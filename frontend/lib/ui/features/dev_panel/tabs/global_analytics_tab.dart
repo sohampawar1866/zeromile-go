@@ -163,12 +163,12 @@ class GlobalAnalyticsTab extends StatelessWidget {
 
   Widget _buildRow(String label, String val) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Text(label, style: AppTypography.bodySm, overflow: TextOverflow.ellipsis)),
-          const SizedBox(width: AppSpacing.sm),
+          Text(label, style: AppTypography.bodySm),
+          const SizedBox(height: 3),
           Text(val, style: AppTypography.bodyStrong),
         ],
       ),
@@ -184,11 +184,11 @@ class GlobalAnalyticsTab extends StatelessWidget {
         borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
         border: Border.all(color: AppColors.hairlineSoft),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Text(title, style: AppTypography.bodyStrong, overflow: TextOverflow.ellipsis)),
-          const SizedBox(width: AppSpacing.xs),
+          Text(title, style: AppTypography.bodyStrong),
+          const SizedBox(height: 4),
           Text(subtitle, style: AppTypography.captionXs.copyWith(color: color, fontWeight: FontWeight.bold)),
         ],
       ),

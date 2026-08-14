@@ -117,12 +117,12 @@ class AdminAnalyticsTab extends StatelessWidget {
 
   Widget _buildStatItem(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Text(label, style: AppTypography.bodySm, overflow: TextOverflow.ellipsis)),
-          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: AppTypography.bodySm),
+          const SizedBox(height: 3),
           Text(value, style: AppTypography.bodyStrong),
         ],
       ),

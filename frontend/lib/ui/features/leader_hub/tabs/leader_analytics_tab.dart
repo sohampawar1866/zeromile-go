@@ -94,12 +94,12 @@ class LeaderAnalyticsTab extends StatelessWidget {
 
   Widget _buildMetricRow(String label, String val) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Text(label, style: AppTypography.bodySm, overflow: TextOverflow.ellipsis)),
-          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: AppTypography.bodySm),
+          const SizedBox(height: 3),
           Text(val, style: AppTypography.bodyStrong),
         ],
       ),
