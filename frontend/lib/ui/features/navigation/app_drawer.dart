@@ -8,6 +8,7 @@ import '../../../models/event_domain.dart';
 import '../../../models/user_profile.dart';
 import '../../core/dialogs/switch_domain_modal.dart';
 import '../../core/dialogs/group_creation_modal.dart';
+import '../../core/widgets/fluid_tap_scale.dart';
 
 class AppDrawer extends StatelessWidget {
   final UserProfile? currentUser;
@@ -88,47 +89,6 @@ class AppDrawer extends StatelessWidget {
                     currentUser?.phoneNumber ?? '+91 8087167841',
                     style: AppTypography.caption,
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  // Domain Switcher Bar
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      SwitchDomainModal.show(
-                        context,
-                        currentDomain: activeDomain,
-                        domains: allDomains,
-                        onSelectDomain: onSwitchDomain,
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-                      decoration: BoxDecoration(
-                        color: AppColors.softCloud,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.hairlineSoft),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.tune, size: 14, color: AppColors.ink),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('ACTIVE RALLY DOMAIN', style: AppTypography.captionXs),
-                                Text(
-                                  activeDomain?.name ?? 'Cycling Rally 2026',
-                                  style: AppTypography.bodyStrong,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.keyboard_arrow_right, size: 16, color: AppColors.ink),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -174,39 +134,86 @@ class AppDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.alt_route,
-                    label: 'Switch Event Domain',
-                    onTap: () {
-                      Navigator.pop(context);
-                      SwitchDomainModal.show(
-                        context,
-                        currentDomain: activeDomain,
-                        domains: allDomains,
-                        onSelectDomain: onSwitchDomain,
-                      );
-                    },
-                  ),
                 ],
               ),
             ),
 
-            // Footer
-            Padding(
+            // Fixed Bottom Action: Distinct "Switch Event Domain" Button
+            Container(
               padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                children: [
-                  const Text(
-                    'ZeroMile Go • Nagpur Municipal Corp',
-                    style: AppTypography.captionXs,
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.hairlineSoft, width: 1.0)),
+              ),
+              child: FluidTapScale(
+                onTap: () {
+                  Navigator.pop(context);
+                  SwitchDomainModal.show(
+                    context,
+                    currentDomain: activeDomain,
+                    domains: allDomains,
+                    onSelectDomain: onSwitchDomain,
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm + 2,
                   ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    'Build v2.4.0 • ZeroMile Architecture',
-                    style: AppTypography.captionXs.copyWith(color: AppColors.stone),
+                  decoration: BoxDecoration(
+                    color: AppColors.softCloud,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(color: AppColors.ink, width: 1.5),
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.xs + 1),
+                        decoration: BoxDecoration(
+                          color: AppColors.ink,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: const Icon(
+                          Icons.swap_horiz_rounded,
+                          color: AppColors.onPrimary,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'SWITCH EVENT DOMAIN',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              activeDomain?.name ?? 'Select Domain',
+                              style: AppTypography.bodySm.copyWith(
+                                color: AppColors.mute,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.ink,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
