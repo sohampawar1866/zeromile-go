@@ -1,6 +1,7 @@
 // lib/config/app_theme.dart
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
@@ -31,10 +32,20 @@ class AppTheme {
   static const Color textMuted = AppColors.stone;
 
   static ThemeData get lightTheme {
+    final emojiFont = GoogleFonts.notoColorEmoji().fontFamily;
+    final emojiFallback = emojiFont != null ? [emojiFont] : const <String>[];
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.canvas,
+      fontFamily: GoogleFonts.inter().fontFamily,
+      fontFamilyFallback: emojiFallback,
+      textTheme: GoogleFonts.interTextTheme().apply(
+        bodyColor: AppColors.ink,
+        displayColor: AppColors.ink,
+        fontFamilyFallback: emojiFallback,
+      ),
       colorScheme: const ColorScheme.light(
         primary: AppColors.ink,
         onPrimary: AppColors.onPrimary,

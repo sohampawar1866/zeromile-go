@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 /// Central Typography Hierarchy
+/// Uses const definitions for widget const-correctness;
+/// Project-wide Inter font and Noto Color Emoji fallbacks are applied via AppTheme.
 abstract class AppTypography {
   // Display Campaign Tier
   static const TextStyle displayCampaign = TextStyle(
