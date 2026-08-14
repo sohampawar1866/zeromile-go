@@ -30,6 +30,7 @@ class AdminLiveMapTab extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: viewModel.selectedGroupFilter,
                   decoration: const InputDecoration(
                     contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
@@ -38,12 +39,20 @@ class AdminLiveMapTab extends StatelessWidget {
                   items: [
                     const DropdownMenuItem(
                       value: '',
-                      child: Text('All Domain Participants (Domain-wide)'),
+                      child: Text(
+                        'All Domain Participants (Domain-wide)',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                     ...viewModel.subGroups.map((g) {
                       return DropdownMenuItem(
                         value: g.id,
-                        child: Text('${g.name} (${g.orgType})'),
+                        child: Text(
+                          '${g.name} (${g.orgType})',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       );
                     }),
                   ],

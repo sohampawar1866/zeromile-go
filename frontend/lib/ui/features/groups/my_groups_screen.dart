@@ -146,13 +146,13 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    m.groupName ?? 'VNIT Cycling Club',
+                                    m.groupName ?? 'Contingent Group',
                                     style: AppTypography.bodyStrong,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: AppSpacing.xxs),
                                   Text(
-                                    'Muster: Samvidhan Sq • Status: ${m.participationStatus.name.toUpperCase()}',
+                                    'Participation Status: ${m.participationStatus.name.toUpperCase()}',
                                     style: AppTypography.caption,
                                     overflow: TextOverflow.ellipsis,
                                   ),

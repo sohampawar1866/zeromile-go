@@ -97,15 +97,31 @@ class _GroupCreationModalState extends State<GroupCreationModal> {
               ),
               const SizedBox(height: AppSpacing.sm),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _orgType,
                 decoration: const InputDecoration(labelText: 'Organization Category'),
                 dropdownColor: AppColors.canvas,
                 items: const [
-                  DropdownMenuItem(value: 'College / University', child: Text('College / University')),
-                  DropdownMenuItem(value: 'Corporate / Office', child: Text('Corporate / Office')),
-                  DropdownMenuItem(value: 'Sports Club / Academy', child: Text('Sports Club / Academy')),
-                  DropdownMenuItem(value: 'NGO / Civil Society', child: Text('NGO / Civil Society')),
-                  DropdownMenuItem(value: 'Residential Society', child: Text('Residential Society')),
+                  DropdownMenuItem(
+                    value: 'College / University',
+                    child: Text('College / University', overflow: TextOverflow.ellipsis),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Corporate / Office',
+                    child: Text('Corporate / Office', overflow: TextOverflow.ellipsis),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Sports Club / Academy',
+                    child: Text('Sports Club / Academy', overflow: TextOverflow.ellipsis),
+                  ),
+                  DropdownMenuItem(
+                    value: 'NGO / Civil Society',
+                    child: Text('NGO / Civil Society', overflow: TextOverflow.ellipsis),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Residential Society',
+                    child: Text('Residential Society', overflow: TextOverflow.ellipsis),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) setState(() => _orgType = val);

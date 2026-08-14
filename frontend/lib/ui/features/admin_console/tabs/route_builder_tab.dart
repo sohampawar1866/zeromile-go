@@ -100,13 +100,23 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: _selectedStatus.contains('ACTIVE') ? 'LIVE_ACTIVE' : 'UPCOMING',
                   decoration: const InputDecoration(labelText: 'Domain Lifecycle Status'),
                   dropdownColor: AppColors.canvas,
                   items: const [
-                    DropdownMenuItem(value: 'UPCOMING', child: Text('UPCOMING (Pre-Event Mode)')),
-                    DropdownMenuItem(value: 'LIVE_ACTIVE', child: Text('LIVE_ACTIVE (Rally Online)')),
-                    DropdownMenuItem(value: 'CONCLUDED', child: Text('CONCLUDED (Closed Mode)')),
+                    DropdownMenuItem(
+                      value: 'UPCOMING',
+                      child: Text('UPCOMING (Pre-Event Mode)', overflow: TextOverflow.ellipsis),
+                    ),
+                    DropdownMenuItem(
+                      value: 'LIVE_ACTIVE',
+                      child: Text('LIVE_ACTIVE (Rally Online)', overflow: TextOverflow.ellipsis),
+                    ),
+                    DropdownMenuItem(
+                      value: 'CONCLUDED',
+                      child: Text('CONCLUDED (Closed Mode)', overflow: TextOverflow.ellipsis),
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) setState(() => _selectedStatus = val);

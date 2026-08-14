@@ -42,6 +42,7 @@ class LeaderHubViewModel extends ChangeNotifier {
 
   int get totalMembers => _roster.length;
   int get totalEnrolled => _roster.length;
+  String get groupName => _roster.firstOrNull?.groupName ?? 'Contingent Group';
   int get activeToday => _teamLocations.isNotEmpty ? _teamLocations.length : _roster.where((m) => m.isActive).length;
   int get checkedInCount => _roster.where((m) => m.participationStatus == ParticipationStatus.checkedIn).length;
   int get checkedInMuster => checkedInCount;

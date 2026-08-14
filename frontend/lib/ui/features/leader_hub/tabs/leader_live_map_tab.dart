@@ -47,8 +47,10 @@ class LeaderLiveMapTab extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
-                const DensityClusterMapView(
-                  title: 'VNIT Contingent Telemetry',
+                DensityClusterMapView(
+                  title: viewModel.groupName.isNotEmpty
+                      ? '${viewModel.groupName} Telemetry'
+                      : 'Contingent Telemetry',
                 ),
               ],
             ),
@@ -64,9 +66,9 @@ class LeaderLiveMapTab extends StatelessWidget {
                 const Text('Live Contingent Telemetry Stats', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
                 _buildStatRow('Contingent Size', '${viewModel.totalEnrolled} Enrolled'),
-                _buildStatRow('Average Team Speed', '19.4 km/h (Moderate)'),
-                _buildStatRow('Furthest Lead Rider', '4.2 km from Start'),
-                _buildStatRow('Telemetry Heartbeat', '2s ago (Active)'),
+                _buildStatRow('Check-in Attendance Rate', '${viewModel.checkinPercent.toStringAsFixed(1)}% Checked-in'),
+                _buildStatRow('Route Completion Rate', '${viewModel.completionPercent.toStringAsFixed(1)}% Finished'),
+                _buildStatRow('Active Location Streams', viewModel.teamLocations.isNotEmpty ? '${viewModel.teamLocations.length} Active' : 'Standby / Idle'),
               ],
             ),
           ),
@@ -77,12 +79,12 @@ class LeaderLiveMapTab extends StatelessWidget {
 
   Widget _buildStatRow(String label, String val) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Text(label, style: AppTypography.bodySm, overflow: TextOverflow.ellipsis)),
-          const SizedBox(width: AppSpacing.xs),
+          Text(label, style: AppTypography.bodySm),
+          const SizedBox(height: 3),
           Text(val, style: AppTypography.bodyStrong),
         ],
       ),
