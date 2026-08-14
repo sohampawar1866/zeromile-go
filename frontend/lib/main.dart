@@ -25,7 +25,7 @@ class ZeroMileGoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0B1120),
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFF2563EB),
           secondary: Color(0xFF10B981),
@@ -37,12 +37,12 @@ class ZeroMileGoApp extends StatelessWidget {
           color: Color(0xFF1E293B),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: Color(0xFF334155), width: 1),
-            borderRadius: BorderRadius.all(Radius.circular(16)),
+            side: BorderSide(color: Color(0xFF334155), width: 1.2),
+            borderRadius: BorderRadius.all(Radius.circular(20)),
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0B1120),
+          backgroundColor: Color(0xFF0F172A),
           elevation: 0,
           scrolledUnderElevation: 0,
           titleTextStyle: TextStyle(
@@ -50,22 +50,6 @@ class ZeroMileGoApp extends StatelessWidget {
             fontSize: 18,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.3,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            side: const BorderSide(color: Color(0xFF475569)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           ),
         ),
         useMaterial3: true,
@@ -82,7 +66,8 @@ class ZeroMileMainDashboard extends StatefulWidget {
   State<ZeroMileMainDashboard> createState() => _ZeroMileMainDashboardState();
 }
 
-class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
+class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard>
+    with SingleTickerProviderStateMixin {
   final _authService = AuthService();
   final _domainService = DomainService();
   final _groupService = GroupService();
@@ -112,10 +97,28 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
     {'name': 'Deekshabhoomi Ground (Finish)', 'type': 'FINISH', 'done': false},
   ];
 
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -272,7 +275,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
       context: context,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(24.0),
@@ -283,7 +286,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             const Row(
               children: [
                 Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 28),
-                SizedBox(width: 8),
+                SizedBox(width: 10),
                 Text(
                   'Emergency SOS Dispatch',
                   style: TextStyle(
@@ -297,9 +300,9 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             const SizedBox(height: 8),
             const Text(
               'Select emergency type. Instant GPS coordinates will route directly to your Group Leader and Domain SuperAdmins:',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.4),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             _buildSosOption(EmergencyType.medical, 'Medical Aid / Injury', Icons.medical_services),
             _buildSosOption(EmergencyType.breakdown, 'Vehicle / Bicycle Breakdown', Icons.build),
             _buildSosOption(EmergencyType.threat, 'Crowd Safety / Threat Alert', Icons.shield),
@@ -311,17 +314,10 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
 
   Widget _buildSosOption(EmergencyType type, String title, IconData icon) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       width: double.infinity,
-      child: OutlinedButton.icon(
-        icon: Icon(icon, color: const Color(0xFFEF4444)),
-        label: Text(title, style: const TextStyle(color: Color(0xFFF8FAFC), fontWeight: FontWeight.w600)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          side: const BorderSide(color: Color(0x66EF4444)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        onPressed: () async {
+      child: FluidTapScale(
+        onTap: () async {
           Navigator.pop(context);
           if (_activeDomain != null && _currentUser != null) {
             try {
@@ -340,6 +336,24 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             }
           }
         },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF7F1D1D), width: 1.2),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: const Color(0xFFEF4444), size: 20),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(color: Color(0xFFF8FAFC), fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -350,7 +364,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
       context: context,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(24.0),
@@ -369,21 +383,27 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             ),
             const SizedBox(height: 16),
             ListTile(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(color: Color(0xFF334155)),
+                borderRadius: BorderRadius.circular(14),
+              ),
               tileColor: const Color(0xFF0F172A),
               leading: const Icon(Icons.groups, color: Color(0xFF60A5FA)),
-              title: const Text('VNIT Cycling Club (Active)'),
-              subtitle: const Text('Muster: Samvidhan Square • Member'),
+              title: const Text('VNIT Cycling Club (Active)', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('Muster: Samvidhan Square • Member', style: TextStyle(color: Color(0xFF94A3B8))),
               trailing: const Icon(Icons.check_circle, color: Color(0xFF10B981)),
               onTap: () => Navigator.pop(context),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             ListTile(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(color: Color(0xFF334155)),
+                borderRadius: BorderRadius.circular(14),
+              ),
               tileColor: const Color(0xFF0F172A),
               leading: const Icon(Icons.people_outline, color: Color(0xFF94A3B8)),
-              title: const Text('General Domain Contingent'),
-              subtitle: const Text('Muster: Zero Mile Monument'),
+              title: const Text('General Domain Contingent', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('Muster: Zero Mile Monument', style: TextStyle(color: Color(0xFF94A3B8))),
               onTap: () {
                 Navigator.pop(context);
                 _showSnackbar('Switched active group to General Contingent.', const Color(0xFF3B82F6));
@@ -406,7 +426,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
       isScrollControlled: true,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
@@ -423,41 +443,42 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
               'Propose Contingent / Sub-Group',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Organization / Club Name',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: musterCtrl,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Proposed Muster Point',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: countCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Expected Participant Count',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () async {
+              child: FluidTapScale(
+                onTap: () async {
                   Navigator.pop(context);
                   if (_activeDomain != null && _currentUser != null) {
                     try {
@@ -475,7 +496,15 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                     }
                   }
                 },
-                child: const Text('Submit Application to SuperAdmins', style: TextStyle(color: Colors.white)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text('Submit Application to SuperAdmins', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
               ),
             ),
           ],
@@ -494,7 +523,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
       isScrollControlled: true,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
@@ -516,27 +545,32 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
               'Adds participant directly to your roster and domain general muster:',
               style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Member Full Name', border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                labelText: 'Member Full Name',
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: phoneCtrl,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Mobile Number (+91 ...)', border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                labelText: 'Mobile Number (+91 ...)',
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () async {
+              child: FluidTapScale(
+                onTap: () async {
                   Navigator.pop(context);
                   if (_activeDomain != null && _currentUser != null && _activeMembership != null) {
                     try {
@@ -554,7 +588,15 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                     }
                   }
                 },
-                child: const Text('Add Member Directly', style: TextStyle(color: Colors.white)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text('Add Member Directly', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
               ),
             ),
           ],
@@ -572,7 +614,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
       isScrollControlled: true,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
@@ -593,25 +635,22 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 color: isSuperAdmin ? const Color(0xFFEF4444) : Colors.orangeAccent,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               controller: msgCtrl,
               maxLines: 3,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Type announcement message...',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isSuperAdmin ? const Color(0xFFEF4444) : const Color(0xFF2563EB),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () async {
+              child: FluidTapScale(
+                onTap: () async {
                   Navigator.pop(context);
                   if (_activeDomain != null && _currentUser != null) {
                     try {
@@ -636,7 +675,15 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                     }
                   }
                 },
-                child: const Text('Dispatch Real-time Broadcast', style: TextStyle(color: Colors.white)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isSuperAdmin ? const Color(0xFFEF4444) : const Color(0xFF2563EB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text('Dispatch Real-time Broadcast', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
               ),
             ),
           ],
@@ -651,7 +698,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
         content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -665,14 +712,17 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             const Icon(Icons.directions_bike, color: Color(0xFF38BDF8), size: 22),
             const SizedBox(width: 8),
             const Text('ZeroMile Go'),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0x3310B981),
-                borderRadius: BorderRadius.circular(4),
+            const SizedBox(width: 10),
+            ScaleTransition(
+              scale: _pulseAnimation,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF065F46),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text('LIVE', style: TextStyle(color: Color(0xFF34D399), fontSize: 10, fontWeight: FontWeight.w800)),
               ),
-              child: const Text('LIVE', style: TextStyle(color: Color(0xFF34D399), fontSize: 10, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -694,41 +744,45 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _refreshDomainContext,
-              child: ListView(
-                padding: const EdgeInsets.all(16.0),
-                children: [
-                  _buildEventHeaderCard(),
-                  const SizedBox(height: 16),
-                  if (_currentRole == 'PARTICIPANT') ...[
-                    _buildParticipantPresenceCard(),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: ListView(
+                  key: ValueKey(_currentRole),
+                  padding: const EdgeInsets.all(16.0),
+                  children: [
+                    _buildEventHeaderCard(),
                     const SizedBox(height: 16),
-                    _buildRouteProgressCard(),
-                    const SizedBox(height: 16),
-                    _buildBroadcastsFeedCard(),
-                  ] else if (_currentRole == 'LEADER') ...[
-                    _buildLeaderHubCard(),
-                    const SizedBox(height: 16),
-                    _buildLeaderSosTriageCard(),
-                    const SizedBox(height: 16),
-                    _buildLeaderRosterCard(),
-                  ] else if (_currentRole == 'SUPERADMIN') ...[
-                    _buildSuperAdminConsoleCard(),
-                    const SizedBox(height: 16),
-                    _buildAdminPendingRequestsCard(),
-                    const SizedBox(height: 16),
-                    _buildAdminSosQueueCard(),
-                  ] else ...[
-                    _buildDeveloperPanelCard(),
+                    if (_currentRole == 'PARTICIPANT') ...[
+                      _buildParticipantPresenceCard(),
+                      const SizedBox(height: 16),
+                      _buildRouteProgressCard(),
+                      const SizedBox(height: 16),
+                      _buildBroadcastsFeedCard(),
+                    ] else if (_currentRole == 'LEADER') ...[
+                      _buildLeaderHubCard(),
+                      const SizedBox(height: 16),
+                      _buildLeaderSosTriageCard(),
+                      const SizedBox(height: 16),
+                      _buildLeaderRosterCard(),
+                    ] else if (_currentRole == 'SUPERADMIN') ...[
+                      _buildSuperAdminConsoleCard(),
+                      const SizedBox(height: 16),
+                      _buildAdminPendingRequestsCard(),
+                      const SizedBox(height: 16),
+                      _buildAdminSosQueueCard(),
+                    ] else ...[
+                      _buildDeveloperPanelCard(),
+                    ],
+                    const SizedBox(height: 80),
                   ],
-                  const SizedBox(height: 80),
-                ],
+                ),
               ),
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openSosModal,
         backgroundColor: const Color(0xFFEF4444),
-        icon: const Icon(Icons.emergency_share, color: Colors.white, size: 24),
-        label: const Text('EMERGENCY SOS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        icon: const Icon(Icons.emergency_share, color: Colors.white, size: 22),
+        label: const Text('EMERGENCY SOS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
       ),
     );
   }
@@ -736,7 +790,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildEventHeaderCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -751,7 +805,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                         _activeDomain?.name ?? 'Cycling Rally 2026',
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       const Text(
                         'Zero Mile -> Deekshabhoomi Loop (14.2 km)',
                         style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
@@ -762,18 +816,18 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0x332563EB),
+                    color: const Color(0xFF1E3A8A),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF3B82F6)),
+                    border: Border.all(color: const Color(0xFF3B82F6), width: 1),
                   ),
                   child: Text(
                     _currentRole,
-                    style: const TextStyle(color: Color(0xFF60A5FA), fontWeight: FontWeight.bold, fontSize: 11),
+                    style: const TextStyle(color: Color(0xFF93C5FD), fontWeight: FontWeight.bold, fontSize: 11),
                   ),
                 ),
               ],
             ),
-            const Divider(height: 24, color: Color(0xFF334155)),
+            const Divider(height: 26, color: Color(0xFF334155)),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -787,25 +841,35 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                     ),
                   ],
                 ),
-                InkWell(
+                FluidTapScale(
                   onTap: _toggleGpsSimulator,
-                  child: Row(
-                    children: [
-                      Icon(
-                        _isGpsSimulating ? Icons.gps_fixed : Icons.gps_not_fixed,
-                        size: 16,
-                        color: _isGpsSimulating ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _isGpsSimulating ? const Color(0xFF064E3B) : const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _isGpsSimulating ? const Color(0xFF10B981) : const Color(0xFF475569),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isGpsSimulating ? 'GPS Online' : 'Simulate GPS',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _isGpsSimulating ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
-                          fontWeight: FontWeight.bold,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _isGpsSimulating ? Icons.gps_fixed : Icons.gps_not_fixed,
+                          size: 14,
+                          color: _isGpsSimulating ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          _isGpsSimulating ? 'GPS Online' : 'Simulate GPS',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _isGpsSimulating ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -823,7 +887,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -834,16 +898,33 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                   'Muster Roll & Participation',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isCompleted ? const Color(0x333B82F6) : isCheckedIn ? const Color(0x3310B981) : const Color(0x33F59E0B),
-                    borderRadius: BorderRadius.circular(6),
+                    color: isCompleted
+                        ? const Color(0xFF1E3A8A)
+                        : isCheckedIn
+                            ? const Color(0xFF065F46)
+                            : const Color(0xFF78350F),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isCompleted
+                          ? const Color(0xFF3B82F6)
+                          : isCheckedIn
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFF59E0B),
+                      width: 1,
+                    ),
                   ),
                   child: Text(
                     isCompleted ? 'COMPLETED' : isCheckedIn ? 'CHECKED IN' : 'NOT CHECKED IN',
                     style: TextStyle(
-                      color: isCompleted ? Colors.lightBlueAccent : isCheckedIn ? Colors.greenAccent : Colors.orangeAccent,
+                      color: isCompleted
+                          ? Colors.lightBlueAccent
+                          : isCheckedIn
+                              ? const Color(0xFF34D399)
+                              : const Color(0xFFFCD34D),
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                     ),
@@ -861,39 +942,58 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 ),
                 InkWell(
                   onTap: _openSwitchSubGroupModal,
-                  child: const Text('Switch Group', style: TextStyle(color: Color(0xFF60A5FA), fontSize: 12)),
+                  child: const Text('Switch Group', style: TextStyle(color: Color(0xFF60A5FA), fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
-                    icon: Icon(isCheckedIn ? Icons.check_circle : Icons.location_on, size: 18),
-                    label: Text(isCheckedIn ? 'Checked In' : 'Check-In at Muster'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isCheckedIn ? const Color(0xFF059669) : const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
+                  child: FluidTapScale(
+                    onTap: _handleCheckIn,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isCheckedIn ? const Color(0xFF059669) : const Color(0xFF2563EB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(isCheckedIn ? Icons.check_circle : Icons.location_on, size: 17, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Text(isCheckedIn ? 'Checked In' : 'Check-In at Muster', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                        ],
+                      ),
                     ),
-                    onPressed: _handleCheckIn,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.flag, size: 18),
-                    label: const Text('Mark Finish'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: isCompleted ? Colors.blueAccent : const Color(0xFFCBD5E1),
-                      side: BorderSide(color: isCompleted ? Colors.blueAccent : const Color(0xFF475569)),
+                  child: FluidTapScale(
+                    onTap: _handleComplete,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isCompleted ? const Color(0xFF1E3A8A) : const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: isCompleted ? const Color(0xFF3B82F6) : const Color(0xFF475569)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.flag, size: 17, color: isCompleted ? Colors.blueAccent : const Color(0xFFCBD5E1)),
+                          const SizedBox(width: 8),
+                          Text('Mark Finish', style: TextStyle(color: isCompleted ? Colors.blueAccent : const Color(0xFFCBD5E1), fontWeight: FontWeight.bold, fontSize: 13)),
+                        ],
+                      ),
                     ),
-                    onPressed: _handleComplete,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Center(
               child: TextButton.icon(
                 icon: const Icon(Icons.group_add, size: 16),
@@ -910,14 +1010,14 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildRouteProgressCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Official Nagpur Route Checkpoints', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             ..._routeCheckpoints.map((cp) => Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 10.0),
               child: Row(
                 children: [
                   Icon(
@@ -925,12 +1025,13 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                     color: cp['done'] ? const Color(0xFF10B981) : const Color(0xFF64748B),
                     size: 18,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       cp['name'] as String,
                       style: TextStyle(
                         fontSize: 13,
+                        fontWeight: cp['done'] ? FontWeight.w600 : FontWeight.normal,
                         color: cp['done'] ? const Color(0xFFF8FAFC) : const Color(0xFF94A3B8),
                       ),
                     ),
@@ -947,27 +1048,27 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildBroadcastsFeedCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
                 Icon(Icons.campaign, color: Colors.orangeAccent, size: 20),
-                SizedBox(width: 6),
+                SizedBox(width: 8),
                 Text('Live Safety Broadcasts', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             if (_broadcasts.isEmpty)
               const Text('No broadcasts posted yet.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12))
             else
               ..._broadcasts.take(3).map((b) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFF334155)),
                 ),
                 child: Column(
@@ -990,8 +1091,8 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(b.messageText, style: const TextStyle(fontSize: 12, color: Color(0xFFF1F5F9))),
+                    const SizedBox(height: 5),
+                    Text(b.messageText, style: const TextStyle(fontSize: 12, color: Color(0xFFF1F5F9), height: 1.3)),
                   ],
                 ),
               )),
@@ -1004,7 +1105,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildLeaderHubCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1012,31 +1113,56 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
               'Group Leader Operations (VNIT Cycling Club)',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
               'Manage your contingent, triage local SOS incidents, and direct-add participants by phone.',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, height: 1.3),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.person_add, size: 18),
-                    label: const Text('Add Member'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      foregroundColor: Colors.white,
+                  child: FluidTapScale(
+                    onTap: _openLeaderAddMemberModal,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.person_add, size: 16, color: Colors.white),
+                          SizedBox(width: 6),
+                          Text('Add Member', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
                     ),
-                    onPressed: _openLeaderAddMemberModal,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.campaign, size: 18),
-                    label: const Text('Team Broadcast'),
-                    onPressed: () => _openPublishBroadcastModal(isSuperAdmin: false),
+                  child: FluidTapScale(
+                    onTap: () => _openPublishBroadcastModal(isSuperAdmin: false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF475569)),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.campaign, size: 16, color: Colors.orangeAccent),
+                          SizedBox(width: 6),
+                          Text('Team Broadcast', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1050,7 +1176,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildLeaderSosTriageCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1064,28 +1190,39 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             else
               ..._sosEvents.map((s) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF334155)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('${s.emergencyType.name.toUpperCase()} • ${s.senderName ?? "Rider"}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF059669), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
-                          onPressed: () => _showSnackbar('Resolved locally.', const Color(0xFF10B981)),
-                          child: const Text('Resolve Locally', style: TextStyle(fontSize: 11)),
+                        FluidTapScale(
+                          onTap: () => _showSnackbar('Resolved locally.', const Color(0xFF10B981)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(color: const Color(0xFF059669), borderRadius: BorderRadius.circular(8)),
+                            child: const Text('Resolve Locally', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+                          ),
                         ),
-                        const SizedBox(width: 6),
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(foregroundColor: Colors.orangeAccent, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
-                          onPressed: () => _showSnackbar('Escalated to SuperAdmin.', Colors.orange),
-                          child: const Text('Forward to Admin', style: TextStyle(fontSize: 11)),
+                        const SizedBox(width: 8),
+                        FluidTapScale(
+                          onTap: () => _showSnackbar('Escalated to SuperAdmin.', Colors.orange),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orangeAccent),
+                            ),
+                            child: const Text('Forward to Admin', style: TextStyle(fontSize: 11, color: Colors.orangeAccent, fontWeight: FontWeight.w600)),
+                          ),
                         ),
                       ],
                     ),
@@ -1101,7 +1238,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildLeaderRosterCard() {
     return const Card(
       child: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1128,22 +1265,32 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildSuperAdminConsoleCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Domain SuperAdmin Command Center', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text('Sector oversight, group approvals, and high-priority broadcasts.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.campaign, size: 18),
-              label: const Text('Publish Domain-Wide Broadcast Alert'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                foregroundColor: Colors.white,
+            const SizedBox(height: 14),
+            FluidTapScale(
+              onTap: () => _openPublishBroadcastModal(isSuperAdmin: true),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.campaign, size: 18, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Publish Domain-Wide Broadcast Alert', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  ],
+                ),
               ),
-              onPressed: () => _openPublishBroadcastModal(isSuperAdmin: true),
             ),
           ],
         ),
@@ -1154,7 +1301,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildAdminPendingRequestsCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1171,7 +1318,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1182,9 +1329,8 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
-                          onPressed: () async {
+                        FluidTapScale(
+                          onTap: () async {
                             await _groupService.reviewGroupRequest(
                               requestId: req.id,
                               approve: true,
@@ -1193,12 +1339,15 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                             _showSnackbar('Approved! Sub-group created & applicant elevated to Leader.', const Color(0xFF10B981));
                             await _refreshDomainContext();
                           },
-                          child: const Text('Approve & Promote', style: TextStyle(fontSize: 11, color: Colors.white)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(8)),
+                            child: const Text('Approve & Promote', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+                          ),
                         ),
-                        const SizedBox(width: 6),
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFEF4444), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
-                          onPressed: () async {
+                        const SizedBox(width: 8),
+                        FluidTapScale(
+                          onTap: () async {
                             await _groupService.reviewGroupRequest(
                               requestId: req.id,
                               approve: false,
@@ -1207,7 +1356,11 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                             _showSnackbar('Application rejected.', Colors.orange);
                             await _refreshDomainContext();
                           },
-                          child: const Text('Reject', style: TextStyle(fontSize: 11)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFEF4444))),
+                            child: const Text('Reject', style: TextStyle(fontSize: 11, color: Color(0xFFEF4444), fontWeight: FontWeight.w600)),
+                          ),
                         ),
                       ],
                     ),
@@ -1223,7 +1376,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildAdminSosQueueCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1236,7 +1389,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0x66EF4444)),
               ),
               child: Column(
@@ -1245,12 +1398,24 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                   const Text('MEDICAL • Ramesh Patil (General)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444))),
                   const SizedBox(height: 4),
                   const Text('Note: Dehydration & dizziness near Law College Square.', style: TextStyle(fontSize: 12, color: Color(0xFFFBBF24))),
-                  const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.medical_services, size: 18),
-                    label: const Text('Dispatch Ambulance & Mark Resolved'),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white),
-                    onPressed: () => _showSnackbar('Ambulance dispatched & incident resolved.', const Color(0xFF10B981)),
+                  const SizedBox(height: 10),
+                  FluidTapScale(
+                    onTap: () => _showSnackbar('Ambulance dispatched & incident resolved.', const Color(0xFF10B981)),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.medical_services, size: 16, color: Colors.white),
+                          SizedBox(width: 6),
+                          Text('Dispatch Ambulance & Mark Resolved', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1264,22 +1429,85 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget _buildDeveloperPanelCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Developer Provisioning & Platform Status', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text('Provisioned SuperAdmins: ${_provisionedAdmins.length}/6 (Soft-Cap)', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.security, size: 18),
-              label: const Text('Provision 6th SuperAdmin Seat'),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB), foregroundColor: Colors.white),
-              onPressed: () => _showSnackbar('6th SuperAdmin seat provisioned.', const Color(0xFF10B981)),
+            const SizedBox(height: 14),
+            FluidTapScale(
+              onTap: () => _showSnackbar('6th SuperAdmin seat provisioned.', const Color(0xFF10B981)),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.security, size: 16, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Provision 6th SuperAdmin Seat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Expressive Fluid Tap Scale Micro-interaction Widget
+class FluidTapScale extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const FluidTapScale({super.key, required this.child, required this.onTap});
+
+  @override
+  State<FluidTapScale> createState() => _FluidTapScaleState();
+}
+
+class _FluidTapScaleState extends State<FluidTapScale> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      reverseDuration: const Duration(milliseconds: 140),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: widget.child,
       ),
     );
   }
