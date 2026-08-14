@@ -222,6 +222,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
             activeDomain: widget.domainContextVm.activeDomain,
             activeMembership: widget.participantHomeVm.activeMembership,
             authVm: widget.authVm,
+            groupsVm: widget.groupsVm,
             onOpenProposeModal: () {
               GroupCreationModal.show(
                 context,
@@ -244,7 +245,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
                 },
               );
             },
-            onNavigateToGroups: () => setState(() => _bottomNavIndex = 1),
+            onManageContingents: () => setState(() => _bottomNavIndex = 1),
           );
         }
         return ParticipantHomeScreen(

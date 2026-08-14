@@ -1,10 +1,10 @@
-// lib/ui/features/dev_panel/tabs/provisioning_tab.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
 import '../../../../logic/view_models/dev_panel_view_model.dart';
+import '../../../../utils/phone_utils.dart';
 import '../../../core/widgets/fluid_tap_scale.dart';
 import '../../../core/widgets/status_badge.dart';
 
@@ -25,6 +25,7 @@ class ProvisioningTab extends StatefulWidget {
 class _ProvisioningTabState extends State<ProvisioningTab> {
   final _phoneCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  String? _phoneError;
 
   @override
   Widget build(BuildContext context) {
@@ -127,9 +128,21 @@ class _ProvisioningTabState extends State<ProvisioningTab> {
                 TextField(
                   controller: _phoneCtrl,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Admin Mobile (+91 ...)',
-                    hintText: '+91 98000 00000',
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  onChanged: (_) {
+                    if (_phoneError != null) {
+                      setState(() => _phoneError = null);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Admin Mobile Number',
+                    prefixText: '+91 ',
+                    prefixStyle: AppTypography.bodyStrong.copyWith(color: AppColors.ink),
+                    hintText: '98000 00000',
+                    errorText: _phoneError,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -147,12 +160,26 @@ class _ProvisioningTabState extends State<ProvisioningTab> {
                         return;
                       }
 
+                      final name = _nameCtrl.text.trim();
+                      final rawDigits = PhoneUtils.extract10Digits(_phoneCtrl.text);
+
+                      if (name.isEmpty) return;
+
+                      if (rawDigits.length != 10) {
+                        setState(() => _phoneError = 'Please enter a valid 10-digit mobile number.');
+                        return;
+                      }
+
+                      final canonicalPhone = PhoneUtils.formatWithPrefix(rawDigits, space: true);
+
                       final ok = await widget.viewModel.provisionNewAdmin(
                         domainId: widget.domainId,
-                        userPhone: _phoneCtrl.text.trim(),
-                        userName: _nameCtrl.text.trim(),
+                        userPhone: canonicalPhone,
+                        userName: name,
                       );
                       if (context.mounted && ok) {
+                        _nameCtrl.clear();
+                        _phoneCtrl.clear();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('SuperAdmin seat successfully provisioned.'),

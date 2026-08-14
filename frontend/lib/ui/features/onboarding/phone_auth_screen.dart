@@ -1,10 +1,10 @@
-// lib/ui/features/onboarding/phone_auth_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
 import '../../../logic/view_models/auth_view_model.dart';
+import '../../../utils/phone_utils.dart';
 import '../../core/widgets/fluid_tap_scale.dart';
 import 'otp_verification_screen.dart';
 
@@ -25,6 +25,7 @@ class PhoneAuthScreen extends StatefulWidget {
 class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   final _phoneController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -89,10 +90,22 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
                           style: AppTypography.bodyStrong,
-                          decoration: const InputDecoration(
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                          onChanged: (_) {
+                            if (_errorMessage != null) {
+                              setState(() => _errorMessage = null);
+                            }
+                          },
+                          decoration: InputDecoration(
                             labelText: 'Mobile Phone Number',
-                            hintText: '+91 98220 XXXXX',
-                            prefixIcon: Icon(Icons.phone_iphone, color: AppColors.ink, size: 20),
+                            prefixText: '+91 ',
+                            prefixStyle: AppTypography.bodyStrong.copyWith(color: AppColors.ink),
+                            hintText: '98220 12345',
+                            errorText: _errorMessage,
+                            prefixIcon: const Icon(Icons.phone_iphone, color: AppColors.ink, size: 20),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.md),
@@ -100,17 +113,24 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                           onTap: _isLoading
                               ? () {}
                               : () async {
-                                  final phone = _phoneController.text.trim();
-                                  if (phone.isEmpty) return;
+                                  final rawDigits = PhoneUtils.extract10Digits(_phoneController.text);
+                                  if (rawDigits.length != 10) {
+                                    setState(() {
+                                      _errorMessage = 'Please enter a valid 10-digit mobile number.';
+                                    });
+                                    return;
+                                  }
+
+                                  final canonicalPhone = PhoneUtils.formatWithPrefix(rawDigits, space: true);
 
                                   if (widget.onPhoneSubmitted != null) {
-                                    widget.onPhoneSubmitted!(phone);
+                                    widget.onPhoneSubmitted!(canonicalPhone);
                                     return;
                                   }
 
                                   if (widget.authViewModel != null) {
                                     setState(() => _isLoading = true);
-                                    await widget.authViewModel!.sendOtp(phone);
+                                    await widget.authViewModel!.sendOtp(canonicalPhone);
                                     setState(() => _isLoading = false);
 
                                     if (context.mounted) {
@@ -118,7 +138,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (_) => OtpVerificationScreen(
-                                            phoneNumber: phone,
+                                            phoneNumber: canonicalPhone,
                                             authViewModel: widget.authViewModel,
                                           ),
                                         ),

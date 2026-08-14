@@ -3,6 +3,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile.dart';
 import '../config/app_config.dart';
+import '../utils/phone_utils.dart';
 import 'supabase_client_service.dart';
 
 class AuthService {
@@ -28,8 +29,9 @@ class AuthService {
 
   /// Sends 6-digit OTP to mobile phone number using Supabase native Phone Auth
   Future<void> sendPhoneOtp(String phoneNumber) async {
+    final formatted = PhoneUtils.formatWithPrefix(phoneNumber, space: false);
     await _client.auth.signInWithOtp(
-      phone: phoneNumber,
+      phone: formatted.isNotEmpty ? formatted : phoneNumber,
     );
   }
 
@@ -40,11 +42,15 @@ class AuthService {
     String? fallbackFullName,
     String? emergencyContact,
   }) async {
+    final cleanDigits = PhoneUtils.extract10Digits(phoneNumber);
+    final canonicalPhone = PhoneUtils.formatWithPrefix(phoneNumber, space: true);
+    final e164NoSpace = PhoneUtils.formatWithPrefix(phoneNumber, space: false);
+
     // 1. Native Supabase Auth verify (handles both live SMS & Supabase configured test phone numbers)
     AuthResponse? authResponse;
     try {
       authResponse = await _client.auth.verifyOTP(
-        phone: phoneNumber,
+        phone: e164NoSpace,
         token: token,
         type: OtpType.sms,
       );
@@ -55,11 +61,11 @@ class AuthService {
       }
     }
 
-    // 2. Fetch or create in public.users table
+    // 2. Fetch or create in public.users table (flexible lookup to match any format)
     final data = await _client
         .from('users')
         .select()
-        .eq('phone_number', phoneNumber)
+        .or('phone_number.eq.$canonicalPhone,phone_number.eq.$e164NoSpace,phone_number.eq.$cleanDigits')
         .maybeSingle();
 
     if (data != null) {
@@ -69,7 +75,7 @@ class AuthService {
       final userId = authResponse?.user?.id;
       final insertPayload = {
         if (userId != null) 'id': userId,
-        'phone_number': phoneNumber,
+        'phone_number': canonicalPhone,
         'full_name': fallbackFullName ?? 'Citizen Participant',
         if (emergencyContact != null) 'emergency_contact': emergencyContact,
       };
@@ -87,10 +93,14 @@ class AuthService {
 
   /// 1-Tap Fast Persona Switcher for Evaluation, Live Field Testing & Sandbox Perspective Switching
   Future<UserProfile> loginAsDemoPersona(String phoneNumber) async {
+    final cleanDigits = PhoneUtils.extract10Digits(phoneNumber);
+    final canonicalPhone = PhoneUtils.formatWithPrefix(phoneNumber, space: true);
+    final e164NoSpace = PhoneUtils.formatWithPrefix(phoneNumber, space: false);
+
     final data = await _client
         .from('users')
         .select()
-        .eq('phone_number', phoneNumber)
+        .or('phone_number.eq.$canonicalPhone,phone_number.eq.$e164NoSpace,phone_number.eq.$cleanDigits')
         .maybeSingle();
 
     if (data == null) {

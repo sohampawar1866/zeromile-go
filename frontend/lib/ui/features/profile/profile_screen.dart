@@ -1,6 +1,7 @@
 // lib/ui/features/profile/profile_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
@@ -8,6 +9,8 @@ import '../../../models/event_domain.dart';
 import '../../../models/group_membership.dart';
 import '../../../models/user_profile.dart';
 import '../../../logic/view_models/auth_view_model.dart';
+import '../../../logic/view_models/groups_view_model.dart';
+import '../../../utils/phone_utils.dart';
 import '../../core/widgets/fluid_tap_scale.dart';
 import '../../core/widgets/status_badge.dart';
 
@@ -16,8 +19,9 @@ class ProfileScreen extends StatefulWidget {
   final EventDomain? activeDomain;
   final GroupMembership? activeMembership;
   final AuthViewModel authVm;
+  final GroupsViewModel groupsVm;
+  final VoidCallback? onManageContingents;
   final VoidCallback onOpenProposeModal;
-  final VoidCallback onNavigateToGroups;
 
   const ProfileScreen({
     super.key,
@@ -25,8 +29,9 @@ class ProfileScreen extends StatefulWidget {
     required this.activeDomain,
     required this.activeMembership,
     required this.authVm,
+    required this.groupsVm,
+    this.onManageContingents,
     required this.onOpenProposeModal,
-    required this.onNavigateToGroups,
   });
 
   @override
@@ -37,7 +42,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showEditProfileDialog() {
     final user = widget.authVm.currentUser ?? widget.currentUser;
     final nameCtrl = TextEditingController(text: user?.fullName ?? '');
-    final emergencyCtrl = TextEditingController(text: user?.emergencyContact ?? '');
+    final emergencyCtrl = TextEditingController(
+      text: PhoneUtils.extract10Digits(user?.emergencyContact ?? ''),
+    );
 
     showDialog(
       context: context,
@@ -61,9 +68,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: emergencyCtrl,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Emergency Contact (+91 ...)',
-                hintText: '+91 98000 00000',
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+              decoration: InputDecoration(
+                labelText: 'Emergency Contact',
+                prefixText: '+91 ',
+                prefixStyle: AppTypography.bodyStrong.copyWith(color: AppColors.ink),
+                hintText: '98000 00000',
               ),
             ),
           ],
@@ -80,12 +93,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             onPressed: () async {
               final newName = nameCtrl.text.trim();
-              final newEmerg = emergencyCtrl.text.trim();
+              final rawEmerg = PhoneUtils.extract10Digits(emergencyCtrl.text);
+
               if (newName.isNotEmpty) {
+                if (rawEmerg.isNotEmpty && rawEmerg.length != 10) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Emergency contact must be 10 digits.'),
+                      backgroundColor: AppColors.warning,
+                    ),
+                  );
+                  return;
+                }
+
+                final canonicalEmerg = rawEmerg.isNotEmpty
+                    ? PhoneUtils.formatWithPrefix(rawEmerg, space: true)
+                    : null;
+
                 Navigator.pop(ctx);
                 await widget.authVm.updateProfile(
                   fullName: newName,
-                  emergencyContact: newEmerg.isNotEmpty ? newEmerg : null,
+                  emergencyContact: canonicalEmerg,
                 );
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -214,7 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: TextButton.icon(
                     icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.ink),
                     label: const Text('Manage Contingents', style: AppTypography.buttonSmSecondary),
-                    onPressed: widget.onNavigateToGroups,
+                    onPressed: widget.onManageContingents,
                   ),
                 ),
               ],

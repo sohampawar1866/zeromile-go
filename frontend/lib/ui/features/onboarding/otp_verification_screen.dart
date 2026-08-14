@@ -1,6 +1,5 @@
-// lib/ui/features/onboarding/otp_verification_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
@@ -14,8 +13,8 @@ class OtpVerificationScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final Function({
     required String otp,
-    required String fullName,
-    required String emergencyContact,
+    String? fullName,
+    String? emergencyContact,
   })? onVerified;
 
   const OtpVerificationScreen({
@@ -33,6 +32,7 @@ class OtpVerificationScreen extends StatefulWidget {
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final _otpController = TextEditingController();
   bool _isLoading = false;
+  String? _otpError;
 
   @override
   Widget build(BuildContext context) {
@@ -92,9 +92,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
                           style: AppTypography.headingLg.copyWith(letterSpacing: 6),
-                          decoration: const InputDecoration(
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(6),
+                          ],
+                          onChanged: (_) {
+                            if (_otpError != null) {
+                              setState(() => _otpError = null);
+                            }
+                          },
+                          decoration: InputDecoration(
                             hintText: '123456',
-                            contentPadding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                            errorText: _otpError,
+                            contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.md),
@@ -105,7 +115,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               ? () {}
                               : () async {
                                   final otp = _otpController.text.trim();
-                                  if (otp.length < 6) return;
+                                  if (otp.length != 6) {
+                                    setState(() => _otpError = 'Please enter the complete 6-digit OTP code.');
+                                    return;
+                                  }
 
                                   setState(() => _isLoading = true);
 
@@ -113,15 +126,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     if (widget.onVerified != null) {
                                       await widget.onVerified!(
                                         otp: otp,
-                                        fullName: 'Soham Pawar',
-                                        emergencyContact: '+91 8087167841',
                                       );
                                     } else if (widget.authViewModel != null) {
                                       final success = await widget.authViewModel!.verifyOtp(
                                         phoneNumber: widget.phoneNumber,
                                         token: otp,
-                                        fullName: 'Soham Pawar',
-                                        emergencyContact: '+91 8087167841',
                                       );
 
                                       if (context.mounted && success) {

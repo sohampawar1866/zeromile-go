@@ -1,9 +1,11 @@
 // lib/ui/core/dialogs/direct_add_member_modal.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
+import '../../../utils/phone_utils.dart';
 import '../widgets/fluid_tap_scale.dart';
 
 class DirectAddMemberModal extends StatefulWidget {
@@ -33,6 +35,7 @@ class DirectAddMemberModal extends StatefulWidget {
 class _DirectAddMemberModalState extends State<DirectAddMemberModal> {
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  String? _phoneError;
 
   @override
   Widget build(BuildContext context) {
@@ -89,20 +92,39 @@ class _DirectAddMemberModalState extends State<DirectAddMemberModal> {
             TextField(
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Member Mobile Number (+91 ...)',
-                hintText: '+91 98000 00000',
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+              onChanged: (_) {
+                if (_phoneError != null) {
+                  setState(() => _phoneError = null);
+                }
+              },
+              decoration: InputDecoration(
+                labelText: 'Member Mobile Number',
+                prefixText: '+91 ',
+                prefixStyle: AppTypography.bodyStrong.copyWith(color: AppColors.ink),
+                hintText: '98000 00000',
+                errorText: _phoneError,
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
             FluidTapScale(
               onTap: () {
                 final name = _nameCtrl.text.trim();
-                final phone = _phoneCtrl.text.trim();
-                if (name.isNotEmpty && phone.isNotEmpty) {
-                  Navigator.pop(context);
-                  widget.onAdd(name, phone);
+                final rawDigits = PhoneUtils.extract10Digits(_phoneCtrl.text);
+
+                if (name.isEmpty) return;
+
+                if (rawDigits.length != 10) {
+                  setState(() => _phoneError = 'Please enter a valid 10-digit mobile number.');
+                  return;
                 }
+
+                final canonicalPhone = PhoneUtils.formatWithPrefix(rawDigits, space: true);
+                Navigator.pop(context);
+                widget.onAdd(name, canonicalPhone);
               },
               child: Container(
                 width: double.infinity,

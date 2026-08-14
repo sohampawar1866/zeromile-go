@@ -161,7 +161,7 @@ class _ZeroMileRootControllerState extends State<ZeroMileRootController> {
         return OtpVerificationScreen(
           phoneNumber: _pendingPhone,
           onBack: () => setState(() => _onboardingStep = 0),
-          onVerified: ({required otp, required fullName, required emergencyContact}) async {
+          onVerified: ({required otp, fullName, emergencyContact}) async {
             final ok = await _authVm.verifyOtp(
               phoneNumber: _pendingPhone,
               token: otp,
