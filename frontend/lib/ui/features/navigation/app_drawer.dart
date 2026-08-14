@@ -151,19 +151,19 @@ class AppDrawer extends StatelessWidget {
                       itemBuilder: (ctx) => const [
                         PopupMenuItem(
                           value: ActiveRolePerspective.developer,
-                          child: Text('👑 Developer: Soham Pawar'),
+                          child: Text('Developer Perspective (Master Console)'),
                         ),
                         PopupMenuItem(
                           value: ActiveRolePerspective.superAdmin,
-                          child: Text('🛡️ SuperAdmin Perspective (Domain Command)'),
+                          child: Text('SuperAdmin Perspective (Domain Command)'),
                         ),
                         PopupMenuItem(
                           value: ActiveRolePerspective.leader,
-                          child: Text('🚴 Group Leader Perspective (Team Hub)'),
+                          child: Text('Group Leader Perspective (Team Hub)'),
                         ),
                         PopupMenuItem(
                           value: ActiveRolePerspective.participant,
-                          child: Text('👤 Participant Perspective (Rider Cockpit)'),
+                          child: Text('Participant Perspective (Rider Cockpit)'),
                         ),
                       ],
                       child: Container(
