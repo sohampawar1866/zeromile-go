@@ -827,12 +827,11 @@
 
 ## 5. Phone Authentication & Push Notification Architecture
 
-### 5.1 Supabase Phone Auth with Predefined OTPs (Zero-Cost / Hackathon Ready)
-* **Free Built-in Supabase Phone Auth**: Leverages Supabase Auth test phone numbers to completely bypass third-party SMS gateway costs (Twilio/MessageBird) and eliminate network delivery latency during testing & live hackathon judging.
-* **Pre-Configured Whitelist**:
-  * **SuperAdmins**: `+91 98220 11111` to `+91 98220 55555` (Fixed OTP: `123456`)
-  * **Group Leaders**: `+91 98230 11111` (VNIT Leader), `+91 98230 22222` (Orange City Leader) (Fixed OTP: `123456`)
-  * **Participants**: `+91 98240 11111` through `+91 98240 99999` (Fixed OTP: `123456`)
+### 5.1 Supabase Native Phone Auth with Test Phone Numbers
+* **Built-in Supabase Phone Auth**: Utilizes Supabase's native Phone Authentication feature with configured test phone numbers.
+* **Configured Whitelist**:
+  * **Developer Master Console**: `+91 8087167841` (Fixed OTP: `123456`)
+  * **SuperAdmins & Contingents**: Direct Supabase Auth session provisioning.
 
 ### 5.2 OneSignal Push Notification Infrastructure (Official Supabase Partner)
 * **Dual-Channel Delivery Pipeline**:
