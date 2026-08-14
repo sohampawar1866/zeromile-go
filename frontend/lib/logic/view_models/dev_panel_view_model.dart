@@ -2,17 +2,17 @@
 
 import 'package:flutter/foundation.dart';
 import '../../models/domain_superadmin.dart';
-import '../../data/repositories/domain_repository.dart';
+import '../../services/domain_service.dart';
 
 class DevPanelViewModel extends ChangeNotifier {
-  final DomainRepository _domainRepository;
+  final DomainService _domainService;
 
   List<DomainSuperAdmin> _provisionedAdmins = [];
   bool _isLoading = false;
   String? _errorMessage;
 
-  DevPanelViewModel({DomainRepository? domainRepository})
-      : _domainRepository = domainRepository ?? DomainRepository();
+  DevPanelViewModel({DomainService? domainService})
+      : _domainService = domainService ?? DomainService();
 
   List<DomainSuperAdmin> get provisionedAdmins => _provisionedAdmins;
   bool get isLoading => _isLoading;
@@ -26,7 +26,7 @@ class DevPanelViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _provisionedAdmins = await _domainRepository.fetchProvisionedSuperAdmins(domainId);
+      _provisionedAdmins = await _domainService.getProvisionedSuperAdmins(domainId);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -47,7 +47,7 @@ class DevPanelViewModel extends ChangeNotifier {
     }
 
     try {
-      final newAdmin = await _domainRepository.provisionSuperAdmin(
+      final newAdmin = await _domainService.provisionSuperAdmin(
         domainId: domainId,
         userPhone: userPhone,
         userName: userName,
@@ -70,7 +70,7 @@ class DevPanelViewModel extends ChangeNotifier {
     Map<String, dynamic>? routeGeojson,
   }) async {
     try {
-      await _domainRepository.createDomain(
+      await _domainService.createDomain(
         name: name,
         slug: slug,
         type: type,

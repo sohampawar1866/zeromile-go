@@ -5,16 +5,16 @@ import 'package:flutter/foundation.dart';
 import '../../models/broadcast_message.dart';
 import '../../models/group_membership.dart';
 import '../../models/sos_event.dart';
-import '../../data/repositories/broadcast_repository.dart';
-import '../../data/repositories/group_repository.dart';
-import '../../data/repositories/sos_repository.dart';
-import '../../data/repositories/telemetry_repository.dart';
+import '../../services/broadcast_service.dart';
+import '../../services/group_service.dart';
+import '../../services/sos_service.dart';
+import '../../services/location_telemetry_service.dart';
 
 class ParticipantHomeViewModel extends ChangeNotifier {
-  final BroadcastRepository _broadcastRepository;
-  final GroupRepository _groupRepository;
-  final SosRepository _sosRepository;
-  final TelemetryRepository _telemetryRepository;
+  final BroadcastService _broadcastService;
+  final GroupService _groupService;
+  final SosService _sosService;
+  final LocationTelemetryService _telemetryService;
 
   List<BroadcastMessage> _broadcasts = [];
   List<GroupMembership> _userMemberships = [];
@@ -26,14 +26,14 @@ class ParticipantHomeViewModel extends ChangeNotifier {
   StreamSubscription<BroadcastMessage>? _broadcastSubscription;
 
   ParticipantHomeViewModel({
-    BroadcastRepository? broadcastRepository,
-    GroupRepository? groupRepository,
-    SosRepository? sosRepository,
-    TelemetryRepository? telemetryRepository,
-  })  : _broadcastRepository = broadcastRepository ?? BroadcastRepository(),
-        _groupRepository = groupRepository ?? GroupRepository(),
-        _sosRepository = sosRepository ?? SosRepository(),
-        _telemetryRepository = telemetryRepository ?? TelemetryRepository();
+    BroadcastService? broadcastService,
+    GroupService? groupService,
+    SosService? sosService,
+    LocationTelemetryService? telemetryService,
+  })  : _broadcastService = broadcastService ?? BroadcastService(),
+        _groupService = groupService ?? GroupService(),
+        _sosService = sosService ?? SosService(),
+        _telemetryService = telemetryService ?? LocationTelemetryService();
 
   List<BroadcastMessage> get broadcasts => _broadcasts;
   List<GroupMembership> get userMemberships => _userMemberships;
@@ -51,7 +51,7 @@ class ParticipantHomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _userMemberships = await _groupRepository.fetchUserMemberships(
+      _userMemberships = await _groupService.getUserMemberships(
         domainId: domainId,
         userId: userId,
       );
@@ -66,7 +66,7 @@ class ParticipantHomeViewModel extends ChangeNotifier {
       }
 
       final enrolledGroupIds = _userMemberships.map((m) => m.groupId).toList();
-      _broadcasts = await _broadcastRepository.fetchVisibleBroadcasts(
+      _broadcasts = await _broadcastService.getVisibleBroadcasts(
         domainId: domainId,
         enrolledGroupIds: enrolledGroupIds,
       );
@@ -82,7 +82,7 @@ class ParticipantHomeViewModel extends ChangeNotifier {
 
   void _setupRealtimeBroadcasts(String domainId) {
     _broadcastSubscription?.cancel();
-    _broadcastSubscription = _broadcastRepository.streamNewBroadcasts(domainId).listen(
+    _broadcastSubscription = _broadcastService.streamNewBroadcasts(domainId).listen(
       (newMsg) {
         _broadcasts.insert(0, newMsg);
         notifyListeners();
@@ -97,19 +97,16 @@ class ParticipantHomeViewModel extends ChangeNotifier {
   }) async {
     if (_activeMembership == null) return false;
     try {
-      await _groupRepository.checkInParticipant(
+      await _groupService.checkInParticipant(
         domainId: domainId,
         groupId: _activeMembership!.groupId,
         userId: userId,
       );
-      _activeMembership = _activeMembership!.copyWith(
-        participationStatus: ParticipationStatus.checkedIn,
-        checkinTime: DateTime.now(),
-      );
-      notifyListeners();
+      await loadParticipantContext(domainId: domainId, userId: userId);
       return true;
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
       return false;
     }
   }
@@ -120,55 +117,46 @@ class ParticipantHomeViewModel extends ChangeNotifier {
   }) async {
     if (_activeMembership == null) return false;
     try {
-      await _groupRepository.completeEventParticipant(
+      await _groupService.completeEventParticipant(
         domainId: domainId,
         groupId: _activeMembership!.groupId,
         userId: userId,
       );
-      _activeMembership = _activeMembership!.copyWith(
-        participationStatus: ParticipationStatus.completed,
-        completionTime: DateTime.now(),
-      );
-      notifyListeners();
+      await loadParticipantContext(domainId: domainId, userId: userId);
       return true;
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
       return false;
     }
   }
 
-  void toggleGpsSimulation({
+  Future<bool> completeEvent({
     required String domainId,
     required String userId,
-  }) {
-    _isGpsSimulating = !_isGpsSimulating;
-    if (_isGpsSimulating) {
-      _telemetryRepository.publishLocation(
-        domainId: domainId,
-        userId: userId,
-        activeGroupId: _activeMembership?.groupId,
-        latitude: 21.1465,
-        longitude: 79.0882,
-        speedKmh: 21.6,
-        heading: 180.0,
-        force: true,
-      );
-    }
-    notifyListeners();
-  }
+  }) => completeRally(domainId: domainId, userId: userId);
 
   Future<bool> triggerEmergencySos({
     required String domainId,
     required String userId,
-    required EmergencyType emergencyType,
-    double latitude = 21.1420,
-    double longitude = 79.0810,
+    EmergencyType emergencyType = EmergencyType.medical,
+    double latitude = 21.1466,
+    double longitude = 79.0888,
   }) async {
+    _isLoading = true;
+    notifyListeners();
+
     try {
-      await _sosRepository.triggerSos(
+      final isSubGroupActive = _activeMembership != null &&
+          _activeMembership!.groupName != null &&
+          !_activeMembership!.groupName!.toLowerCase().contains('general');
+
+      final activeSubGroupId = isSubGroupActive ? _activeMembership!.groupId : null;
+
+      await _sosService.triggerSos(
         domainId: domainId,
         senderUserId: userId,
-        activeSubGroupId: _activeMembership?.groupId,
+        activeSubGroupId: activeSubGroupId,
         emergencyType: emergencyType,
         latitude: latitude,
         longitude: longitude,
@@ -177,12 +165,43 @@ class ParticipantHomeViewModel extends ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString();
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
+
+  void startGpsTelemetry({
+    required String domainId,
+    required String userId,
+  }) {
+    _isGpsSimulating = true;
+    final activeGroupId = _activeMembership?.groupId;
+    _telemetryService.startHardwareTelemetryDaemon(
+      domainId: domainId,
+      userId: userId,
+      activeGroupId: activeGroupId,
+    );
+    notifyListeners();
+  }
+
+  void stopGpsTelemetry() {
+    _isGpsSimulating = false;
+    _telemetryService.stopHardwareTelemetryDaemon();
+    notifyListeners();
+  }
+
+  void startGpsSimulation({
+    required String domainId,
+    required String userId,
+  }) => startGpsTelemetry(domainId: domainId, userId: userId);
+
+  void stopGpsSimulation() => stopGpsTelemetry();
 
   @override
   void dispose() {
     _broadcastSubscription?.cancel();
+    _telemetryService.stopHardwareTelemetryDaemon();
     super.dispose();
   }
 }

@@ -14,6 +14,15 @@ class AdminAnalyticsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final totalGroups = viewModel.subGroups.isNotEmpty ? viewModel.subGroups.length : 1;
+    final collegeCount = viewModel.subGroups.where((g) => g.orgType == 'COLLEGE').length;
+    final sportsCount = viewModel.subGroups.where((g) => g.orgType == 'SPORTS_CLUB').length;
+    final generalCount = viewModel.subGroups.where((g) => g.orgType == 'GENERAL' || g.orgType == 'NGO' || g.orgType == 'RWA').length;
+
+    final collegeFraction = totalGroups > 0 ? (collegeCount / totalGroups).clamp(0.0, 1.0) : 0.0;
+    final sportsFraction = totalGroups > 0 ? (sportsCount / totalGroups).clamp(0.0, 1.0) : 0.0;
+    final generalFraction = totalGroups > 0 ? (generalCount / totalGroups).clamp(0.0, 1.0) : 0.0;
+
     return ListView(
       padding: AppSpacing.edgeInsetsScreen,
       children: [
@@ -46,7 +55,7 @@ class AdminAnalyticsTab extends StatelessWidget {
                 const Text('Route Traffic & Safety Incident SLA', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
                 _buildStatItem('Active Emergency Dispatches', '${viewModel.escalatedSosQueue.length} Dispatched'),
-                _buildStatItem('Average Emergency Response Time', '< 4.5 Minutes'),
+                _buildStatItem('Active Contingents Enrolled', '${viewModel.subGroups.length} Groups'),
                 _buildStatItem('Active Group Filter Target', viewModel.selectedGroupFilter.isEmpty ? 'All Domain Contingents' : 'Filtered Contingent'),
                 _buildStatItem('Telemetry Stream Status', 'Connected (Supabase Realtime)'),
               ],
@@ -64,9 +73,9 @@ class AdminAnalyticsTab extends StatelessWidget {
               children: [
                 const Text('Contingent Breakdown (By Org Type)', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
-                _buildBreakdownBar('Educational / Colleges (VNIT, etc.)', 0.50, '${viewModel.subGroups.where((g) => g.orgType == "COLLEGE").length} Groups', AppColors.ink),
-                _buildBreakdownBar('Sports & Athletic Clubs', 0.30, '${viewModel.subGroups.where((g) => g.orgType == "SPORTS_CLUB").length} Groups', AppColors.info),
-                _buildBreakdownBar('General & Civil Society Orgs', 0.20, '${viewModel.subGroups.where((g) => g.orgType == "GENERAL" || g.orgType == "NGO").length} Groups', AppColors.accentTeal),
+                _buildBreakdownBar('Educational / Colleges (VNIT, etc.)', collegeFraction, '$collegeCount Groups (${(collegeFraction * 100).toStringAsFixed(0)}%)', AppColors.ink),
+                _buildBreakdownBar('Sports & Athletic Clubs', sportsFraction, '$sportsCount Groups (${(sportsFraction * 100).toStringAsFixed(0)}%)', AppColors.info),
+                _buildBreakdownBar('General & Civil Society Orgs', generalFraction, '$generalCount Groups (${(generalFraction * 100).toStringAsFixed(0)}%)', AppColors.accentTeal),
                 const SizedBox(height: AppSpacing.md),
                 SizedBox(
                   width: double.infinity,

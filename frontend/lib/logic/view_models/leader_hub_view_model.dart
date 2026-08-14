@@ -5,16 +5,16 @@ import 'package:flutter/foundation.dart';
 import '../../models/group_membership.dart';
 import '../../models/sos_event.dart';
 import '../../models/user_live_location.dart';
-import '../../data/repositories/group_repository.dart';
-import '../../data/repositories/sos_repository.dart';
-import '../../data/repositories/telemetry_repository.dart';
-import '../../data/repositories/broadcast_repository.dart';
+import '../../services/group_service.dart';
+import '../../services/sos_service.dart';
+import '../../services/location_telemetry_service.dart';
+import '../../services/broadcast_service.dart';
 
 class LeaderHubViewModel extends ChangeNotifier {
-  final GroupRepository _groupRepository;
-  final SosRepository _sosRepository;
-  final TelemetryRepository _telemetryRepository;
-  final BroadcastRepository _broadcastRepository;
+  final GroupService _groupService;
+  final SosService _sosService;
+  final LocationTelemetryService _telemetryService;
+  final BroadcastService _broadcastService;
 
   List<GroupMembership> _roster = [];
   List<SosEvent> _teamSosAlerts = [];
@@ -25,14 +25,14 @@ class LeaderHubViewModel extends ChangeNotifier {
   StreamSubscription<List<UserLiveLocation>>? _telemetrySub;
 
   LeaderHubViewModel({
-    GroupRepository? groupRepository,
-    SosRepository? sosRepository,
-    TelemetryRepository? telemetryRepository,
-    BroadcastRepository? broadcastRepository,
-  })  : _groupRepository = groupRepository ?? GroupRepository(),
-        _sosRepository = sosRepository ?? SosRepository(),
-        _telemetryRepository = telemetryRepository ?? TelemetryRepository(),
-        _broadcastRepository = broadcastRepository ?? BroadcastRepository();
+    GroupService? groupService,
+    SosService? sosService,
+    LocationTelemetryService? telemetryService,
+    BroadcastService? broadcastService,
+  })  : _groupService = groupService ?? GroupService(),
+        _sosService = sosService ?? SosService(),
+        _telemetryService = telemetryService ?? LocationTelemetryService(),
+        _broadcastService = broadcastService ?? BroadcastService();
 
   List<GroupMembership> get roster => _roster;
   List<SosEvent> get teamSosAlerts => _teamSosAlerts;
@@ -49,22 +49,6 @@ class LeaderHubViewModel extends ChangeNotifier {
   double get checkinPercent => _roster.isEmpty ? 0.0 : (checkedInCount / _roster.length) * 100.0;
   double get completionPercent => _roster.isEmpty ? 0.0 : (completedCount / _roster.length) * 100.0;
 
-  Future<bool> directAddMember({
-    required String domainId,
-    required String groupId,
-    required String leaderUserId,
-    required String memberPhone,
-    required String memberName,
-  }) {
-    return directAddMemberByPhone(
-      domainId: domainId,
-      groupId: groupId,
-      leaderUserId: leaderUserId,
-      memberPhone: memberPhone,
-      memberName: memberName,
-    );
-  }
-
   Future<void> loadLeaderContext({
     required String domainId,
     required String groupId,
@@ -74,11 +58,11 @@ class LeaderHubViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _roster = await _groupRepository.fetchGroupRoster(domainId: domainId, groupId: groupId);
-      _teamSosAlerts = await _sosRepository.fetchGroupLeaderSosAlerts(domainId: domainId, groupId: groupId);
+      _roster = await _groupService.getGroupRoster(domainId: domainId, groupId: groupId);
+      _teamSosAlerts = await _sosService.getGroupLeaderSosAlerts(domainId: domainId, groupId: groupId);
 
       _telemetrySub?.cancel();
-      _telemetrySub = _telemetryRepository.streamGroupTelemetry(domainId, groupId).listen(
+      _telemetrySub = _telemetryService.streamGroupTelemetry(domainId, groupId).listen(
         (locations) {
           _teamLocations = locations;
           notifyListeners();
@@ -93,51 +77,48 @@ class LeaderHubViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> directAddMemberByPhone({
+  Future<bool> directAddMember({
     required String domainId,
     required String groupId,
     required String leaderUserId,
     required String memberPhone,
     required String memberName,
   }) async {
+    _isLoading = true;
+    notifyListeners();
+
     try {
-      await _groupRepository.leaderDirectAddMember(
+      await _groupService.leaderDirectAddMember(
         domainId: domainId,
         groupId: groupId,
         leaderUserId: leaderUserId,
         memberPhone: memberPhone,
         memberName: memberName,
       );
-      _roster = await _groupRepository.fetchGroupRoster(domainId: domainId, groupId: groupId);
-      notifyListeners();
+      await loadLeaderContext(domainId: domainId, groupId: groupId);
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      notifyListeners();
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  Future<bool> sendTeamBroadcast({
+  Future<bool> directAddMemberByPhone({
     required String domainId,
-    required String leaderUserId,
     required String groupId,
-    required String messageText,
-  }) async {
-    try {
-      await _broadcastRepository.sendGroupLeaderBroadcast(
+    required String leaderUserId,
+    required String memberPhone,
+    required String memberName,
+  }) => directAddMember(
         domainId: domainId,
-        leaderUserId: leaderUserId,
         groupId: groupId,
-        messageText: messageText,
+        leaderUserId: leaderUserId,
+        memberPhone: memberPhone,
+        memberName: memberName,
       );
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    }
-  }
 
   Future<bool> resolveSosLocally({
     required String sosId,
@@ -146,8 +127,11 @@ class LeaderHubViewModel extends ChangeNotifier {
     required String groupId,
   }) async {
     try {
-      await _sosRepository.resolveSosLocally(sosId: sosId, leaderUserId: leaderUserId);
-      _teamSosAlerts = await _sosRepository.fetchGroupLeaderSosAlerts(domainId: domainId, groupId: groupId);
+      await _sosService.resolveSosLocally(
+        sosId: sosId,
+        leaderUserId: leaderUserId,
+      );
+      _teamSosAlerts.removeWhere((sos) => sos.id == sosId);
       notifyListeners();
       return true;
     } catch (e) {
@@ -165,13 +149,34 @@ class LeaderHubViewModel extends ChangeNotifier {
     required String groupId,
   }) async {
     try {
-      await _sosRepository.forwardSosToSuperAdmin(
+      await _sosService.forwardSosToSuperAdmin(
         sosId: sosId,
         leaderUserId: leaderUserId,
         leaderNotes: leaderNotes,
       );
-      _teamSosAlerts = await _sosRepository.fetchGroupLeaderSosAlerts(domainId: domainId, groupId: groupId);
+      _teamSosAlerts.removeWhere((sos) => sos.id == sosId);
       notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> sendTeamBroadcast({
+    required String domainId,
+    required String leaderUserId,
+    required String groupId,
+    required String messageText,
+  }) async {
+    try {
+      await _broadcastService.sendGroupLeaderBroadcast(
+        domainId: domainId,
+        leaderUserId: leaderUserId,
+        groupId: groupId,
+        messageText: messageText,
+      );
       return true;
     } catch (e) {
       _errorMessage = e.toString();

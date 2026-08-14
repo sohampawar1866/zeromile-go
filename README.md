@@ -5,35 +5,35 @@
 [![OneSignal](https://img.shields.io/badge/Push-OneSignal-E54B4D?logo=onesignal)](https://onesignal.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-ZeroMile Go is an event coordination, crowd safety, and real-time telemetry management platform built for civic rallies, marathons, walkathons, and cycling events.
+ZeroMile Go (Vikasit Nagpur) is an event coordination, crowd safety, and real-time telemetry management platform built for civic rallies, marathons, walkathons, and cycling events in Nagpur.
 
 ---
 
-## 📁 Clean Repository Structure (Frontend / Backend Separation)
+## 📁 Clean Repository Structure
 
 ```text
 .
-├── frontend/                        # 📱 Complete Standalone Flutter Mobile App
+├── frontend/                        # 📱 Flutter Mobile Application
 │   ├── lib/
-│   │   ├── config/                  # AppConfig & Environment Manager
-│   │   ├── models/                  # 10 Typed DTO Models (JSON, copyWith, null-safe)
-│   │   ├── services/                # 8 Supabase Services (Auth, SOS, Groups, Telemetry, Push)
-│   │   ├── utils/                   # Linear Spatial Grid Clustering & Temporal Window
-│   │   ├── flutter_core.dart        # Barrel Library Export
-│   │   └── main.dart                # Interactive Mobile UI & Persona Switcher
-│   ├── android/                     # Android Native Runner & Manifest
-│   ├── ios/                         # iOS Xcode Runner & Entitlements
-│   └── pubspec.yaml                 # Flutter Dependencies
+│   │   ├── config/                  # Design tokens, Nike athletic theme, app configuration
+│   │   ├── models/                  # 10 Strongly-typed DTO Models (JSON & null-safe)
+│   │   ├── services/                # Direct Supabase BaaS Service layer (Auth, SOS, Groups, Telemetry, Broadcast)
+│   │   ├── logic/view_models/       # Layered MVVM ChangeNotifier ViewModels
+│   │   ├── ui/                      # Material 3 UI (Navigation shell, Dev Panel, Admin Console, Leader Hub, Home)
+│   │   ├── utils/                   # Spatial Density Clustering & Temporal Window Evaluator
+│   │   ├── flutter_core.dart        # Barrel library export
+│   │   └── main.dart                # Application bootstrap & multi-domain controller
+│   ├── test/                        # Automated unit, model serialization, logic, and widget tests
+│   └── pubspec.yaml                 # Flutter 3.x dependencies
 │
-├── backend/                         # ⚙️ Database BaaS & Verification Workbench
+├── backend/                         # ⚙️ Supabase PostgreSQL BaaS & Web Workbench
 │   ├── supabase/
-│   │   ├── migrations/              # Core Schema (10 Tables, RLS, Triggers, RPCs) & Patches
-│   │   └── seed.sql                 # Pre-seeded Nagpur Rally Event Data
-│   └── web_prototype/               # Interactive Multi-Role Reference Workbench (45-Rider Sim)
+│   │   ├── migrations/              # Core schema (10 tables, RLS, triggers, stored procedures)
+│   │   └── seed.sql                 # Official Nagpur Event Domains, Routes, Checkpoints & Seed Data
+│   └── web_prototype/               # Standalone multi-role reference workbench with 45-rider GPS simulator
 │
-├── .env.example                     # Environment variables template
-├── .gitignore                       # Git ignore definitions
-├── PROJECT_PLAN.md                  # Comprehensive blueprint
+├── docs/                            # Design tokens, rules, and Nike athletic system guidelines
+├── PROJECT_PLAN.md                  # Comprehensive architectural blueprint
 └── README.md                        # Master Project Documentation
 ```
 
@@ -45,7 +45,7 @@ ZeroMile Go is an event coordination, crowd safety, and real-time telemetry mana
    ```bash
    cd frontend
    ```
-2. Connect your Android phone via USB debugging (or start an emulator) and verify it is connected:
+2. Verify connected device or start an emulator:
    ```bash
    flutter devices
    ```
@@ -56,29 +56,24 @@ ZeroMile Go is an event coordination, crowd safety, and real-time telemetry mana
 
 ---
 
-## ⚙️ Quickstart for Backend Workbench (`backend/`)
+## ⚙️ Quickstart for Web Workbench (`backend/`)
 
 Launch the web testing simulation engine in your browser:
 ```bash
 python3 -m http.server 8085 --directory backend/web_prototype
 ```
-Open **`http://localhost:8085`** in Google Chrome or Safari to test:
+Open **`http://localhost:8085`** in your browser to test:
 * Fast persona switching across **Participant**, **Group Leader**, **SuperAdmin**, and **Developer**.
 * **Live Crowd Simulator (45 Riders)** moving along Nagpur's Zero Mile loop.
 
 ---
 
-## 🔑 Test Whitelist Personas (Fixed OTP: `123456`)
+## 🔑 Authentication & Master Access
 
-| Role | Name | Phone Number | Group Affiliation | Key Screen / Action |
-|---|---|---|---|---|
-| **SuperAdmin** | Rajesh Sharma | `+91 98220 11111` | Seated Admin (1/6) | Governance, Approvals & Escalated SOS Queue |
-| **SuperAdmin** | Sunita Deshmukh | `+91 98220 22222` | Seated Admin (2/6) | Route & Schedule Builder |
-| **Group Leader** | Aniket Deshmukh | `+91 98230 11111` | VNIT Cycling Club | Team Triage, Direct Add by Phone, Broadcast |
-| **Group Leader** | Neha Verma | `+91 98230 22222` | Orange City Sprinters | Contingent Roster & Attendance Stats |
-| **Participant** | Priya Verma | `+91 98240 11111` | VNIT Cycling Club | Check-in, Completed, Floating SOS FAB |
-| **Participant** | Rohan Gupta | `+91 98240 22222` | VNIT Cycling Club | Active telemetry ping |
-| **General Rider** | Rahul Wankhede | `+91 98240 44444` | General Group Only | Domain muster attendance |
+ZeroMile Go uses **Supabase Native Phone Authentication**:
+* **Developer Master Console**: `+91 8087167841` (Soham Pawar) — Configured test OTP: `123456`.
+* **Domain Role Resolution**: When logged in, your role is dynamically resolved per event domain (SuperAdmin in Cycling Rally, Group Leader in Marathon, Citizen Participant in Protest Rally).
+* **Domain Switcher**: Universal `[ 🔄 SWITCH EVENT DOMAIN ]` drawer action to transition between active event domains.
 
 ---
 

@@ -3,14 +3,14 @@
 import 'package:flutter/foundation.dart';
 import '../../models/event_domain.dart';
 import '../../models/route_checkpoint.dart';
-import '../../data/repositories/domain_repository.dart';
-import '../../data/repositories/auth_repository.dart';
+import '../../services/domain_service.dart';
+import '../../services/auth_service.dart';
 
 enum ActiveRolePerspective { participant, leader, superAdmin, developer }
 
 class DomainContextViewModel extends ChangeNotifier {
-  final DomainRepository _domainRepository;
-  final AuthRepository _authRepository;
+  final DomainService _domainService;
+  final AuthService _authService;
 
   List<EventDomain> _domains = [];
   EventDomain? _activeDomain;
@@ -20,13 +20,13 @@ class DomainContextViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   DomainContextViewModel({
-    DomainRepository? domainRepository,
-    AuthRepository? authRepository,
-  })  : _domainRepository = domainRepository ?? DomainRepository(),
-        _authRepository = authRepository ?? AuthRepository();
+    DomainService? domainService,
+    AuthService? authService,
+  })  : _domainService = domainService ?? DomainService(),
+        _authService = authService ?? AuthService();
 
   List<EventDomain> get domains => _domains;
-  EventDomain? get activeDomain => _activeDomain ?? _domainRepository.activeDomain;
+  EventDomain? get activeDomain => _activeDomain;
   List<RouteCheckpoint> get checkpoints => _checkpoints;
   ActiveRolePerspective get currentRole => _currentRole;
   bool get isLoading => _isLoading;
@@ -51,13 +51,12 @@ class DomainContextViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _domains = await _domainRepository.fetchDomains();
+      _domains = await _domainService.getDomains();
       if (_domains.isNotEmpty) {
         _activeDomain = _domains.firstWhere(
           (d) => d.slug == 'cycling-2026',
           orElse: () => _domains.first,
         );
-        _domainRepository.setActiveDomain(_activeDomain!);
         await _loadCheckpoints();
       }
       await switchPersonaRole(ActiveRolePerspective.developer);
@@ -71,7 +70,6 @@ class DomainContextViewModel extends ChangeNotifier {
 
   Future<void> switchDomain(EventDomain domain) async {
     _activeDomain = domain;
-    _domainRepository.setActiveDomain(domain);
     await _loadCheckpoints();
     await resolveUserRoleInDomain();
     notifyListeners();
@@ -80,7 +78,7 @@ class DomainContextViewModel extends ChangeNotifier {
   Future<void> _loadCheckpoints() async {
     if (_activeDomain == null) return;
     try {
-      _checkpoints = await _domainRepository.fetchRouteCheckpoints(_activeDomain!.id);
+      _checkpoints = await _domainService.getRouteCheckpoints(_activeDomain!.id);
     } catch (_) {
       _checkpoints = [];
     }
@@ -94,7 +92,7 @@ class DomainContextViewModel extends ChangeNotifier {
     const phone = '+91 8087167841'; // Soham Pawar (Developer Master Console)
 
     try {
-      await _authRepository.loginAsDemoPersona(phone);
+      await _authService.loginAsDemoPersona(phone);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -104,20 +102,20 @@ class DomainContextViewModel extends ChangeNotifier {
   }
 
   Future<void> resolveUserRoleInDomain() async {
-    final user = _authRepository.currentUser;
+    final user = _authService.currentUser;
     if (user == null || _activeDomain == null) {
       _currentRole = ActiveRolePerspective.participant;
       return;
     }
 
-    final isSuper = await _authRepository.isSuperAdmin(_activeDomain!.id);
+    final isSuper = await _authService.isSuperAdmin(_activeDomain!.id);
     if (isSuper) {
       _currentRole = ActiveRolePerspective.superAdmin;
       notifyListeners();
       return;
     }
 
-    final isLeader = await _authRepository.isGroupLeader(_activeDomain!.id);
+    final isLeader = await _authService.isGroupLeader(_activeDomain!.id);
     if (isLeader) {
       _currentRole = ActiveRolePerspective.leader;
       notifyListeners();

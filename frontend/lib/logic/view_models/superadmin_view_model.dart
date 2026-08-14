@@ -6,18 +6,18 @@ import '../../models/group_creation_request.dart';
 import '../../models/sos_event.dart';
 import '../../models/user_live_location.dart';
 import '../../models/sub_group.dart';
-import '../../data/repositories/group_repository.dart';
-import '../../data/repositories/sos_repository.dart';
-import '../../data/repositories/telemetry_repository.dart';
-import '../../data/repositories/broadcast_repository.dart';
-import '../../data/repositories/domain_repository.dart';
+import '../../services/group_service.dart';
+import '../../services/sos_service.dart';
+import '../../services/location_telemetry_service.dart';
+import '../../services/broadcast_service.dart';
+import '../../services/domain_service.dart';
 
 class SuperAdminViewModel extends ChangeNotifier {
-  final GroupRepository _groupRepository;
-  final SosRepository _sosRepository;
-  final TelemetryRepository _telemetryRepository;
-  final BroadcastRepository _broadcastRepository;
-  final DomainRepository _domainRepository;
+  final GroupService _groupService;
+  final SosService _sosService;
+  final LocationTelemetryService _telemetryService;
+  final BroadcastService _broadcastService;
+  final DomainService _domainService;
 
   List<GroupCreationRequest> _pendingRequests = [];
   List<SosEvent> _escalatedSosQueue = [];
@@ -31,16 +31,16 @@ class SuperAdminViewModel extends ChangeNotifier {
   StreamSubscription<List<UserLiveLocation>>? _telemetrySub;
 
   SuperAdminViewModel({
-    GroupRepository? groupRepository,
-    SosRepository? sosRepository,
-    TelemetryRepository? telemetryRepository,
-    BroadcastRepository? broadcastRepository,
-    DomainRepository? domainRepository,
-  })  : _groupRepository = groupRepository ?? GroupRepository(),
-        _sosRepository = sosRepository ?? SosRepository(),
-        _telemetryRepository = telemetryRepository ?? TelemetryRepository(),
-        _broadcastRepository = broadcastRepository ?? BroadcastRepository(),
-        _domainRepository = domainRepository ?? DomainRepository();
+    GroupService? groupService,
+    SosService? sosService,
+    LocationTelemetryService? telemetryService,
+    BroadcastService? broadcastService,
+    DomainService? domainService,
+  })  : _groupService = groupService ?? GroupService(),
+        _sosService = sosService ?? SosService(),
+        _telemetryService = telemetryService ?? LocationTelemetryService(),
+        _broadcastService = broadcastService ?? BroadcastService(),
+        _domainService = domainService ?? DomainService();
 
   List<GroupCreationRequest> get pendingRequests => _pendingRequests;
   List<SosEvent> get escalatedSosQueue => _escalatedSosQueue;
@@ -64,12 +64,12 @@ class SuperAdminViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _pendingRequests = await _groupRepository.fetchPendingGroupRequests(domainId);
-      _escalatedSosQueue = await _sosRepository.fetchSuperAdminSosQueue(domainId);
-      _domainGroups = await _groupRepository.fetchDomainSubGroups(domainId);
+      _pendingRequests = await _groupService.getPendingGroupRequests(domainId);
+      _escalatedSosQueue = await _sosService.getSuperAdminSosQueue(domainId);
+      _domainGroups = await _groupService.getDomainSubGroups(domainId);
 
       _sosSub?.cancel();
-      _sosSub = _sosRepository.streamSosEvents(domainId).listen(
+      _sosSub = _sosService.streamSosEvents(domainId).listen(
         (events) {
           _escalatedSosQueue = events;
           notifyListeners();
@@ -94,7 +94,7 @@ class SuperAdminViewModel extends ChangeNotifier {
 
   void _subscribeTelemetry(String domainId) {
     _telemetrySub?.cancel();
-    _telemetrySub = _telemetryRepository
+    _telemetrySub = _telemetryService
         .streamDomainTelemetry(domainId, subGroupIdFilter: _selectedGroupFilter.isEmpty ? null : _selectedGroupFilter)
         .listen(
       (locations) {
@@ -107,44 +107,16 @@ class SuperAdminViewModel extends ChangeNotifier {
 
   Future<bool> reviewGroupProposal({
     required String requestId,
-    String? adminUserId,
-    String? reviewerUserId,
+    required String reviewerUserId,
     required bool approve,
-    String domainId = 'cycling-2026',
   }) async {
-    final effectiveAdminId = adminUserId ?? reviewerUserId ?? 'admin';
     try {
-      await _groupRepository.reviewGroupRequest(
+      await _groupService.reviewGroupRequest(
         requestId: requestId,
-        reviewerUserId: effectiveAdminId,
+        reviewerUserId: reviewerUserId,
         approve: approve,
       );
-      _pendingRequests = await _groupRepository.fetchPendingGroupRequests(domainId);
-      _domainGroups = await _groupRepository.fetchDomainSubGroups(domainId);
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<bool> updateRouteAndSchedule({
-    required String domainId,
-    required DateTime startTime,
-    required DateTime endTime,
-    required String status,
-    Map<String, dynamic>? routeGeojson,
-  }) async {
-    try {
-      await _domainRepository.updateRouteAndSchedule(
-        domainId: domainId,
-        startTime: startTime,
-        endTime: endTime,
-        status: status,
-        routeGeojson: routeGeojson,
-      );
+      _pendingRequests.removeWhere((req) => req.id == requestId);
       notifyListeners();
       return true;
     } catch (e) {
@@ -159,10 +131,12 @@ class SuperAdminViewModel extends ChangeNotifier {
     required String adminUserId,
   }) async {
     try {
-      await _sosRepository.resolveSosByAdmin(
+      await _sosService.resolveSosByAdmin(
         sosId: sosId,
         adminUserId: adminUserId,
       );
+      _escalatedSosQueue.removeWhere((sos) => sos.id == sosId);
+      notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
@@ -178,7 +152,7 @@ class SuperAdminViewModel extends ChangeNotifier {
     String? targetGroupId,
   }) async {
     try {
-      await _broadcastRepository.sendSuperAdminBroadcast(
+      await _broadcastService.sendSuperAdminBroadcast(
         domainId: domainId,
         adminUserId: adminUserId,
         messageText: messageText,
@@ -189,6 +163,34 @@ class SuperAdminViewModel extends ChangeNotifier {
       _errorMessage = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<bool> updateRouteAndSchedule({
+    required String domainId,
+    required DateTime startTime,
+    required DateTime endTime,
+    required String status,
+    Map<String, dynamic>? routeGeojson,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _domainService.updateRouteAndSchedule(
+        domainId: domainId,
+        startTime: startTime,
+        endTime: endTime,
+        status: status,
+        routeGeojson: routeGeojson,
+      );
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

@@ -30,14 +30,6 @@ export 'services/location_telemetry_service.dart';
 export 'services/broadcast_service.dart';
 export 'services/push_notification_service.dart';
 
-// Repositories
-export 'data/repositories/auth_repository.dart';
-export 'data/repositories/domain_repository.dart';
-export 'data/repositories/group_repository.dart';
-export 'data/repositories/sos_repository.dart';
-export 'data/repositories/telemetry_repository.dart';
-export 'data/repositories/broadcast_repository.dart';
-
 // ViewModels
 export 'logic/view_models/auth_view_model.dart';
 export 'logic/view_models/domain_context_view_model.dart';

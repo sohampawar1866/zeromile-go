@@ -2,18 +2,18 @@
 
 import 'package:flutter/foundation.dart';
 import '../../models/user_profile.dart';
-import '../../data/repositories/auth_repository.dart';
+import '../../services/auth_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  final AuthRepository _authRepository;
+  final AuthService _authService;
   UserProfile? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
 
-  AuthViewModel({AuthRepository? authRepository})
-      : _authRepository = authRepository ?? AuthRepository();
+  AuthViewModel({AuthService? authService})
+      : _authService = authService ?? AuthService();
 
-  UserProfile? get currentUser => _currentUser ?? _authRepository.currentUser;
+  UserProfile? get currentUser => _currentUser ?? _authService.currentUser;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
@@ -24,7 +24,7 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authRepository.sendOtp(phoneNumber);
+      await _authService.sendPhoneOtp(phoneNumber);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -44,10 +44,10 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentUser = await _authRepository.verifyOtpAndLogin(
+      _currentUser = await _authService.verifyOtp(
         phoneNumber: phoneNumber,
         token: token,
-        fullName: fullName,
+        fallbackFullName: fullName,
         emergencyContact: emergencyContact,
       );
       return true;
@@ -66,7 +66,7 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentUser = await _authRepository.loginAsDemoPersona(phoneNumber);
+      _currentUser = await _authService.loginAsDemoPersona(phoneNumber);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -85,7 +85,7 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentUser = await _authRepository.updateProfile(
+      _currentUser = await _authService.updateProfile(
         fullName: fullName,
         avatarUrl: avatarUrl,
         emergencyContact: emergencyContact,
@@ -100,7 +100,7 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<void> signOut() async {
     _currentUser = null;
-    await _authRepository.signOut();
+    await _authService.signOut();
     notifyListeners();
   }
 }

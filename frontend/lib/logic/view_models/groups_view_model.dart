@@ -3,18 +3,18 @@
 import 'package:flutter/foundation.dart';
 import '../../models/group_membership.dart';
 import '../../models/sub_group.dart';
-import '../../data/repositories/group_repository.dart';
+import '../../services/group_service.dart';
 
 class GroupsViewModel extends ChangeNotifier {
-  final GroupRepository _groupRepository;
+  final GroupService _groupService;
 
   List<SubGroup> _domainGroups = [];
   List<GroupMembership> _userMemberships = [];
   bool _isLoading = false;
   String? _errorMessage;
 
-  GroupsViewModel({GroupRepository? groupRepository})
-      : _groupRepository = groupRepository ?? GroupRepository();
+  GroupsViewModel({GroupService? groupService})
+      : _groupService = groupService ?? GroupService();
 
   List<SubGroup> get domainGroups => _domainGroups;
   List<GroupMembership> get userMemberships => _userMemberships;
@@ -38,8 +38,8 @@ class GroupsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _domainGroups = await _groupRepository.fetchDomainSubGroups(domainId);
-      _userMemberships = await _groupRepository.fetchUserMemberships(domainId: domainId, userId: userId);
+      _domainGroups = await _groupService.getDomainSubGroups(domainId);
+      _userMemberships = await _groupService.getUserMemberships(domainId: domainId, userId: userId);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -64,7 +64,7 @@ class GroupsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final newMembership = await _groupRepository.joinSubGroup(
+      final newMembership = await _groupService.joinSubGroup(
         domainId: domainId,
         groupId: groupId,
         userId: userId,
@@ -88,7 +88,7 @@ class GroupsViewModel extends ChangeNotifier {
     required String userId,
   }) async {
     try {
-      await _groupRepository.setActiveGroup(
+      await _groupService.setActiveGroup(
         domainId: domainId,
         groupId: groupId,
         userId: userId,
@@ -112,7 +112,7 @@ class GroupsViewModel extends ChangeNotifier {
     String? leaderNotes,
   }) async {
     try {
-      await _groupRepository.submitGroupCreationRequest(
+      await _groupService.submitGroupCreationRequest(
         domainId: domainId,
         applicantUserId: applicantUserId,
         orgName: orgName,

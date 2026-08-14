@@ -14,6 +14,10 @@ class LeaderAnalyticsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activePercentStr = viewModel.totalEnrolled > 0
+        ? (viewModel.activeToday / viewModel.totalEnrolled * 100).toStringAsFixed(1)
+        : '0.0';
+
     return ListView(
       padding: AppSpacing.edgeInsetsScreen,
       children: [
@@ -29,7 +33,7 @@ class LeaderAnalyticsTab extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _buildMetricRow('Total Enrolled Members', '${viewModel.totalEnrolled}'),
-                _buildMetricRow('Currently Active Today', '${viewModel.activeToday} (89.4%)'),
+                _buildMetricRow('Currently Active Today', '${viewModel.activeToday} ($activePercentStr%)'),
                 _buildMetricRow('Checked-In at Muster', '${viewModel.checkedInMuster} (${viewModel.checkinPercent.toStringAsFixed(1)}%)'),
                 _buildMetricRow('Completed Route Finish', '${viewModel.completedCount} (${viewModel.completionPercent.toStringAsFixed(1)}%)'),
                 const SizedBox(height: AppSpacing.md),
@@ -48,7 +52,7 @@ class LeaderAnalyticsTab extends StatelessWidget {
                 const Text('INCIDENT & SAFETY LOG', style: AppTypography.caption),
                 const SizedBox(height: AppSpacing.xs),
                 _buildMetricRow('SOS Triggered Today', '${viewModel.teamSosAlerts.length}'),
-                _buildMetricRow('Avg Pace / Speed', '18.4 km/h'),
+                _buildMetricRow('Roster Telemetry Status', viewModel.teamLocations.isNotEmpty ? 'Live Tracking Active' : 'Idle / Standby'),
                 const SizedBox(height: AppSpacing.md),
                 SizedBox(
                   width: double.infinity,
