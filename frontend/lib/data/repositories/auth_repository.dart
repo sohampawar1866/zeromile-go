@@ -1,7 +1,7 @@
 // lib/data/repositories/auth_repository.dart
 
-import '../models/user_profile.dart';
-import '../services/auth_service.dart';
+import '../../models/user_profile.dart';
+import '../../services/auth_service.dart';
 
 class AuthRepository {
   final AuthService _authService;

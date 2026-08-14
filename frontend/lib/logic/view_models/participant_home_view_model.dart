@@ -2,9 +2,9 @@
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../../data/models/broadcast_message.dart';
-import '../../data/models/group_membership.dart';
-import '../../data/models/sos_event.dart';
+import '../../models/broadcast_message.dart';
+import '../../models/group_membership.dart';
+import '../../models/sos_event.dart';
 import '../../data/repositories/broadcast_repository.dart';
 import '../../data/repositories/group_repository.dart';
 import '../../data/repositories/sos_repository.dart';
@@ -62,7 +62,6 @@ class ParticipantHomeViewModel extends ChangeNotifier {
           orElse: () => _userMemberships.first,
         );
       } else {
-        // Fallback default
         _activeMembership = GroupMembership(
           id: 'demo-vnit-membership',
           domainId: domainId,

@@ -46,7 +46,7 @@ class ZeroMileRootController extends StatefulWidget {
 }
 
 class _ZeroMileRootControllerState extends State<ZeroMileRootController> {
-  // Core ViewModels
+  // Scoped ViewModels
   late final DomainContextViewModel _domainContextVm;
   late final AuthViewModel _authVm;
   late final ParticipantHomeViewModel _participantHomeVm;
@@ -56,12 +56,13 @@ class _ZeroMileRootControllerState extends State<ZeroMileRootController> {
   late final DevPanelViewModel _devPanelVm;
 
   // Onboarding Step State (0 = Phone, 1 = OTP/Profile, 2 = Domain Select, 3 = Main Shell)
-  int _onboardingStep = 3; // Default to main shell with pre-seeded demo session for testing
+  int _onboardingStep = 3; // Defaults to main shell when in demo mode, or 0 when in production
   String _pendingPhone = '';
 
   @override
   void initState() {
     super.initState();
+    _onboardingStep = AppConfig.isDemoMode ? 3 : 0;
     _initViewModels();
   }
 
@@ -74,19 +75,14 @@ class _ZeroMileRootControllerState extends State<ZeroMileRootController> {
     _superAdminVm = SuperAdminViewModel();
     _devPanelVm = DevPanelViewModel();
 
-    // Listen to changes
-    _domainContextVm.addListener(_onStateChanged);
-    _authVm.addListener(_onStateChanged);
-    _participantHomeVm.addListener(_onStateChanged);
-    _groupsVm.addListener(_onStateChanged);
-    _leaderHubVm.addListener(_onStateChanged);
-    _superAdminVm.addListener(_onStateChanged);
-    _devPanelVm.addListener(_onStateChanged);
+    // Only navigation-level controllers bind to the root state
+    _domainContextVm.addListener(_onRootStateChanged);
+    _authVm.addListener(_onRootStateChanged);
 
     _bootstrapData();
   }
 
-  void _onStateChanged() {
+  void _onRootStateChanged() {
     if (mounted) setState(() {});
   }
 
@@ -115,13 +111,8 @@ class _ZeroMileRootControllerState extends State<ZeroMileRootController> {
 
   @override
   void dispose() {
-    _domainContextVm.removeListener(_onStateChanged);
-    _authVm.removeListener(_onStateChanged);
-    _participantHomeVm.removeListener(_onStateChanged);
-    _groupsVm.removeListener(_onStateChanged);
-    _leaderHubVm.removeListener(_onStateChanged);
-    _superAdminVm.removeListener(_onStateChanged);
-    _devPanelVm.removeListener(_onStateChanged);
+    _domainContextVm.removeListener(_onRootStateChanged);
+    _authVm.removeListener(_onRootStateChanged);
 
     _domainContextVm.dispose();
     _authVm.dispose();

@@ -1,7 +1,7 @@
 // lib/logic/view_models/dev_panel_view_model.dart
 
 import 'package:flutter/foundation.dart';
-import '../../data/models/domain_superadmin.dart';
+import '../../models/domain_superadmin.dart';
 import '../../data/repositories/domain_repository.dart';
 
 class DevPanelViewModel extends ChangeNotifier {

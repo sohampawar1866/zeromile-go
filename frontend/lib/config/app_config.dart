@@ -15,14 +15,20 @@ class AppConfig {
     'ONESIGNAL_APP_ID',
     defaultValue: 'your-onesignal-app-id-here',
   );
+  static const bool defaultIsDemoMode = bool.fromEnvironment(
+    'DEMO_MODE',
+    defaultValue: true, // Set to false in production releases via --dart-define=DEMO_MODE=false
+  );
 
   static String _supabaseUrl = defaultSupabaseUrl;
   static String _supabaseAnonKey = defaultSupabaseAnonKey;
   static String _oneSignalAppId = defaultOneSignalAppId;
+  static bool _isDemoMode = defaultIsDemoMode;
 
   static String get supabaseUrl => _supabaseUrl;
   static String get supabaseAnonKey => _supabaseAnonKey;
   static String get oneSignalAppId => _oneSignalAppId;
+  static bool get isDemoMode => _isDemoMode;
 
   /// Loads configuration from a provided Map (e.g. from flutter_dotenv or .env file)
   static void loadFromEnv(Map<String, String> envMap) {
@@ -35,6 +41,9 @@ class AppConfig {
     if (envMap.containsKey('ONESIGNAL_APP_ID') && envMap['ONESIGNAL_APP_ID']!.isNotEmpty) {
       _oneSignalAppId = envMap['ONESIGNAL_APP_ID']!;
     }
+    if (envMap.containsKey('DEMO_MODE')) {
+      _isDemoMode = envMap['DEMO_MODE']!.toLowerCase() == 'true';
+    }
   }
 
   /// Override configuration manually (useful for testing or runtime environment switches)
@@ -42,9 +51,11 @@ class AppConfig {
     String? supabaseUrl,
     String? supabaseAnonKey,
     String? oneSignalAppId,
+    bool? isDemoMode,
   }) {
     if (supabaseUrl != null && supabaseUrl.isNotEmpty) _supabaseUrl = supabaseUrl;
     if (supabaseAnonKey != null && supabaseAnonKey.isNotEmpty) _supabaseAnonKey = supabaseAnonKey;
     if (oneSignalAppId != null && oneSignalAppId.isNotEmpty) _oneSignalAppId = oneSignalAppId;
+    if (isDemoMode != null) _isDemoMode = isDemoMode;
   }
 }

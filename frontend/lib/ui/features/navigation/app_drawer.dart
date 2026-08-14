@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
-import '../../../data/models/event_domain.dart';
-import '../../../data/models/user_profile.dart';
+import '../../../models/event_domain.dart';
+import '../../../models/user_profile.dart';
 import '../../core/dialogs/switch_domain_modal.dart';
 import '../../core/dialogs/group_creation_modal.dart';
 

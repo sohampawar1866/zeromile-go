@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_typography.dart';
-import '../../../data/models/event_domain.dart';
+import '../../../models/event_domain.dart';
 import '../../../logic/view_models/dev_panel_view_model.dart';
 import 'tabs/provisioning_tab.dart';
 import 'tabs/global_analytics_tab.dart';
@@ -58,17 +58,22 @@ class _DevPanelScreenState extends State<DevPanelScreen> with SingleTickerProvid
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          ProvisioningTab(
-            viewModel: widget.viewModel,
-            domainId: domainId,
-          ),
-          GlobalAnalyticsTab(
-            viewModel: widget.viewModel,
-          ),
-        ],
+      body: ListenableBuilder(
+        listenable: widget.viewModel,
+        builder: (context, _) {
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              ProvisioningTab(
+                viewModel: widget.viewModel,
+                domainId: domainId,
+              ),
+              GlobalAnalyticsTab(
+                viewModel: widget.viewModel,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

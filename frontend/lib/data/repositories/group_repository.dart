@@ -1,9 +1,9 @@
 // lib/data/repositories/group_repository.dart
 
-import '../models/sub_group.dart';
-import '../models/group_membership.dart';
-import '../models/group_creation_request.dart';
-import '../services/group_service.dart';
+import '../../models/sub_group.dart';
+import '../../models/group_membership.dart';
+import '../../models/group_creation_request.dart';
+import '../../services/group_service.dart';
 
 class GroupRepository {
   final GroupService _groupService;

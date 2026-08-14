@@ -1,7 +1,7 @@
 // lib/data/repositories/broadcast_repository.dart
 
-import '../models/broadcast_message.dart';
-import '../services/broadcast_service.dart';
+import '../../models/broadcast_message.dart';
+import '../../services/broadcast_service.dart';
 
 class BroadcastRepository {
   final BroadcastService _broadcastService;

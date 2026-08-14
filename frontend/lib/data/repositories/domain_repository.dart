@@ -1,9 +1,9 @@
 // lib/data/repositories/domain_repository.dart
 
-import '../models/event_domain.dart';
-import '../models/route_checkpoint.dart';
-import '../models/domain_superadmin.dart';
-import '../services/domain_service.dart';
+import '../../models/event_domain.dart';
+import '../../models/route_checkpoint.dart';
+import '../../models/domain_superadmin.dart';
+import '../../services/domain_service.dart';
 
 class DomainRepository {
   final DomainService _domainService;

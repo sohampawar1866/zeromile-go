@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
-import '../../../data/models/broadcast_message.dart';
+import '../../../models/broadcast_message.dart';
 
 class BroadcastCard extends StatelessWidget {
   final BroadcastMessage message;

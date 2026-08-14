@@ -1,7 +1,7 @@
 // lib/data/repositories/sos_repository.dart
 
-import '../models/sos_event.dart';
-import '../services/sos_service.dart';
+import '../../models/sos_event.dart';
+import '../../services/sos_service.dart';
 
 class SosRepository {
   final SosService _sosService;

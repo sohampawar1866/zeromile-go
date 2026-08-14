@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_typography.dart';
-import '../../../data/models/event_domain.dart';
+import '../../../models/event_domain.dart';
 import '../../../logic/view_models/superadmin_view_model.dart';
 import 'tabs/governance_tab.dart';
 import 'tabs/admin_live_map_tab.dart';
@@ -66,25 +66,30 @@ class _SuperAdminConsoleScreenState extends State<SuperAdminConsoleScreen> with 
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          GovernanceTab(
-            viewModel: widget.viewModel,
-            domainId: domainId,
-            adminUserId: widget.adminUserId,
-          ),
-          AdminLiveMapTab(
-            viewModel: widget.viewModel,
-          ),
-          RouteBuilderTab(
-            activeDomain: widget.activeDomain,
-            viewModel: widget.viewModel,
-          ),
-          AdminAnalyticsTab(
-            viewModel: widget.viewModel,
-          ),
-        ],
+      body: ListenableBuilder(
+        listenable: widget.viewModel,
+        builder: (context, _) {
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              GovernanceTab(
+                viewModel: widget.viewModel,
+                domainId: domainId,
+                adminUserId: widget.adminUserId,
+              ),
+              AdminLiveMapTab(
+                viewModel: widget.viewModel,
+              ),
+              RouteBuilderTab(
+                activeDomain: widget.activeDomain,
+                viewModel: widget.viewModel,
+              ),
+              AdminAnalyticsTab(
+                viewModel: widget.viewModel,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

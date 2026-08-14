@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
-import '../../../data/models/sos_event.dart';
+import '../../../models/sos_event.dart';
 import '../widgets/fluid_tap_scale.dart';
 
 class EmergencySosModal extends StatefulWidget {

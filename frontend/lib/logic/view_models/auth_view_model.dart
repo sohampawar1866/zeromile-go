@@ -1,7 +1,7 @@
 // lib/logic/view_models/auth_view_model.dart
 
 import 'package:flutter/foundation.dart';
-import '../../data/models/user_profile.dart';
+import '../../models/user_profile.dart';
 import '../../data/repositories/auth_repository.dart';
 
 class AuthViewModel extends ChangeNotifier {

@@ -2,6 +2,7 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile.dart';
+import '../config/app_config.dart';
 import 'supabase_client_service.dart';
 
 class AuthService {
@@ -14,6 +15,8 @@ class AuthService {
 
   UserProfile? get currentUser => _currentUser;
   String? get selectedDomainId => _selectedDomainId;
+  Session? get currentSession => _client.auth.currentSession;
+  bool get isAuthenticated => _currentUser != null;
 
   void setSelectedDomainId(String domainId) {
     _selectedDomainId = domainId;
@@ -25,12 +28,18 @@ class AuthService {
 
   /// Sends 6-digit OTP to mobile phone number (E.164 format e.g. +91 98230 12345)
   Future<void> sendPhoneOtp(String phoneNumber) async {
-    await _client.auth.signInWithOtp(
-      phone: phoneNumber,
-    );
+    try {
+      await _client.auth.signInWithOtp(
+        phone: phoneNumber,
+      );
+    } catch (e) {
+      if (!AppConfig.isDemoMode) {
+        rethrow;
+      }
+    }
   }
 
-  /// Verifies OTP and retrieves or provisions user profile
+  /// Verifies OTP and retrieves or provisions user profile with true cryptographic session validation
   Future<UserProfile> verifyOtp({
     required String phoneNumber,
     required String token,
@@ -38,14 +47,18 @@ class AuthService {
     String? emergencyContact,
   }) async {
     // 1. Supabase Auth verify
+    AuthResponse? authResponse;
     try {
-      await _client.auth.verifyOTP(
+      authResponse = await _client.auth.verifyOTP(
         phone: phoneNumber,
         token: token,
         type: OtpType.sms,
       );
-    } catch (_) {
-      // In testing/dev mode with pre-seeded users, allow verified login
+    } catch (e) {
+      // In production mode, failed OTP must fail authentication
+      if (!AppConfig.isDemoMode) {
+        throw AuthException('Invalid or expired OTP token: ${e.toString()}');
+      }
     }
 
     // 2. Fetch or create in public.users table
@@ -59,13 +72,17 @@ class AuthService {
       _currentUser = UserProfile.fromJson(data);
       return _currentUser!;
     } else {
+      final userId = authResponse?.user?.id;
+      final insertPayload = {
+        if (userId != null) 'id': userId,
+        'phone_number': phoneNumber,
+        'full_name': fallbackFullName ?? 'Citizen Participant',
+        if (emergencyContact != null) 'emergency_contact': emergencyContact,
+      };
+
       final inserted = await _client
           .from('users')
-          .insert({
-            'phone_number': phoneNumber,
-            'full_name': fallbackFullName ?? 'Citizen Participant',
-            if (emergencyContact != null) 'emergency_contact': emergencyContact,
-          })
+          .insert(insertPayload)
           .select()
           .single();
 
@@ -74,8 +91,12 @@ class AuthService {
     }
   }
 
-  /// 1-Tap Fast Persona Switcher for Hackathon Judges & Testing
+  /// 1-Tap Fast Persona Switcher for Evaluation, Judges & Sandbox Testing
   Future<UserProfile> loginAsDemoPersona(String phoneNumber) async {
+    if (!AppConfig.isDemoMode) {
+      throw const AuthException('Demo persona fast login is disabled in production mode.');
+    }
+
     final data = await _client
         .from('users')
         .select()

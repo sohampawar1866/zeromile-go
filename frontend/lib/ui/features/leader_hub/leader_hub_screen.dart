@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_typography.dart';
-import '../../../data/models/event_domain.dart';
+import '../../../models/event_domain.dart';
 import '../../../logic/view_models/leader_hub_view_model.dart';
 import 'tabs/team_hub_tab.dart';
 import 'tabs/leader_live_map_tab.dart';
@@ -64,22 +64,27 @@ class _LeaderHubScreenState extends State<LeaderHubScreen> with SingleTickerProv
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          TeamHubTab(
-            viewModel: widget.viewModel,
-            domainId: domainId,
-            groupId: widget.groupId,
-            leaderUserId: widget.leaderUserId,
-          ),
-          LeaderLiveMapTab(
-            viewModel: widget.viewModel,
-          ),
-          LeaderAnalyticsTab(
-            viewModel: widget.viewModel,
-          ),
-        ],
+      body: ListenableBuilder(
+        listenable: widget.viewModel,
+        builder: (context, _) {
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              TeamHubTab(
+                viewModel: widget.viewModel,
+                domainId: domainId,
+                groupId: widget.groupId,
+                leaderUserId: widget.leaderUserId,
+              ),
+              LeaderLiveMapTab(
+                viewModel: widget.viewModel,
+              ),
+              LeaderAnalyticsTab(
+                viewModel: widget.viewModel,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

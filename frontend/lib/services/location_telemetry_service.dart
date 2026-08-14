@@ -9,17 +9,20 @@ import 'supabase_client_service.dart';
 
 class LocationTelemetryService {
   final SupabaseClient _client;
+  final Map<String, RealtimeChannel> _domainChannels = {};
   final List<RealtimeChannel> _activeChannels = [];
 
   // Throttling & Daemon State
   double? _lastLatitude;
   double? _lastLongitude;
   DateTime? _lastPingTime;
+  DateTime? _lastDbPersistTime;
   Timer? _telemetryTimer;
   bool _isDaemonRunning = false;
 
-  static const int minPingIntervalSeconds = 5;
-  static const double minDistanceDeltaMeters = 5.0;
+  static const int minPingIntervalSeconds = 3;
+  static const double minDistanceDeltaMeters = 3.0;
+  static const int minDbPersistIntervalSeconds = 25; // Throttled DB write interval to prevent Postgres write storm
 
   // Offline buffer queue
   final List<Map<String, dynamic>> _offlineQueue = [];
@@ -29,12 +32,31 @@ class LocationTelemetryService {
 
   bool get isDaemonRunning => _isDaemonRunning;
 
+  /// Retrieves or joins a Supabase Realtime Broadcast Channel for ephemeral sub-second telemetry distribution
+  RealtimeChannel _getOrCreateBroadcastChannel(String domainId) {
+    if (_domainChannels.containsKey(domainId)) {
+      return _domainChannels[domainId]!;
+    }
+
+    final channelName = 'domain_telemetry_$domainId';
+    final channel = _client.channel(
+      channelName,
+      opts: const RealtimeChannelConfig(
+        self: true,
+      ),
+    );
+    channel.subscribe();
+    _domainChannels[domainId] = channel;
+    _activeChannels.add(channel);
+    return channel;
+  }
+
   /// Starts the automatic 10-second GPS telemetry publisher daemon for active rally participants
   void startHardwareTelemetryDaemon({
     required String domainId,
     required String userId,
     String? activeGroupId,
-    int intervalSeconds = 10,
+    int intervalSeconds = 8,
   }) {
     if (_isDaemonRunning) return;
     _isDaemonRunning = true;
@@ -63,7 +85,7 @@ class LocationTelemetryService {
           heading: heading,
         );
       } catch (e) {
-        debugPrint('Telemetry daemon ping error: $e');
+        debugPrint('Telemetry daemon ping notice: $e');
       }
     });
   }
@@ -75,7 +97,9 @@ class LocationTelemetryService {
     _isDaemonRunning = false;
   }
 
-  /// Throttled GPS publisher: Publishes ONLY if moved >= 5m or interval >= 5s
+  /// High-Performance Telemetry Publisher:
+  /// 1. Broadcasts over in-memory WebSockets (Supabase Realtime) for 0-latency live map updates.
+  /// 2. Performs throttled asynchronous PostgreSQL upsert to maintain persistence without database write fatigue.
   Future<bool> publishLocationPing({
     required String domainId,
     required String userId,
@@ -108,6 +132,7 @@ class LocationTelemetryService {
     _lastPingTime = now;
 
     final payload = {
+      'id': '$domainId-$userId',
       'domain_id': domainId,
       'user_id': userId,
       'active_group_id': activeGroupId,
@@ -118,91 +143,100 @@ class LocationTelemetryService {
       'updated_at': now.toIso8601String(),
     };
 
+    // 3. Ephemeral Realtime Broadcast (Zero database overhead)
     try {
-      await _client
-          .from('user_live_locations')
-          .upsert(payload, onConflict: 'domain_id,user_id');
+      final channel = _getOrCreateBroadcastChannel(domainId);
+      await channel.sendBroadcastMessage(
+        event: 'location_ping',
+        payload: payload,
+      );
+    } catch (_) {
+      // Fallback if socket is connecting
+    }
 
-      // Flush offline queue if network was restored
-      if (_offlineQueue.isNotEmpty) {
-        final toFlush = List<Map<String, dynamic>>.from(_offlineQueue);
-        _offlineQueue.clear();
-        for (final item in toFlush) {
-          try {
-            await _client.from('user_live_locations').upsert(item, onConflict: 'domain_id,user_id');
-          } catch (_) {
-            _offlineQueue.add(item);
+    // 4. Throttled Database Snapshot Persistence (Every 25s or on forced waypoint)
+    final shouldPersistToDb = force ||
+        _lastDbPersistTime == null ||
+        now.difference(_lastDbPersistTime!).inSeconds >= minDbPersistIntervalSeconds;
+
+    if (shouldPersistToDb) {
+      _lastDbPersistTime = now;
+      try {
+        await _client
+            .from('user_live_locations')
+            .upsert(payload, onConflict: 'domain_id,user_id');
+
+        // Flush offline queue if network was restored
+        if (_offlineQueue.isNotEmpty) {
+          final toFlush = List<Map<String, dynamic>>.from(_offlineQueue);
+          _offlineQueue.clear();
+          for (final item in toFlush) {
+            try {
+              await _client.from('user_live_locations').upsert(item, onConflict: 'domain_id,user_id');
+            } catch (_) {
+              _offlineQueue.add(item);
+            }
           }
         }
+      } catch (_) {
+        _offlineQueue.add(payload);
+        if (_offlineQueue.length > 50) _offlineQueue.removeAt(0);
       }
-
-      return true;
-    } catch (_) {
-      // Buffer in offline queue for auto-retry
-      _offlineQueue.add(payload);
-      if (_offlineQueue.length > 30) _offlineQueue.removeAt(0);
-      return false;
     }
+
+    return true;
   }
 
-  /// SuperAdmin Console: Stream all domain participant pings (with optional group filter)
+  /// SuperAdmin Console: Stream all domain participant pings with instant WebSocket Realtime Broadcast + DB snapshot seed
   Stream<List<UserLiveLocation>> streamDomainTelemetry(
     String domainId, {
     String? subGroupIdFilter,
   }) {
     late final StreamController<List<UserLiveLocation>> controller;
-    RealtimeChannel? channel;
+    final Map<String, UserLiveLocation> locationMap = {};
+    RealtimeChannel? broadcastChannel;
 
-    void fetchAndEmit() {
-      var query = _client
-          .from('user_live_locations')
-          .select('*, users(full_name)')
-          .eq('domain_id', domainId);
-
+    void emitCurrentLocations() {
+      if (controller.isClosed) return;
+      var list = locationMap.values.toList();
       if (subGroupIdFilter != null && subGroupIdFilter.isNotEmpty) {
-        query = query.eq('active_group_id', subGroupIdFilter);
+        list = list.where((loc) => loc.activeGroupId == subGroupIdFilter).toList();
       }
-
-      query.then((data) {
-        final list = (data as List).map((j) => UserLiveLocation.fromJson(j)).toList();
-        if (!controller.isClosed) {
-          controller.add(list);
-        }
-      }).catchError((e, st) {
-        if (!controller.isClosed) {
-          controller.addError(e, st);
-        }
-      });
+      controller.add(list);
     }
 
     controller = StreamController<List<UserLiveLocation>>.broadcast(
       onListen: () {
-        fetchAndEmit();
+        // 1. Initial snapshot fetch from DB
+        _client
+            .from('user_live_locations')
+            .select('*, users(full_name)')
+            .eq('domain_id', domainId)
+            .then((data) {
+          for (final item in (data as List)) {
+            final loc = UserLiveLocation.fromJson(item);
+            locationMap[loc.userId] = loc;
+          }
+          emitCurrentLocations();
+        }).catchError((_) {
+          emitCurrentLocations();
+        });
 
-        final channelName = 'realtime:telemetry:$domainId:${DateTime.now().millisecondsSinceEpoch}';
-        channel = _client
-            .channel(channelName)
-            .onPostgresChanges(
-              event: PostgresChangeEvent.all,
-              schema: 'public',
-              table: 'user_live_locations',
-              filter: PostgresChangeFilter(
-                type: PostgresChangeFilterType.eq,
-                column: 'domain_id',
-                value: domainId,
-              ),
-              callback: (payload) => fetchAndEmit(),
-            )
-            .subscribe();
-
-        _activeChannels.add(channel!);
+        // 2. Subscribe to sub-second Realtime Broadcast channel
+        broadcastChannel = _getOrCreateBroadcastChannel(domainId);
+        broadcastChannel!.onBroadcast(
+          event: 'location_ping',
+          callback: (payload) {
+            try {
+              final ping = UserLiveLocation.fromJson(Map<String, dynamic>.from(payload));
+              locationMap[ping.userId] = ping;
+              emitCurrentLocations();
+            } catch (_) {}
+          },
+        );
       },
       onCancel: () {
-        if (channel != null) {
-          channel!.unsubscribe();
-          _client.removeChannel(channel!);
-          _activeChannels.remove(channel);
-        }
+        // Keep channel active in domain pool
       },
     );
 
@@ -221,10 +255,13 @@ class LocationTelemetryService {
   void dispose() {
     stopHardwareTelemetryDaemon();
     for (final channel in List<RealtimeChannel>.from(_activeChannels)) {
-      channel.unsubscribe();
-      _client.removeChannel(channel);
+      try {
+        channel.unsubscribe();
+        _client.removeChannel(channel);
+      } catch (_) {}
     }
     _activeChannels.clear();
+    _domainChannels.clear();
   }
 
   static double _distanceMeters(double lat1, double lon1, double lat2, double lon2) {

@@ -1,8 +1,8 @@
 // lib/logic/view_models/domain_context_view_model.dart
 
 import 'package:flutter/foundation.dart';
-import '../../data/models/event_domain.dart';
-import '../../data/models/route_checkpoint.dart';
+import '../../models/event_domain.dart';
+import '../../models/route_checkpoint.dart';
 import '../../data/repositories/domain_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 

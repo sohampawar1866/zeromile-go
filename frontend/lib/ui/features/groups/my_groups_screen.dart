@@ -37,15 +37,18 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final memberships = widget.viewModel.userMemberships;
-    final joinedCount = memberships.length;
-    final isMaxReached = joinedCount >= 3;
+    return ListenableBuilder(
+      listenable: widget.viewModel,
+      builder: (context, _) {
+        final memberships = widget.viewModel.userMemberships;
+        final joinedCount = memberships.length;
+        final isMaxReached = joinedCount >= 3;
 
-    return Scaffold(
-      backgroundColor: AppColors.canvas,
-      body: ListView(
-        padding: AppSpacing.edgeInsetsScreen,
-        children: [
+        return Scaffold(
+          backgroundColor: AppColors.canvas,
+          body: ListView(
+            padding: AppSpacing.edgeInsetsScreen,
+            children: [
           // Quota & Rules Card
           Card(
             child: Padding(
@@ -222,6 +225,8 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
           ),
         ],
       ),
+        );
+      },
     );
   }
 }

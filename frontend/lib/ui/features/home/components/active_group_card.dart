@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
-import '../../../../data/models/group_membership.dart';
+import '../../../../models/group_membership.dart';
 import '../../../core/widgets/status_badge.dart';
 
 class ActiveGroupCard extends StatelessWidget {

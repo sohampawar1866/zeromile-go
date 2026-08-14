@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
-import '../../../../data/models/group_membership.dart';
+import '../../../../models/group_membership.dart';
 import '../../../../logic/view_models/leader_hub_view_model.dart';
 import '../../../core/widgets/fluid_tap_scale.dart';
 import '../../../core/widgets/sos_triage_card.dart';
@@ -109,6 +109,8 @@ class TeamHubTab extends StatelessWidget {
                         sosId: sos.id,
                         leaderUserId: leaderUserId,
                         leaderNotes: 'Requested medical ambulance escort.',
+                        domainId: domainId,
+                        groupId: groupId,
                       );
                       if (context.mounted && ok) {
                         ScaffoldMessenger.of(context).showSnackBar(

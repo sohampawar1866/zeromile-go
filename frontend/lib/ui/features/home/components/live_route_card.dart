@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
-import '../../../../data/models/route_checkpoint.dart';
+import '../../../../models/route_checkpoint.dart';
 import '../../../core/widgets/density_cluster_map_view.dart';
 import '../../../core/widgets/route_checkpoint_stepper.dart';
 

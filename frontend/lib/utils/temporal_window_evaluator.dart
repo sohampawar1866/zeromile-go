@@ -5,17 +5,18 @@ import '../models/event_domain.dart';
 enum EventWindowLifecycle { preEvent, liveActive, concluded }
 
 class TemporalWindowEvaluator {
-  /// Evaluates whether the event is within the official active rally hours
-  static EventWindowLifecycle evaluate(EventDomain domain) {
-    final now = DateTime.now();
+  /// Evaluates whether the event is within the official active rally hours.
+  /// Accepts an optional [currentTime] for server-synchronized evaluation.
+  static EventWindowLifecycle evaluate(EventDomain domain, {DateTime? currentTime}) {
+    final now = currentTime ?? DateTime.now();
 
     if (domain.status == EventDomainStatus.concluded ||
         domain.status == EventDomainStatus.archived ||
         now.isAfter(domain.endTime)) {
       return EventWindowLifecycle.concluded;
     } else if (domain.status == EventDomainStatus.liveActive &&
-        now.isAfter(domain.startTime) &&
-        now.isBefore(domain.endTime)) {
+        !now.isBefore(domain.startTime) &&
+        !now.isAfter(domain.endTime)) {
       return EventWindowLifecycle.liveActive;
     } else if (now.isBefore(domain.startTime) || domain.status == EventDomainStatus.upcoming) {
       return EventWindowLifecycle.preEvent;
@@ -24,13 +25,13 @@ class TemporalWindowEvaluator {
   }
 
   /// Whether GPS tracking, live map streaming, and SOS trigger should be fully active
-  static bool isLiveInteractive(EventDomain domain) {
-    return evaluate(domain) == EventWindowLifecycle.liveActive;
+  static bool isLiveInteractive(EventDomain domain, {DateTime? currentTime}) {
+    return evaluate(domain, currentTime: currentTime) == EventWindowLifecycle.liveActive;
   }
 
   /// Human-readable schedule banner text
-  static String getScheduleBanner(EventDomain domain) {
-    final lifecycle = evaluate(domain);
+  static String getScheduleBanner(EventDomain domain, {DateTime? currentTime}) {
+    final lifecycle = evaluate(domain, currentTime: currentTime);
     switch (lifecycle) {
       case EventWindowLifecycle.preEvent:
         return '🏁 PRE-EVENT PREPARATION • Live GPS & SOS activates at ${_formatTime(domain.startTime)}';

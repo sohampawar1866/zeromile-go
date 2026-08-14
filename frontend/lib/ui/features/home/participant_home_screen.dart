@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
-import '../../../data/models/event_domain.dart';
-import '../../../data/models/route_checkpoint.dart';
+import '../../../models/event_domain.dart';
+import '../../../models/route_checkpoint.dart';
 import '../../../utils/temporal_window_evaluator.dart';
 import '../../../logic/view_models/participant_home_view_model.dart';
 import '../../core/widgets/broadcast_card.dart';
@@ -34,29 +34,32 @@ class ParticipantHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final domain = activeDomain ?? EventDomain(
-      id: 'default-domain',
-      name: 'Cycling Rally 2026',
-      slug: 'cycling-2026',
-      type: EventDomainType.cycling,
-      status: EventDomainStatus.liveActive,
-      startTime: DateTime.now().subtract(const Duration(hours: 1)),
-      endTime: DateTime.now().add(const Duration(hours: 4)),
-      createdAt: DateTime.now(),
-    );
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, _) {
+        final domain = activeDomain ?? EventDomain(
+          id: 'default-domain',
+          name: 'Cycling Rally 2026',
+          slug: 'cycling-2026',
+          type: EventDomainType.cycling,
+          status: EventDomainStatus.liveActive,
+          startTime: DateTime.now().subtract(const Duration(hours: 1)),
+          endTime: DateTime.now().add(const Duration(hours: 4)),
+          createdAt: DateTime.now(),
+        );
 
-    final isLive = domain.status == EventDomainStatus.liveActive;
-    final bannerText = TemporalWindowEvaluator.getScheduleBanner(domain);
+        final isLive = domain.status == EventDomainStatus.liveActive;
+        final bannerText = TemporalWindowEvaluator.getScheduleBanner(domain);
 
-    return Scaffold(
-      backgroundColor: AppColors.canvas,
-      body: RefreshIndicator(
-        color: AppColors.ink,
-        backgroundColor: AppColors.canvas,
-        onRefresh: () => viewModel.loadParticipantContext(
-          domainId: domain.id,
-          userId: currentUserId,
-        ),
+        return Scaffold(
+          backgroundColor: AppColors.canvas,
+          body: RefreshIndicator(
+            color: AppColors.ink,
+            backgroundColor: AppColors.canvas,
+            onRefresh: () => viewModel.loadParticipantContext(
+              domainId: domain.id,
+              userId: currentUserId,
+            ),
         child: ListView(
           padding: AppSpacing.edgeInsetsScreen,
           children: [
@@ -206,6 +209,8 @@ class ParticipantHomeScreen extends StatelessWidget {
               ),
             )
           : null,
+        );
+      },
     );
   }
 }

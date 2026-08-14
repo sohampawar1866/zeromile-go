@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
-import '../../../data/models/event_domain.dart';
+import '../../../models/event_domain.dart';
 import '../../../main.dart';
 import '../../core/widgets/status_badge.dart';
 

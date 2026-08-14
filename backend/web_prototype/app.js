@@ -297,33 +297,45 @@ function renderUserParticipationCard() {
 async function handleParticipantCheckIn() {
   state.activeMembership.participation_status = 'CHECKED_IN';
   state.activeMembership.checkin_time = new Date().toISOString();
-  showToast('Check-in confirmed! Muster attendance recorded and GPS online.', 'success');
-  renderUserParticipationCard();
   if (supabase && state.currentUser) {
     try {
-      await supabase.rpc('check_in_participant', {
+      const { error } = await supabase.rpc('check_in_participant', {
         p_domain_id: state.activeDomain.id,
         p_group_id: state.activeMembership.group_id,
         p_user_id: state.currentUser.id
       });
-    } catch (e) { /* non-blocking */ }
+      if (error) {
+        showToast(`Check-in rejected: ${error.message}`, 'danger');
+        return;
+      }
+    } catch (e) {
+      showToast(`Network error: ${e.message}`, 'warning');
+    }
   }
+  showToast('Check-in confirmed! Muster attendance recorded and GPS online.', 'success');
+  renderUserParticipationCard();
 }
 
 async function handleParticipantComplete() {
+  if (supabase && state.currentUser) {
+    try {
+      const { error } = await supabase.rpc('complete_event_participant', {
+        p_domain_id: state.activeDomain.id,
+        p_group_id: state.activeMembership.group_id,
+        p_user_id: state.currentUser.id
+      });
+      if (error) {
+        showToast(`Completion rejected: ${error.message}`, 'danger');
+        return;
+      }
+    } catch (e) {
+      showToast(`Network error: ${e.message}`, 'warning');
+    }
+  }
   state.activeMembership.participation_status = 'COMPLETED';
   state.activeMembership.completion_time = new Date().toISOString();
   showToast('Congratulations! Rally marked completed. Pass registered.', 'success');
   renderUserParticipationCard();
-  if (supabase && state.currentUser) {
-    try {
-      await supabase.rpc('complete_event_participant', {
-        p_domain_id: state.activeDomain.id,
-        p_group_id: state.activeMembership.group_id,
-        p_user_id: state.currentUser.id
-      });
-    } catch (e) { /* non-blocking */ }
-  }
 }
 
 function renderCheckpointsBar() {

@@ -1,7 +1,7 @@
 // lib/data/repositories/telemetry_repository.dart
 
-import '../models/user_live_location.dart';
-import '../services/location_telemetry_service.dart';
+import '../../models/user_live_location.dart';
+import '../../services/location_telemetry_service.dart';
 
 class TelemetryRepository {
   final LocationTelemetryService _telemetryService;
