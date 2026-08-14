@@ -8,7 +8,6 @@ import '../../../models/event_domain.dart';
 import '../../../models/user_profile.dart';
 import '../../../logic/view_models/domain_context_view_model.dart';
 import '../../core/dialogs/switch_domain_modal.dart';
-import '../../core/dialogs/group_creation_modal.dart';
 import '../../core/widgets/fluid_tap_scale.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -21,13 +20,6 @@ class AppDrawer extends StatelessWidget {
   final ValueChanged<int> onSelectNavIndex;
   final ValueChanged<EventDomain> onSwitchDomain;
   final ValueChanged<ActiveRolePerspective> onSelectRole;
-  final Function({
-    required String orgName,
-    required String orgType,
-    required int expectedCount,
-    required String musterPoint,
-    String? leaderNotes,
-  }) onGroupProposal;
 
   const AppDrawer({
     super.key,
@@ -40,7 +32,6 @@ class AppDrawer extends StatelessWidget {
     required this.onSelectNavIndex,
     required this.onSwitchDomain,
     required this.onSelectRole,
-    required this.onGroupProposal,
   });
 
   @override
@@ -125,20 +116,14 @@ class AppDrawer extends StatelessWidget {
                       Navigator.pop(context);
                     },
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-                    child: Divider(),
-                  ),
                   _buildDrawerItem(
                     context,
-                    icon: Icons.add_business_outlined,
-                    label: 'Propose New Sub-Group',
+                    icon: Icons.person_outline,
+                    label: 'My Profile',
+                    isSelected: selectedNavIndex == 2,
                     onTap: () {
+                      onSelectNavIndex(2);
                       Navigator.pop(context);
-                      GroupCreationModal.show(
-                        context,
-                        onSubmit: onGroupProposal,
-                      );
                     },
                   ),
                 ],

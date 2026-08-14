@@ -16,6 +16,7 @@ import '../groups/my_groups_screen.dart';
 import '../leader_hub/leader_hub_screen.dart';
 import '../admin_console/superadmin_console_screen.dart';
 import '../dev_panel/dev_panel_screen.dart';
+import '../profile/profile_screen.dart';
 import 'app_drawer.dart';
 import '../../core/dialogs/group_creation_modal.dart';
 
@@ -147,31 +148,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
           await widget.domainContextVm.switchDomain(newDom);
           await widget.participantHomeVm.loadParticipantContext(domainId: newDom.id, userId: userId);
         },
-        onGroupProposal: ({
-          required orgName,
-          required orgType,
-          required expectedCount,
-          required musterPoint,
-          leaderNotes,
-        }) async {
-          final ok = await widget.groupsVm.submitGroupProposal(
-            domainId: domainId,
-            applicantUserId: userId,
-            orgName: orgName,
-            orgType: orgType,
-            expectedCount: expectedCount,
-            musterPoint: musterPoint,
-            leaderNotes: leaderNotes,
-          );
-          if (context.mounted && ok) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Contingent proposal submitted to SuperAdmins.'),
-                backgroundColor: AppColors.success,
-              ),
-            );
-          }
-        },
       ),
       body: _buildActiveRoleBody(role, domainId, userId),
       bottomNavigationBar: role == ActiveRolePerspective.participant
@@ -198,6 +174,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
                     activeIcon: Icon(Icons.groups),
                     label: 'My Groups',
                   ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person_outline),
+                    activeIcon: Icon(Icons.person),
+                    label: 'Profile',
+                  ),
                 ],
               ),
             )
@@ -206,6 +187,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
   }
 
   Widget _buildActiveRoleBody(ActiveRolePerspective role, String domainId, String userId) {
+    final user = widget.authVm.currentUser;
+
     switch (role) {
       case ActiveRolePerspective.leader:
         return LeaderHubScreen(
@@ -231,6 +214,37 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
             viewModel: widget.groupsVm,
             domainId: domainId,
             userId: userId,
+          );
+        }
+        if (_bottomNavIndex == 2) {
+          return ProfileScreen(
+            currentUser: user,
+            activeDomain: widget.domainContextVm.activeDomain,
+            activeMembership: widget.participantHomeVm.activeMembership,
+            authVm: widget.authVm,
+            onOpenProposeModal: () {
+              GroupCreationModal.show(
+                context,
+                onSubmit: ({
+                  required orgName,
+                  required orgType,
+                  required expectedCount,
+                  required musterPoint,
+                  leaderNotes,
+                }) async {
+                  await widget.groupsVm.submitGroupProposal(
+                    domainId: domainId,
+                    applicantUserId: userId,
+                    orgName: orgName,
+                    orgType: orgType,
+                    expectedCount: expectedCount,
+                    musterPoint: musterPoint,
+                    leaderNotes: leaderNotes,
+                  );
+                },
+              );
+            },
+            onNavigateToGroups: () => setState(() => _bottomNavIndex = 1),
           );
         }
         return ParticipantHomeScreen(

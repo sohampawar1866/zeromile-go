@@ -1,0 +1,362 @@
+// lib/ui/features/profile/profile_screen.dart
+
+import 'package:flutter/material.dart';
+import '../../../config/app_colors.dart';
+import '../../../config/app_spacing.dart';
+import '../../../config/app_typography.dart';
+import '../../../models/event_domain.dart';
+import '../../../models/group_membership.dart';
+import '../../../models/user_profile.dart';
+import '../../../logic/view_models/auth_view_model.dart';
+import '../../core/widgets/fluid_tap_scale.dart';
+import '../../core/widgets/status_badge.dart';
+
+class ProfileScreen extends StatefulWidget {
+  final UserProfile? currentUser;
+  final EventDomain? activeDomain;
+  final GroupMembership? activeMembership;
+  final AuthViewModel authVm;
+  final VoidCallback onOpenProposeModal;
+  final VoidCallback onNavigateToGroups;
+
+  const ProfileScreen({
+    super.key,
+    required this.currentUser,
+    required this.activeDomain,
+    required this.activeMembership,
+    required this.authVm,
+    required this.onOpenProposeModal,
+    required this.onNavigateToGroups,
+  });
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  void _showEditProfileDialog() {
+    final user = widget.authVm.currentUser ?? widget.currentUser;
+    final nameCtrl = TextEditingController(text: user?.fullName ?? '');
+    final emergencyCtrl = TextEditingController(text: user?.emergencyContact ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.canvas,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
+        title: const Text('Update Profile Details', style: AppTypography.headingMd),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+                hintText: 'Name',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: emergencyCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Emergency Contact (+91 ...)',
+                hintText: '+91 98000 00000',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: AppTypography.buttonSmSecondary),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.ink,
+              foregroundColor: AppColors.onPrimary,
+            ),
+            onPressed: () async {
+              final newName = nameCtrl.text.trim();
+              final newEmerg = emergencyCtrl.text.trim();
+              if (newName.isNotEmpty) {
+                Navigator.pop(ctx);
+                await widget.authVm.updateProfile(
+                  fullName: newName,
+                  emergencyContact: newEmerg.isNotEmpty ? newEmerg : null,
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Profile details updated successfully.'),
+                      backgroundColor: AppColors.ink,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Save Details', style: AppTypography.buttonSm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = widget.authVm.currentUser ?? widget.currentUser;
+    final domain = widget.activeDomain;
+    final membership = widget.activeMembership;
+    final isEnrolled = membership != null;
+    final groupName = membership?.groupName ?? 'General Rally Participant';
+    final isLeader = membership?.isLeader ?? false;
+
+    return ListView(
+      padding: AppSpacing.edgeInsetsScreen,
+      children: [
+        // User Identity Card
+        Card(
+          child: Padding(
+            padding: AppSpacing.edgeInsetsCard,
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        color: AppColors.ink,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        (user?.fullName.isNotEmpty == true)
+                            ? user!.fullName.substring(0, 1).toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.onPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.fullName ?? 'Soham Pawar',
+                            style: AppTypography.headingLg,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            user?.phoneNumber ?? '+91 8087167841',
+                            style: AppTypography.bodySm.copyWith(color: AppColors.mute),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          StatusBadge(
+                            label: isLeader ? 'GROUP LEADER' : 'PARTICIPANT',
+                            type: isLeader ? StatusBadgeType.warning : StatusBadgeType.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, color: AppColors.ink, size: 20),
+                      tooltip: 'Edit Profile Details',
+                      onPressed: _showEditProfileDialog,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Active Event & Contingent Affiliation
+        Card(
+          child: Padding(
+            padding: AppSpacing.edgeInsetsCard,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.directions_bike_outlined, color: AppColors.ink, size: 20),
+                    SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Event & Contingent Affiliation',
+                        style: AppTypography.headingMd,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _buildInfoRow('Active Domain', domain?.name ?? 'Nagpur Cycling Rally 2026'),
+                _buildInfoRow('Domain Slug', domain?.slug ?? 'cycling-2026'),
+                _buildInfoRow('Enrolled Contingent', groupName),
+                _buildInfoRow(
+                  'Participation Status',
+                  isEnrolled ? membership.participationStatus.name.toUpperCase() : 'GENERAL ROSTER',
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.ink),
+                    label: const Text('Manage Contingents', style: AppTypography.buttonSmSecondary),
+                    onPressed: widget.onNavigateToGroups,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Emergency SOS & Next-of-Kin Contact
+        Card(
+          child: Padding(
+            padding: AppSpacing.edgeInsetsCard,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.emergency_outlined, color: AppColors.sale, size: 20),
+                        SizedBox(width: AppSpacing.sm),
+                        Text('Emergency Distress Contact', style: AppTypography.headingMd),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.ink),
+                      tooltip: 'Update Emergency Contact',
+                      onPressed: _showEditProfileDialog,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                      ? 'Next-of-Kin: ${user.emergencyContact}'
+                      : 'No emergency next-of-kin contact registered. Tap edit to configure.',
+                  style: AppTypography.bodySm.copyWith(
+                    color: (user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty)
+                        ? AppColors.ink
+                        : AppColors.sale,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                const Text(
+                  'This contact number receives instant SMS alerts during critical distress signals.',
+                  style: AppTypography.caption,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Telemetry & Device Sensors Card
+        Card(
+          child: Padding(
+            padding: AppSpacing.edgeInsetsCard,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.sensors, color: AppColors.success, size: 20),
+                    SizedBox(width: AppSpacing.sm),
+                    Text('Telemetry & Device Sensors', style: AppTypography.headingMd),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _buildInfoRow('GPS Telemetry Stream', 'Online (1Hz High-Precision Stream)'),
+                _buildInfoRow('Density Heatmap Sync', 'Synchronized (WebSocket Channels)'),
+                _buildInfoRow('Device Identifier', user?.id.substring(0, 13) ?? 'u0000000-0000'),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Bottom Action Button: Propose New Sub-Group (Requested by User)
+        FluidTapScale(
+          onTap: widget.onOpenProposeModal,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            decoration: const BoxDecoration(
+              color: AppColors.ink,
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+            ),
+            alignment: Alignment.center,
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add_business_outlined, size: 18, color: AppColors.onPrimary),
+                SizedBox(width: AppSpacing.sm),
+                Text('Propose New Sub-Group', style: AppTypography.buttonMd),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+
+        // Sign Out Button
+        FluidTapScale(
+          onTap: () async {
+            await widget.authVm.signOut();
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm + 2),
+            decoration: BoxDecoration(
+              color: AppColors.softCloud,
+              borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
+              border: Border.all(color: AppColors.hairlineSoft),
+            ),
+            alignment: Alignment.center,
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.logout, size: 16, color: AppColors.sale),
+                SizedBox(width: AppSpacing.xs),
+                Text('Sign Out of Session', style: AppTypography.buttonSmSecondary),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xxl),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.caption),
+          const SizedBox(height: 2),
+          Text(value, style: AppTypography.bodyStrong, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+}
