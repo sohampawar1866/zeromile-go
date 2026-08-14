@@ -1,7 +1,6 @@
-// lib/flutter_core.dart
-
 /// ZeroMile Go - Core Data & Service Layer for Flutter
 /// Modular Supabase Backend, Real-time WebSockets & OneSignal Push Integration
+library flutter_core;
 
 // Config
 export 'config/app_config.dart';
