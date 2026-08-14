@@ -6,6 +6,7 @@ import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
 import '../../../models/event_domain.dart';
 import '../../../models/user_profile.dart';
+import '../../../logic/view_models/domain_context_view_model.dart';
 import '../../core/dialogs/switch_domain_modal.dart';
 import '../../core/dialogs/group_creation_modal.dart';
 import '../../core/widgets/fluid_tap_scale.dart';
@@ -14,9 +15,12 @@ class AppDrawer extends StatelessWidget {
   final UserProfile? currentUser;
   final EventDomain? activeDomain;
   final List<EventDomain> allDomains;
+  final ActiveRolePerspective currentRole;
+  final String roleString;
   final int selectedNavIndex;
   final ValueChanged<int> onSelectNavIndex;
   final ValueChanged<EventDomain> onSwitchDomain;
+  final ValueChanged<ActiveRolePerspective> onSelectRole;
   final Function({
     required String orgName,
     required String orgType,
@@ -30,9 +34,12 @@ class AppDrawer extends StatelessWidget {
     required this.currentUser,
     required this.activeDomain,
     required this.allDomains,
+    required this.currentRole,
+    required this.roleString,
     required this.selectedNavIndex,
     required this.onSelectNavIndex,
     required this.onSwitchDomain,
+    required this.onSelectRole,
     required this.onGroupProposal,
   });
 
@@ -138,82 +145,169 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
 
-            // Fixed Bottom Action: Distinct "Switch Event Domain" Button
+            // Bottom Fixed Section: Role Perspective Switcher + Switch Event Domain Button
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: AppColors.hairlineSoft, width: 1.0)),
               ),
-              child: FluidTapScale(
-                onTap: () {
-                  Navigator.pop(context);
-                  SwitchDomainModal.show(
-                    context,
-                    currentDomain: activeDomain,
-                    domains: allDomains,
-                    onSelectDomain: onSwitchDomain,
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm + 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.softCloud,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: AppColors.ink, width: 1.5),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.xs + 1),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Role Perspective Switcher (Positioned right above Switch Event Domain)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: PopupMenuButton<ActiveRolePerspective>(
+                      tooltip: 'Switch Role Perspective',
+                      onSelected: (role) {
+                        Navigator.pop(context);
+                        onSelectRole(role);
+                      },
+                      itemBuilder: (ctx) => const [
+                        PopupMenuItem(
+                          value: ActiveRolePerspective.developer,
+                          child: Text('👑 Developer: Soham Pawar'),
+                        ),
+                        PopupMenuItem(
+                          value: ActiveRolePerspective.superAdmin,
+                          child: Text('🛡️ SuperAdmin Perspective (Domain Command)'),
+                        ),
+                        PopupMenuItem(
+                          value: ActiveRolePerspective.leader,
+                          child: Text('🚴 Group Leader Perspective (Team Hub)'),
+                        ),
+                        PopupMenuItem(
+                          value: ActiveRolePerspective.participant,
+                          child: Text('👤 Participant Perspective (Rider Cockpit)'),
+                        ),
+                      ],
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.ink,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
-                        child: const Icon(
-                          Icons.swap_horiz_rounded,
-                          color: AppColors.onPrimary,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                        child: Row(
                           children: [
-                            const Text(
-                              'SWITCH EVENT DOMAIN',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                                color: AppColors.ink,
+                            const Icon(
+                              Icons.admin_panel_settings_outlined,
+                              color: AppColors.onPrimary,
+                              size: 18,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'ROLE PERSPECTIVE',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                      color: AppColors.stone,
+                                    ),
+                                  ),
+                                  Text(
+                                    roleString.toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.onPrimary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 1),
-                            Text(
-                              activeDomain?.name ?? 'Select Domain',
-                              style: AppTypography.bodySm.copyWith(
-                                color: AppColors.mute,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              color: AppColors.onPrimary,
+                              size: 20,
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.ink,
-                        size: 20,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+
+                  // Fixed Bottom Action: Distinct "Switch Event Domain" Button
+                  FluidTapScale(
+                    onTap: () {
+                      Navigator.pop(context);
+                      SwitchDomainModal.show(
+                        context,
+                        currentDomain: activeDomain,
+                        domains: allDomains,
+                        onSelectDomain: onSwitchDomain,
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm + 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.softCloud,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(color: AppColors.ink, width: 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(AppSpacing.xs + 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.ink,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                            child: const Icon(
+                              Icons.swap_horiz_rounded,
+                              color: AppColors.onPrimary,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'SWITCH EVENT DOMAIN',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                Text(
+                                  activeDomain?.name ?? 'Select Domain',
+                                  style: AppTypography.bodySm.copyWith(
+                                    color: AppColors.mute,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.ink,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

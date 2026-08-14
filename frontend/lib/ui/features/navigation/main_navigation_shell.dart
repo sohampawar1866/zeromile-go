@@ -112,80 +112,37 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
             ),
           ],
         ),
-        actions: [
-          // Persona Switcher Dropdown (Compact Black pill)
-          PopupMenuButton<ActiveRolePerspective>(
-            tooltip: 'Switch Role Persona',
-            child: Container(
-              margin: const EdgeInsets.only(right: AppSpacing.md),
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-              decoration: BoxDecoration(
-                color: AppColors.ink,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.domainContextVm.roleString,
-                    style: AppTypography.captionXs.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(Icons.arrow_drop_down, size: 14, color: AppColors.onPrimary),
-                ],
-              ),
-            ),
-            onSelected: (newRole) async {
-              await widget.domainContextVm.switchPersonaRole(newRole);
-              final activeDomId = widget.domainContextVm.activeDomain?.id ?? domainId;
-              final activeUsrId = widget.authVm.currentUser?.id ?? userId;
-
-              if (newRole == ActiveRolePerspective.participant) {
-                await widget.participantHomeVm.loadParticipantContext(domainId: activeDomId, userId: activeUsrId);
-                await widget.groupsVm.loadGroups(domainId: activeDomId, userId: activeUsrId);
-              } else if (newRole == ActiveRolePerspective.leader) {
-                await widget.groupsVm.loadGroups(domainId: activeDomId, userId: activeUsrId);
-                final ledGroup = widget.groupsVm.userMemberships.where((m) => m.isLeader).firstOrNull ??
-                    widget.groupsVm.userMemberships.where((m) => m.isActive).firstOrNull ??
-                    widget.groupsVm.userMemberships.firstOrNull;
-                final targetGroupId = ledGroup?.groupId ?? 'd755b533-e975-41c0-8a88-ed0b30e60a7c';
-                await widget.leaderHubVm.loadLeaderContext(domainId: activeDomId, groupId: targetGroupId);
-              } else if (newRole == ActiveRolePerspective.superAdmin) {
-                await widget.superAdminVm.loadAdminContext(activeDomId);
-              } else if (newRole == ActiveRolePerspective.developer) {
-                await widget.devPanelVm.loadProvisionedAdmins(activeDomId);
-              }
-            },
-            itemBuilder: (ctx) => const [
-              PopupMenuItem(
-                value: ActiveRolePerspective.developer,
-                child: Text('👑 Developer: Soham Pawar (+91 8087167841)'),
-              ),
-              PopupMenuItem(
-                value: ActiveRolePerspective.superAdmin,
-                child: Text('🛡️ SuperAdmin Perspective (Domain Command)'),
-              ),
-              PopupMenuItem(
-                value: ActiveRolePerspective.leader,
-                child: Text('🚴 Group Leader Perspective (Team Hub)'),
-              ),
-              PopupMenuItem(
-                value: ActiveRolePerspective.participant,
-                child: Text('👤 Participant Perspective (Rider Cockpit)'),
-              ),
-            ],
-          ),
-        ],
       ),
       drawer: AppDrawer(
         currentUser: user,
         activeDomain: domain,
         allDomains: widget.domainContextVm.domains,
+        currentRole: role,
+        roleString: widget.domainContextVm.roleString,
         selectedNavIndex: _bottomNavIndex,
         onSelectNavIndex: (idx) => setState(() => _bottomNavIndex = idx),
+        onSelectRole: (newRole) async {
+          await widget.domainContextVm.switchPersonaRole(newRole);
+          final activeDomId = widget.domainContextVm.activeDomain?.id ?? domainId;
+          final activeUsrId = widget.authVm.currentUser?.id ?? userId;
+
+          if (newRole == ActiveRolePerspective.participant) {
+            await widget.participantHomeVm.loadParticipantContext(domainId: activeDomId, userId: activeUsrId);
+            await widget.groupsVm.loadGroups(domainId: activeDomId, userId: activeUsrId);
+          } else if (newRole == ActiveRolePerspective.leader) {
+            await widget.groupsVm.loadGroups(domainId: activeDomId, userId: activeUsrId);
+            final ledGroup = widget.groupsVm.userMemberships.where((m) => m.isLeader).firstOrNull ??
+                widget.groupsVm.userMemberships.where((m) => m.isActive).firstOrNull ??
+                widget.groupsVm.userMemberships.firstOrNull;
+            final targetGroupId = ledGroup?.groupId ?? 'd755b533-e975-41c0-8a88-ed0b30e60a7c';
+            await widget.leaderHubVm.loadLeaderContext(domainId: activeDomId, groupId: targetGroupId);
+          } else if (newRole == ActiveRolePerspective.superAdmin) {
+            await widget.superAdminVm.loadAdminContext(activeDomId);
+          } else if (newRole == ActiveRolePerspective.developer) {
+            await widget.devPanelVm.loadProvisionedAdmins(activeDomId);
+            await widget.devPanelVm.loadGlobalMetrics();
+          }
+        },
         onSwitchDomain: (newDom) async {
           await widget.domainContextVm.switchDomain(newDom);
           await widget.participantHomeVm.loadParticipantContext(domainId: newDom.id, userId: userId);
