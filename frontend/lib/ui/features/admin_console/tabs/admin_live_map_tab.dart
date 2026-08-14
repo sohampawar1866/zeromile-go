@@ -17,6 +17,47 @@ class AdminLiveMapTab extends StatelessWidget {
     return ListView(
       padding: AppSpacing.edgeInsetsScreen,
       children: [
+        // Live Domain Density Visualizer Card
+        Card(
+          child: Padding(
+            padding: AppSpacing.edgeInsetsCard,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Domain Live Density Visualizer',
+                        style: AppTypography.headingMd,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.sensors, size: 14, color: AppColors.success),
+                        const SizedBox(width: AppSpacing.xs),
+                        Text(
+                          '60 FPS',
+                          style: AppTypography.captionXs.copyWith(color: AppColors.success, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                DensityClusterMapView(
+                  title: viewModel.selectedGroupFilter.isEmpty
+                      ? 'Nagpur Domain Loop (All General Crowd)'
+                      : 'Nagpur Domain Loop (Filtered Contingent)',
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
         // Sub-Group Filter Dropdown Card
         Card(
           child: Padding(
@@ -59,47 +100,6 @@ class AdminLiveMapTab extends StatelessWidget {
                   onChanged: (val) {
                     if (val != null) viewModel.setSelectedGroupFilter(val);
                   },
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-
-        // Live Domain Density Visualizer Card
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Domain Live Density Visualizer',
-                        style: AppTypography.headingMd,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.sensors, size: 14, color: AppColors.success),
-                        const SizedBox(width: AppSpacing.xs),
-                        Text(
-                          '60 FPS',
-                          style: AppTypography.captionXs.copyWith(color: AppColors.success, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                DensityClusterMapView(
-                  title: viewModel.selectedGroupFilter.isEmpty
-                      ? 'Nagpur Domain Loop (All General Crowd)'
-                      : 'Nagpur Domain Loop (Filtered Contingent)',
                 ),
               ],
             ),
