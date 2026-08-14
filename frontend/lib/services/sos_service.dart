@@ -32,7 +32,7 @@ class SosService {
           'longitude': longitude,
           'status': 'TRIGGERED',
         })
-        .select('*, users(full_name, phone_number), sub_groups(name)')
+        .select('*, sender:users!sos_events_sender_user_id_fkey(full_name, phone_number), sub_groups(name)')
         .single();
 
     return SosEvent.fromJson(inserted);
@@ -45,7 +45,7 @@ class SosService {
   }) async {
     final data = await _client
         .from('sos_events')
-        .select('*, users(full_name, phone_number), sub_groups(name)')
+        .select('*, sender:users!sos_events_sender_user_id_fkey(full_name, phone_number), sub_groups(name)')
         .eq('domain_id', domainId)
         .eq('active_sub_group_id', groupId)
         .neq('status', 'RESOLVED')
@@ -83,7 +83,7 @@ class SosService {
   Future<List<SosEvent>> getSuperAdminSosQueue(String domainId) async {
     final data = await _client
         .from('sos_events')
-        .select('*, users(full_name, phone_number), sub_groups(name)')
+        .select('*, sender:users!sos_events_sender_user_id_fkey(full_name, phone_number), sub_groups(name)')
         .eq('domain_id', domainId)
         .neq('status', 'RESOLVED')
         .order('created_at', ascending: false);

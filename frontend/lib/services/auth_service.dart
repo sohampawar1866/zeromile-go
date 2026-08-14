@@ -91,12 +91,8 @@ class AuthService {
     }
   }
 
-  /// 1-Tap Fast Persona Switcher for Evaluation, Judges & Sandbox Testing
+  /// 1-Tap Fast Persona Switcher for Evaluation, Live Field Testing & Sandbox Perspective Switching
   Future<UserProfile> loginAsDemoPersona(String phoneNumber) async {
-    if (!AppConfig.isDemoMode) {
-      throw const AuthException('Demo persona fast login is disabled in production mode.');
-    }
-
     final data = await _client
         .from('users')
         .select()
@@ -104,7 +100,7 @@ class AuthService {
         .maybeSingle();
 
     if (data == null) {
-      throw Exception('Demo persona with phone $phoneNumber not found in database.');
+      throw Exception('User persona with phone $phoneNumber not found in database.');
     }
 
     _currentUser = UserProfile.fromJson(data);

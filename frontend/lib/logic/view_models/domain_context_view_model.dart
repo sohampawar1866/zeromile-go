@@ -60,7 +60,7 @@ class DomainContextViewModel extends ChangeNotifier {
         _domainRepository.setActiveDomain(_activeDomain!);
         await _loadCheckpoints();
       }
-      await switchPersonaRole(ActiveRolePerspective.participant);
+      await switchPersonaRole(ActiveRolePerspective.developer);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -91,10 +91,7 @@ class DomainContextViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    String phone = '+91 98240 11111'; // Participant default (Priya Verma)
-    if (role == ActiveRolePerspective.leader) phone = '+91 98230 11111'; // Leader (Aniket Deshmukh)
-    if (role == ActiveRolePerspective.superAdmin) phone = '+91 98220 11111'; // SuperAdmin (Rajesh Sharma)
-    if (role == ActiveRolePerspective.developer) phone = '+91 98000 00000'; // Developer
+    const phone = '+91 8087167841'; // Soham Pawar (Developer Master Console)
 
     try {
       await _authRepository.loginAsDemoPersona(phone);

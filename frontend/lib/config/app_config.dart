@@ -17,7 +17,7 @@ class AppConfig {
   );
   static const bool defaultIsDemoMode = bool.fromEnvironment(
     'DEMO_MODE',
-    defaultValue: true, // Set to false in production releases via --dart-define=DEMO_MODE=false
+    defaultValue: false, // Fully integrated with live Supabase backend
   );
 
   static String _supabaseUrl = defaultSupabaseUrl;

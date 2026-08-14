@@ -32,9 +32,9 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final _otpController = TextEditingController(text: '123456');
-  final _nameController = TextEditingController(text: 'Priya Verma');
-  final _nokNameController = TextEditingController(text: 'Suresh Verma (Father)');
-  final _nokPhoneController = TextEditingController(text: '+91 98240 22222');
+  final _nameController = TextEditingController(text: 'Soham Pawar');
+  final _nokNameController = TextEditingController(text: 'Emergency Contact');
+  final _nokPhoneController = TextEditingController(text: '+91 8087167841');
   bool _isLoading = false;
 
   @override

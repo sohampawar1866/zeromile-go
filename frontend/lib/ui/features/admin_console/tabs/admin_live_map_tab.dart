@@ -38,7 +38,7 @@ class AdminLiveMapTab extends StatelessWidget {
                   items: [
                     const DropdownMenuItem(
                       value: '',
-                      child: Text('All Domain Participants (1,248 Users)'),
+                      child: Text('All Domain Participants (Domain-wide)'),
                     ),
                     ...viewModel.subGroups.map((g) {
                       return DropdownMenuItem(

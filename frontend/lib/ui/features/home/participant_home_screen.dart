@@ -177,38 +177,48 @@ class ParticipantHomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: isLive
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                EmergencySosModal.show(
-                  context,
-                  onTrigger: (type) async {
-                    final ok = await viewModel.triggerEmergencySos(
-                      domainId: domain.id,
-                      userId: currentUserId,
-                      emergencyType: type,
-                    );
-                    if (context.mounted && ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('🚨 Emergency SOS dispatched to Command Center.'),
-                          backgroundColor: AppColors.sale,
-                        ),
+          floatingActionButton: isLive
+              ? Container(
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+                  ),
+                  child: FloatingActionButton.extended(
+                    onPressed: () {
+                      EmergencySosModal.show(
+                        context,
+                        onTrigger: (type) async {
+                          final ok = await viewModel.triggerEmergencySos(
+                            domainId: domain.id,
+                            userId: currentUserId,
+                            emergencyType: type,
+                          );
+                          if (context.mounted && ok) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('🚨 Emergency SOS dispatched to Command Center.'),
+                                backgroundColor: AppColors.sale,
+                              ),
+                            );
+                          }
+                        },
                       );
-                    }
-                  },
-                );
-              },
-              backgroundColor: AppColors.sale,
-              foregroundColor: AppColors.onPrimary,
-              elevation: 3,
-              icon: const Icon(Icons.emergency_share, color: AppColors.onPrimary, size: 20),
-              label: const Text(
-                'EMERGENCY SOS',
-                style: AppTypography.buttonLg,
-              ),
-            )
-          : null,
+                    },
+                    backgroundColor: AppColors.sale,
+                    foregroundColor: AppColors.onPrimary,
+                    elevation: 0,
+                    highlightElevation: 0,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+                    ),
+                    icon: const Icon(Icons.emergency_share, color: AppColors.onPrimary, size: 20),
+                    label: const Text(
+                      'EMERGENCY SOS',
+                      style: AppTypography.buttonLg,
+                    ),
+                  ),
+                )
+              : null,
         );
       },
     );

@@ -81,19 +81,26 @@ class _ProvisioningTabState extends State<ProvisioningTab> {
                   style: AppTypography.headingMd,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                if (widget.viewModel.provisionedAdmins.isEmpty) ...[
-                  _buildAdminRow('1. Rajesh Sharma (Lead)', '+91 98220 11111', '14/8/2026'),
-                  _buildAdminRow('2. Sunita Deshmukh', '+91 98220 22222', '14/8/2026'),
-                  _buildAdminRow('3. Amit Patel', '+91 98220 33333', '14/8/2026'),
-                  _buildAdminRow('4. Kavita Joshi', '+91 98220 44444', '14/8/2026'),
-                  _buildAdminRow('5. Vikram Rao', '+91 98220 55555', '14/8/2026'),
-                ] else ...[
+                if (widget.viewModel.provisionedAdmins.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.canvas,
+                      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+                      border: Border.all(color: AppColors.hairlineSoft),
+                    ),
+                    child: const Text(
+                      'No SuperAdmins provisioned yet for this domain.',
+                      style: AppTypography.bodySm,
+                    ),
+                  )
+                else
                   ...widget.viewModel.provisionedAdmins.map((a) => _buildAdminRow(
                     a.userFullName ?? 'SuperAdmin',
                     a.userPhoneNumber ?? '+91 98220 XXXXX',
                     '${a.assignedAt.day}/${a.assignedAt.month}/${a.assignedAt.year}',
                   )),
-                ],
               ],
             ),
           ),

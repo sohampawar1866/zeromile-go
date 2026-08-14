@@ -80,12 +80,12 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    currentUser?.fullName ?? 'Priya Verma',
+                    currentUser?.fullName ?? 'Soham Pawar',
                     style: AppTypography.headingMd,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    currentUser?.phoneNumber ?? '+91 98240 11111',
+                    currentUser?.phoneNumber ?? '+91 8087167841',
                     style: AppTypography.caption,
                   ),
                   const SizedBox(height: AppSpacing.md),

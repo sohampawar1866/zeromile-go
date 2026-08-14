@@ -23,7 +23,7 @@ class PhoneAuthScreen extends StatefulWidget {
 }
 
 class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
-  final _phoneController = TextEditingController(text: '+91 98240 11111');
+  final _phoneController = TextEditingController(text: '+91 8087167841');
   bool _isLoading = false;
 
   @override

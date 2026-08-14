@@ -54,6 +54,29 @@ void main() {
       expect(event.groupName, equals('VNIT Cycling Club'));
     });
 
+    test('SosEvent parses disambiguated sender alias relation', () {
+      final json = {
+        'id': 'sos-456',
+        'domain_id': 'd1',
+        'sender_user_id': 'u2',
+        'active_sub_group_id': 'g2',
+        'emergency_type': 'BREAKDOWN',
+        'latitude': 21.1500,
+        'longitude': 79.0800,
+        'status': 'TRIGGERED',
+        'created_at': '2026-08-14T08:00:00.000Z',
+        'sender': {'full_name': 'Rahul Deshmukh', 'phone_number': '+91 98220 33333'},
+        'sub_groups': {'name': 'RCOEM Riders'},
+      };
+
+      final event = SosEvent.fromJson(json);
+      expect(event.id, equals('sos-456'));
+      expect(event.emergencyType, equals(EmergencyType.breakdown));
+      expect(event.senderName, equals('Rahul Deshmukh'));
+      expect(event.senderPhone, equals('+91 98220 33333'));
+      expect(event.groupName, equals('RCOEM Riders'));
+    });
+
     test('GroupMembership parses joined group relations and status', () {
       final json = {
         'id': 'm-123',

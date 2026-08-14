@@ -21,7 +21,8 @@ class ActiveGroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groupName = membership?.groupName ?? 'VNIT Cycling Club';
+    final isEnrolled = membership != null;
+    final groupName = membership?.groupName ?? 'General Rally Participant';
     final isLeader = membership?.isLeader ?? false;
 
     return Card(
@@ -50,8 +51,8 @@ class ActiveGroupCard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 StatusBadge(
-                  label: isLeader ? 'LEADER' : 'MEMBER',
-                  type: isLeader ? StatusBadgeType.warning : StatusBadgeType.primary,
+                  label: !isEnrolled ? 'GENERAL' : (isLeader ? 'LEADER' : 'MEMBER'),
+                  type: !isEnrolled ? StatusBadgeType.muted : (isLeader ? StatusBadgeType.warning : StatusBadgeType.primary),
                 ),
               ],
             ),
@@ -72,19 +73,23 @@ class ActiveGroupCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppSpacing.xxs),
-                  const Text(
-                    'Muster Point: Samvidhan Square • Active Telemetry Linked',
+                  Text(
+                    isEnrolled
+                        ? 'Muster Point: Samvidhan Square • Active Telemetry Linked'
+                        : 'Muster Point: Zero Mile Monument (Start Flag-off) • General Route',
                     style: AppTypography.caption,
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.shield_outlined, size: 13, color: AppColors.ink),
-                      SizedBox(width: AppSpacing.xs),
+                      const Icon(Icons.shield_outlined, size: 13, color: AppColors.ink),
+                      const SizedBox(width: AppSpacing.xs),
                       Expanded(
                         child: Text(
-                          'SOS routes to: Aniket Deshmukh (Leader)',
-                          style: TextStyle(
+                          isEnrolled
+                              ? 'SOS routes to: Assigned Contingent Leader'
+                              : 'SOS routes to: SuperAdmin Command Center',
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.ink,
                             fontWeight: FontWeight.w600,

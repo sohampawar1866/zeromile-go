@@ -100,9 +100,12 @@ class _ZeroMileRootControllerState extends State<ZeroMileRootController> {
         domainId: domain.id,
         userId: user.id,
       );
+      final activeMembership = _groupsVm.userMemberships.where((m) => m.isActive).firstOrNull ??
+          _groupsVm.userMemberships.firstOrNull;
+      final targetGroupId = activeMembership?.groupId ?? 'd755b533-e975-41c0-8a88-ed0b30e60a7c';
       await _leaderHubVm.loadLeaderContext(
         domainId: domain.id,
-        groupId: 'g0000000-0000-0000-0000-000000000002',
+        groupId: targetGroupId,
       );
       await _superAdminVm.loadAdminContext(domain.id);
       await _devPanelVm.loadProvisionedAdmins(domain.id);

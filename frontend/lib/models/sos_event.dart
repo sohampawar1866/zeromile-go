@@ -45,7 +45,11 @@ class SosEvent {
   factory SosEvent.fromJson(Map<String, dynamic> json) {
     String? senderName;
     String? senderPhone;
-    if (json['users'] != null && json['users'] is Map) {
+    if (json['sender'] != null && json['sender'] is Map) {
+      final s = json['sender'] as Map;
+      senderName = s['full_name'] as String?;
+      senderPhone = s['phone_number'] as String?;
+    } else if (json['users'] != null && json['users'] is Map) {
       final u = json['users'] as Map;
       senderName = u['full_name'] as String?;
       senderPhone = u['phone_number'] as String?;

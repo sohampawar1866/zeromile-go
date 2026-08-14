@@ -62,17 +62,7 @@ class ParticipantHomeViewModel extends ChangeNotifier {
           orElse: () => _userMemberships.first,
         );
       } else {
-        _activeMembership = GroupMembership(
-          id: 'demo-vnit-membership',
-          domainId: domainId,
-          groupId: 'g0000000-0000-0000-0000-000000000002',
-          userId: userId,
-          isActive: true,
-          isLeader: false,
-          participationStatus: ParticipationStatus.notCheckedIn,
-          joinedAt: DateTime.now(),
-          groupName: 'VNIT Cycling Club',
-        );
+        _activeMembership = null;
       }
 
       final enrolledGroupIds = _userMemberships.map((m) => m.groupId).toList();
