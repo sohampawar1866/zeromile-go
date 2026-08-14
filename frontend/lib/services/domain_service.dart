@@ -149,4 +149,33 @@ class DomainService {
 
     return (data as List).map((json) => DomainSuperAdmin.fromJson(json)).toList();
   }
+
+  /// Developer Panel: Live Global Cross-Domain Metrics
+  Future<Map<String, dynamic>> getGlobalCrossDomainMetrics() async {
+    final domainsData = await _client
+        .from('event_domains')
+        .select()
+        .order('created_at', ascending: false);
+    final domains = (domainsData as List).map((j) => EventDomain.fromJson(j)).toList();
+
+    final usersRes = await _client.from('users').select('id');
+    final totalUsers = (usersRes as List).length;
+
+    final groupsRes = await _client.from('sub_groups').select('id, domain_id');
+    final totalGroups = (groupsRes as List).length;
+
+    final superAdminsRes = await _client.from('domain_superadmins').select('id, domain_id');
+    final totalSuperAdmins = (superAdminsRes as List).length;
+
+    final liveLocationsRes = await _client.from('user_live_locations').select('id, domain_id');
+    final totalLiveLocations = (liveLocationsRes as List).length;
+
+    return {
+      'domains': domains,
+      'totalUsers': totalUsers,
+      'totalGroups': totalGroups,
+      'totalSuperAdmins': totalSuperAdmins,
+      'totalLiveLocations': totalLiveLocations,
+    };
+  }
 }

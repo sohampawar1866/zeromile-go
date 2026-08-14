@@ -29,6 +29,10 @@ class _DevPanelScreenState extends State<DevPanelScreen> with SingleTickerProvid
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    widget.viewModel.loadGlobalMetrics();
+    if (widget.activeDomain != null) {
+      widget.viewModel.loadProvisionedAdmins(widget.activeDomain!.id);
+    }
   }
 
   @override

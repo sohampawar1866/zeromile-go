@@ -64,7 +64,7 @@ class PresenceTrackerCard extends StatelessWidget {
               isCompleted
                   ? '🏁 Congratulations! You have successfully completed the rally loop. Finish certificate registered.'
                   : isCheckedIn
-                      ? '📍 Present at muster point since ${membership?.checkinTime != null ? "${membership!.checkinTime!.hour}:${membership!.checkinTime!.minute.toString().padLeft(2, '0')}" : "06:15 AM"}. Live GPS Telemetry Online.'
+                      ? '📍 Present at muster point${membership?.checkinTime != null ? " since ${membership!.checkinTime!.hour}:${membership!.checkinTime!.minute.toString().padLeft(2, '0')}" : ""}. Live GPS Telemetry Online.'
                       : 'ℹ️ Please tap "Check-in at Muster" when arriving at your assigned assembly point.',
               style: AppTypography.bodySm,
             ),

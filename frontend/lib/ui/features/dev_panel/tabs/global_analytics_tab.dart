@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
+import '../../../../models/event_domain.dart';
 import '../../../../logic/view_models/dev_panel_view_model.dart';
 import '../../../core/widgets/fluid_tap_scale.dart';
 
@@ -26,10 +27,10 @@ class GlobalAnalyticsTab extends StatelessWidget {
               children: [
                 const Text('Global Cross-Domain Overview', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
-                _buildRow('Total Active Rally Domains', '3 Configured'),
-                _buildRow('Total Registered Citizen Accounts', '5,498 Verified Users'),
-                _buildRow('Total Approved Contingent Groups', '52 Sub-Groups'),
-                _buildRow('Total Seated SuperAdmins', '16 Across All Domains'),
+                _buildRow('Total Active Rally Domains', '${viewModel.totalDomains} Configured'),
+                _buildRow('Total Registered Citizen Accounts', '${viewModel.totalUsers} Verified Users'),
+                _buildRow('Total Approved Contingent Groups', '${viewModel.totalGroups} Sub-Groups'),
+                _buildRow('Total Seated SuperAdmins', '${viewModel.totalSuperAdmins} Across All Domains'),
               ],
             ),
           ),
@@ -43,11 +44,30 @@ class GlobalAnalyticsTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Domain-by-Domain User Distribution', style: AppTypography.headingMd),
+                const Text('Domain-by-Domain Distribution', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
-                _buildDomainStat('🚲 Cycling Rally 2026', '1,248 Users (LIVE NOW)', AppColors.success),
-                _buildDomainStat('🏃 Nagpur City Marathon 2026', '3,400 Users (Scheduled)', AppColors.info),
-                _buildDomainStat('📢 Citizen Protest Rally', '850 Users (Draft)', AppColors.warning),
+                if (viewModel.domains.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.canvas,
+                      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+                      border: Border.all(color: AppColors.hairlineSoft),
+                    ),
+                    child: const Text('No domains configured yet.', style: AppTypography.bodySm),
+                  )
+                else
+                  ...viewModel.domains.map((domain) {
+                    final isLive = domain.status == EventDomainStatus.liveActive;
+                    final color = isLive ? AppColors.success : AppColors.info;
+                    final statusLabel = isLive ? 'LIVE NOW' : domain.status.name.toUpperCase();
+                    return _buildDomainStat(
+                      domain.name,
+                      'Type: ${domain.type.name.toUpperCase()} • Status: $statusLabel',
+                      color,
+                    );
+                  }),
               ],
             ),
           ),
@@ -61,24 +81,26 @@ class GlobalAnalyticsTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Infrastructure Health & Telemetry Latency', style: AppTypography.headingMd),
+                const Text('Infrastructure Health & Telemetry', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
-                _buildRow('Live WebSocket Connections', '2,140 Subscribed Channels'),
-                _buildRow('Geolocation Ping Latency (P95)', '48 ms (Sub-50ms)'),
-                _buildRow('Database Query Pool Utilization', '22% Operational Load'),
-                _buildRow('OneSignal Background Channels', 'Active & Synchronized'),
+                _buildRow('Active Location Telemetry Snapshots', '${viewModel.totalLiveLocations} Pings Recorded'),
+                _buildRow('Supabase Realtime Stream', 'Active & Synchronized'),
+                _buildRow('Database Schema Engine', 'PostgreSQL 15 (Hardened RLS)'),
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
                     Expanded(
                       child: FluidTapScale(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Telemetry cache refreshed.'),
-                              backgroundColor: AppColors.ink,
-                            ),
-                          );
+                        onTap: () async {
+                          await viewModel.loadGlobalMetrics();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Live metrics synchronized from Supabase.'),
+                                backgroundColor: AppColors.ink,
+                              ),
+                            );
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm + 2),

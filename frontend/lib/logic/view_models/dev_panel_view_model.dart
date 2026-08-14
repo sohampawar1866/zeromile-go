@@ -2,12 +2,14 @@
 
 import 'package:flutter/foundation.dart';
 import '../../models/domain_superadmin.dart';
+import '../../models/event_domain.dart';
 import '../../services/domain_service.dart';
 
 class DevPanelViewModel extends ChangeNotifier {
   final DomainService _domainService;
 
   List<DomainSuperAdmin> _provisionedAdmins = [];
+  Map<String, dynamic> _globalMetrics = {};
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -15,10 +17,33 @@ class DevPanelViewModel extends ChangeNotifier {
       : _domainService = domainService ?? DomainService();
 
   List<DomainSuperAdmin> get provisionedAdmins => _provisionedAdmins;
+  Map<String, dynamic> get globalMetrics => _globalMetrics;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int get adminSeatCount => _provisionedAdmins.length;
   bool get isSeatCapReached => _provisionedAdmins.length >= 6;
+
+  int get totalDomains => (_globalMetrics['domains'] as List<EventDomain>?)?.length ?? 0;
+  int get totalUsers => (_globalMetrics['totalUsers'] as int?) ?? 0;
+  int get totalGroups => (_globalMetrics['totalGroups'] as int?) ?? 0;
+  int get totalSuperAdmins => (_globalMetrics['totalSuperAdmins'] as int?) ?? 0;
+  int get totalLiveLocations => (_globalMetrics['totalLiveLocations'] as int?) ?? 0;
+  List<EventDomain> get domains => (_globalMetrics['domains'] as List<EventDomain>?) ?? [];
+
+  Future<void> loadGlobalMetrics() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _globalMetrics = await _domainService.getGlobalCrossDomainMetrics();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> loadProvisionedAdmins(String domainId) async {
     _isLoading = true;
@@ -78,6 +103,7 @@ class DevPanelViewModel extends ChangeNotifier {
         endTime: endTime,
         routeGeojson: routeGeojson,
       );
+      await loadGlobalMetrics();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
