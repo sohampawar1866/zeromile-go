@@ -152,60 +152,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Testing Quick Fill Options
-                Container(
-                  padding: AppSpacing.edgeInsetsCard,
-                  decoration: BoxDecoration(
-                    color: AppColors.softCloud,
-                    borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-                    border: Border.all(color: AppColors.hairlineSoft),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'DEMO QUICK-LOGIN PROFILES (NAGPUR RALLY)',
-                        style: AppTypography.captionXs,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      _buildQuickLoginRow('Participant (Priya Verma)', '+91 98240 11111'),
-                      _buildQuickLoginRow('Contingent Leader (Aniket Deshmukh)', '+91 98230 11111'),
-                      _buildQuickLoginRow('SuperAdmin (Rajesh Sharma)', '+91 98220 11111'),
-                      _buildQuickLoginRow('Developer Master Console', '+91 98000 00000'),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickLoginRow(String label, String phone) {
-    return GestureDetector(
-      onTap: () => setState(() => _phoneController.text = phone),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: AppTypography.captionXs.copyWith(color: AppColors.ink, fontWeight: FontWeight.w600),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              phone,
-              style: AppTypography.captionXs.copyWith(color: AppColors.mute),
-            ),
-          ],
         ),
       ),
     );
