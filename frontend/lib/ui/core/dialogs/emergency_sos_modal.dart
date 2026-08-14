@@ -63,7 +63,13 @@ class _EmergencySosModalState extends State<EmergencySosModal> {
               children: [
                 Icon(Icons.emergency_outlined, color: AppColors.sale, size: 24),
                 SizedBox(width: AppSpacing.sm),
-                Text('EMERGENCY SOS DISTRESS', style: AppTypography.headingXl),
+                Expanded(
+                  child: Text(
+                    'EMERGENCY SOS DISTRESS',
+                    style: AppTypography.headingXl,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),

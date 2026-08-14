@@ -77,9 +77,12 @@ class _PublishBroadcastModalState extends State<PublishBroadcastModal> {
                   size: 24,
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Text(
-                  isSuper ? 'DISPATCH DOMAIN BROADCAST' : 'DISPATCH TEAM NOTICE',
-                  style: AppTypography.headingLg,
+                Expanded(
+                  child: Text(
+                    isSuper ? 'DISPATCH DOMAIN BROADCAST' : 'DISPATCH TEAM NOTICE',
+                    style: AppTypography.headingLg,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

@@ -79,7 +79,13 @@ class _GroupCreationModalState extends State<GroupCreationModal> {
                 children: [
                   Icon(Icons.add_business, color: AppColors.ink, size: 22),
                   SizedBox(width: AppSpacing.sm),
-                  Text('PROPOSE NEW SUB-GROUP', style: AppTypography.headingLg),
+                  Expanded(
+                    child: Text(
+                      'PROPOSE NEW SUB-GROUP',
+                      style: AppTypography.headingLg,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),

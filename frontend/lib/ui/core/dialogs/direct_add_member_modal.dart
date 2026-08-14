@@ -63,7 +63,13 @@ class _DirectAddMemberModalState extends State<DirectAddMemberModal> {
               children: [
                 Icon(Icons.person_add, color: AppColors.ink, size: 22),
                 SizedBox(width: AppSpacing.sm),
-                Text('DIRECT ADD TO CONTINGENT', style: AppTypography.headingLg),
+                Expanded(
+                  child: Text(
+                    'DIRECT ADD TO CONTINGENT',
+                    style: AppTypography.headingLg,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
