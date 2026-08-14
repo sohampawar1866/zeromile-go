@@ -7,6 +7,7 @@ import '../../../../config/app_typography.dart';
 import '../../../../models/event_domain.dart';
 import '../../../../logic/view_models/dev_panel_view_model.dart';
 import '../../../core/widgets/fluid_tap_scale.dart';
+import '../../../core/widgets/status_badge.dart';
 
 class GlobalAnalyticsTab extends StatelessWidget {
   final DevPanelViewModel viewModel;
@@ -58,16 +59,7 @@ class GlobalAnalyticsTab extends StatelessWidget {
                     child: const Text('No domains configured yet.', style: AppTypography.bodySm),
                   )
                 else
-                  ...viewModel.domains.map((domain) {
-                    final isLive = domain.status == EventDomainStatus.liveActive;
-                    final color = isLive ? AppColors.success : AppColors.info;
-                    final statusLabel = isLive ? 'LIVE NOW' : domain.status.name.toUpperCase();
-                    return _buildDomainStat(
-                      domain.name,
-                      'Type: ${domain.type.name.toUpperCase()} • Status: $statusLabel',
-                      color,
-                    );
-                  }),
+                  ...viewModel.domains.map((domain) => _buildDomainCard(domain)),
               ],
             ),
           ),
@@ -175,7 +167,21 @@ class GlobalAnalyticsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildDomainStat(String title, String subtitle, Color color) {
+  Widget _buildDomainCard(EventDomain domain) {
+    final isLive = domain.status == EventDomainStatus.liveActive;
+    final isConcluded = domain.status == EventDomainStatus.concluded;
+    final badgeType = isLive
+        ? StatusBadgeType.success
+        : isConcluded
+            ? StatusBadgeType.muted
+            : StatusBadgeType.primary;
+
+    final statusLabel = isLive
+        ? 'LIVE NOW'
+        : isConcluded
+            ? 'CONCLUDED'
+            : 'UPCOMING';
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: AppSpacing.edgeInsetsCard,
@@ -187,9 +193,26 @@ class GlobalAnalyticsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTypography.bodyStrong),
-          const SizedBox(height: 4),
-          Text(subtitle, style: AppTypography.captionXs.copyWith(color: color, fontWeight: FontWeight.bold)),
+          Text(
+            domain.name,
+            style: AppTypography.bodyStrong,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xxs,
+            children: [
+              StatusBadge(
+                label: 'TYPE: ${domain.type.name.toUpperCase()}',
+                type: StatusBadgeType.muted,
+              ),
+              StatusBadge(
+                label: statusLabel,
+                type: badgeType,
+                icon: isLive ? Icons.sensors : null,
+              ),
+            ],
+          ),
         ],
       ),
     );
