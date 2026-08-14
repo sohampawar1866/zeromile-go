@@ -31,10 +31,12 @@ coverage/
 
 # Environment files & Secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+config.js
+**/config.js
+!config.example.js
+!**/config.example.js
 
 # Supabase Local
 .supabase/
