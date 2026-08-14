@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZeroMile Go — Multi-Rally & Event Management Platform</title>
+  
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Supabase JS Client -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Top App Navigation & Persona Fast Switcher -->
+  <header class="top-nav">
+    <div class="brand-section">
+      <div class="logo-icon"><i class="fa-solid fa-location-crosshairs"></i></div>
+      <div class="brand-text">
+        <h1>ZeroMile Go</h1>
+        <span class="badge-tag">Vikasit Nagpur Ecosystem</span>
+      </div>
+    </div>
+
+    <!-- Active Domain Switcher -->
+    <div class="domain-selector-wrapper">
+      <label for="domainSelect"><i class="fa-solid fa-flag-checkered"></i> Event Domain:</label>
+      <select id="domainSelect" onchange="switchDomain(this.value)">
+        <!-- Populated dynamically -->
+      </select>
+    </div>
+
+    <!-- Quick Role Switcher -->
+    <div class="role-selector-wrapper">
+      <span class="role-label"><i class="fa-solid fa-user-shield"></i> Perspective:</span>
+      <div class="role-pills">
+        <button class="role-pill active" onclick="switchRole('participant')">
+          <i class="fa-solid fa-person-biking"></i> Participant
+        </button>
+        <button class="role-pill" onclick="switchRole('leader')">
+          <i class="fa-solid fa-users-gear"></i> Group Leader
+        </button>
+        <button class="role-pill" onclick="switchRole('admin')">
+          <i class="fa-solid fa-shield-halved"></i> SuperAdmin
+        </button>
+        <button class="role-pill" onclick="switchRole('developer')">
+          <i class="fa-solid fa-terminal"></i> Dev Panel
+        </button>
+        <button class="role-pill" onclick="switchRole('onboarding')">
+          <i class="fa-solid fa-mobile-screen"></i> Onboarding
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Simulation Control -->
+    <div class="sim-control-wrapper">
+      <button id="simToggleBtn" class="btn btn-warning" onclick="toggleRallySimulation()">
+        <i class="fa-solid fa-play"></i> Run Live Crowd Sim (45 Riders)
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    
+    <!-- ==================== ONBOARDING VIEW ==================== -->
+    <section id="view-onboarding" class="role-view hidden">
+      <div class="onboarding-card">
+        <div class="onboarding-progress">
+          <div class="progress-step active" id="step-dot-1" onclick="nextOnboardingStep(1)">1. Phone</div>
+          <div class="progress-step" id="step-dot-2" onclick="nextOnboardingStep(2)">2. Profile</div>
+          <div class="progress-step" id="step-dot-3" onclick="nextOnboardingStep(3)">3. Domain</div>
+          <div class="progress-step" id="step-dot-4" onclick="nextOnboardingStep(4)">4. Permissions</div>
+        </div>
+
+        <!-- Step 1: Phone & OTP -->
+        <div id="onboarding-step-1" class="onboard-step active">
+          <h2><i class="fa-solid fa-mobile-screen"></i> Mobile Phone Login</h2>
+          <p class="subtitle">Enter your mobile phone number for instant OTP verification.</p>
+          <div class="input-group">
+            <span class="input-prefix">🇮🇳 +91</span>
+            <input type="tel" id="onboard-phone" value="9824011111" placeholder="98XXXXXXXX" />
+          </div>
+          <button class="btn btn-primary btn-block" onclick="nextOnboardingStep(2)">
+            <i class="fa-solid fa-paper-plane"></i> Send 6-Digit OTP
+          </button>
+          <div class="test-phone-hint">
+            <i class="fa-solid fa-circle-info"></i> Pre-configured Test Whitelist: <code>+91 98220 11111</code> (SuperAdmin), <code>+91 98230 11111</code> (Leader), <code>+91 98240 11111</code> (Rider). OTP: <code>123456</code>.
+          </div>
+        </div>
+
+        <!-- Step 2: OTP & Profile Creation -->
+        <div id="onboarding-step-2" class="onboard-step hidden">
+          <h2><i class="fa-solid fa-circle-check"></i> Verify OTP & Setup Profile</h2>
+          <p class="subtitle">Enter the 6-digit OTP code and citizen profile details.</p>
+          <div class="otp-inputs">
+            <input type="text" maxlength="1" value="1" />
+            <input type="text" maxlength="1" value="2" />
+            <input type="text" maxlength="1" value="3" />
+            <input type="text" maxlength="1" value="4" />
+            <input type="text" maxlength="1" value="5" />
+            <input type="text" maxlength="1" value="6" />
+          </div>
+          <div class="form-group">
+            <label for="onboard-name">Full Name</label>
+            <input type="text" id="onboard-name" value="Priya Verma" placeholder="Enter full name" />
+          </div>
+          <div class="form-group">
+            <label for="onboard-emergency">Next-of-Kin Emergency Contact Number</label>
+            <input type="tel" id="onboard-emergency" value="+91 98240 99991" placeholder="+91 98XXXXXXXX" />
+          </div>
+          <button class="btn btn-primary btn-block" onclick="nextOnboardingStep(3)">
+            <i class="fa-solid fa-arrow-right"></i> Verify & Continue
+          </button>
+        </div>
+
+        <!-- Step 3: Domain Selection -->
+        <div id="onboarding-step-3" class="onboard-step hidden">
+          <h2><i class="fa-solid fa-map-location-dot"></i> Select Your Event Domain</h2>
+          <p class="subtitle">Choose which rally you are attending today. You will be automatically enrolled in its General Group.</p>
+          <div class="domain-card-grid">
+            <div id="onboard-domain-cycling" class="domain-choice-card selected" onclick="selectOnboardingDomain('cycling-2026')">
+              <div class="domain-icon">🚲</div>
+              <div class="domain-details">
+                <h3>Cycling Rally 2026</h3>
+                <span class="status-chip live"><i class="fa-solid fa-circle"></i> LIVE ACTIVE</span>
+                <p><i class="fa-regular fa-clock"></i> 06:00 AM - 11:30 AM • Samvidhan Sq</p>
+              </div>
+            </div>
+            <div id="onboard-domain-marathon" class="domain-choice-card" onclick="selectOnboardingDomain('marathon-2026')">
+              <div class="domain-icon">🏃</div>
+              <div class="domain-details">
+                <h3>Nagpur City Marathon 2026</h3>
+                <span class="status-chip upcoming">UPCOMING</span>
+                <p><i class="fa-regular fa-clock"></i> Next Sunday • Zero Mile</p>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="nextOnboardingStep(4)">
+            <i class="fa-solid fa-check"></i> Confirm Domain Selection
+          </button>
+        </div>
+
+        <!-- Step 4: Permissions Setup -->
+        <div id="onboarding-step-4" class="onboard-step hidden">
+          <h2><i class="fa-solid fa-satellite-dish"></i> Event Permissions & Safety</h2>
+          <p class="subtitle">ZeroMile Go requires GPS location and notification permissions strictly during the active rally window for live density shading, muster roll check-in, and emergency SOS routing.</p>
+          <div class="permission-item">
+            <i class="fa-solid fa-location-dot text-primary"></i>
+            <div>
+              <strong>Live GPS Telemetry:</strong>
+              <p>Streams throttled pings every 5-8s when moving for crowd density and lead rider tracking.</p>
+            </div>
+          </div>
+          <div class="permission-item">
+            <i class="fa-solid fa-bell text-warning"></i>
+            <div>
+              <strong>OneSignal Push Alerts:</strong>
+              <p>For instant high-priority SuperAdmin safety broadcasts and SOS notifications.</p>
+            </div>
+          </div>
+          <button class="btn btn-success btn-block" onclick="finishOnboarding()">
+            <i class="fa-solid fa-rocket"></i> Allow & Launch Dashboard
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PARTICIPANT / USER VIEW ==================== -->
+    <section id="view-participant" class="role-view">
+      <div class="view-grid user-dashboard-layout">
+        
+        <!-- Left Column: Participation Status, Broadcasts & Active Sub-Group -->
+        <div class="card panel-left">
+          
+          <!-- Event Status & Temporal Window Banner -->
+          <div class="event-temporal-banner" id="userTemporalBanner">
+            <span class="pulse-indicator"></span>
+            <span id="temporalBannerText">🟢 LIVE RALLY ACTIVE • Real-time GPS & SOS Online</span>
+          </div>
+
+          <!-- Presence / Check-in & Finish Action Card -->
+          <div class="action-card participation-card">
+            <div class="card-header-compact">
+              <h3><i class="fa-solid fa-id-badge"></i> Participation Lifecycle</h3>
+              <span id="userStatusBadge" class="status-badge checked-in">CHECKED IN</span>
+            </div>
+            <p class="text-muted text-sm" id="userStatusDesc">You are checked in at Ambazari Muster Point. Live telemetry active.</p>
+            <div class="dual-actions">
+              <button id="btnCheckIn" class="btn btn-outline-primary" onclick="handleParticipantCheckIn()">
+                <i class="fa-solid fa-location-dot"></i> Check-in / Present
+              </button>
+              <button id="btnComplete" class="btn btn-outline-success" onclick="handleParticipantComplete()">
+                <i class="fa-solid fa-flag-checkered"></i> Mark Completed
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Sub-Group Card (Max 3 / 1 Active Rule) -->
+          <div class="action-card sub-group-card">
+            <div class="card-header-compact">
+              <h3><i class="fa-solid fa-users"></i> Active Sub-Group</h3>
+              <button class="btn-text" onclick="openSubGroupModal()"><i class="fa-solid fa-repeat"></i> Change (Max 3)</button>
+            </div>
+            <div class="active-group-details" id="activeGroupSummary">
+              <div class="group-title">🎓 VNIT Cycling Club <span class="role-badge">Leader: Aniket</span></div>
+              <div class="group-meta text-muted text-xs">Muster: Ambazari Gate • 38 Members Enrolled</div>
+              <div class="group-sos-info text-xs"><i class="fa-solid fa-shield-halved"></i> SOS Routes to: <strong>Aniket Deshmukh (Group Leader)</strong></div>
+            </div>
+          </div>
+
+          <!-- Live Broadcasts Banner -->
+          <div class="action-card broadcasts-card">
+            <div class="card-header-compact">
+              <h3><i class="fa-solid fa-bullhorn text-warning"></i> Latest Broadcasts</h3>
+              <span class="badge-count" id="broadcastCountBadge">2</span>
+            </div>
+            <div class="broadcast-feed" id="participantBroadcastFeed">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Discreet Footer Request Group Link -->
+          <div class="sidebar-footer-link">
+            <span>Have an organization or club?</span>
+            <a href="javascript:void(0)" onclick="openRequestGroupModal()"><i class="fa-solid fa-file-pen"></i> Request to create a sub-group &rarr;</a>
+          </div>
+        </div>
+
+        <!-- Right Column: Live Interactive Rally Map -->
+        <div class="card panel-right map-panel">
+          <div class="map-header">
+            <h3><i class="fa-solid fa-map"></i> Live Rally Route & Checkpoints</h3>
+            <div class="map-legend">
+              <span class="legend-dot cyan"></span> 1-25
+              <span class="legend-dot blue"></span> 25-100
+              <span class="legend-dot amber"></span> 100-300
+              <span class="legend-dot red"></span> 300-600
+              <span class="legend-dot purple"></span> 600+
+            </div>
+          </div>
+          <div id="participantMap" class="map-container"></div>
+          
+          <!-- Route Checkpoints Bar -->
+          <div class="checkpoints-bar" id="checkpointsBar">
+            <!-- Dynamic checkpoints -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating SOS Button (Active Window Only) -->
+      <button class="fab-sos" id="fabSosBtn" onclick="openSosModal()">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>EMERGENCY SOS</span>
+      </button>
+    </section>
+
+    <!-- ==================== GROUP LEADER HUB VIEW ==================== -->
+    <section id="view-leader" class="role-view hidden">
+      <div class="tabbed-view-container">
+        <div class="sub-nav-tabs">
+          <button class="sub-tab active" onclick="switchLeaderTab('hub')"><i class="fa-solid fa-users"></i> Tab 1: Team Hub</button>
+          <button class="sub-tab" onclick="switchLeaderTab('map')"><i class="fa-solid fa-map-location-dot"></i> Tab 2: Live Team Map</button>
+          <button class="sub-tab" onclick="switchLeaderTab('stats')"><i class="fa-solid fa-chart-column"></i> Tab 3: Team Analytics</button>
+        </div>
+
+        <!-- Leader Tab 1: Team Hub -->
+        <div id="leader-tab-hub" class="tab-content active">
+          <div class="view-grid">
+            <!-- Left: Triage & Broadcast -->
+            <div class="card panel-left">
+              <div class="section-title text-danger"><i class="fa-solid fa-heart-pulse"></i> Team SOS Alerts (Triage)</div>
+              <div class="sos-triage-container" id="leaderSosTriage">
+                <!-- Dynamic SOS cards -->
+              </div>
+
+              <hr class="divider"/>
+
+              <div class="section-title"><i class="fa-solid fa-user-plus"></i> Direct Add Member (Auto-General)</div>
+              <div class="direct-add-form">
+                <input type="text" id="add-member-name" placeholder="Member Full Name" />
+                <div class="input-group">
+                  <span class="input-prefix">+91</span>
+                  <input type="tel" id="add-member-phone" placeholder="98XXXXXXXX" />
+                </div>
+                <button class="btn btn-primary" onclick="handleLeaderDirectAdd()"><i class="fa-solid fa-plus"></i> Add Member</button>
+              </div>
+
+              <hr class="divider"/>
+
+              <div class="section-title"><i class="fa-solid fa-bullhorn"></i> Team Broadcast (Own Group Only)</div>
+              <div class="team-broadcast-form">
+                <textarea id="leader-broadcast-msg" rows="2" placeholder="e.g. Assemble at South Gate by 05:30 AM!"></textarea>
+                <button class="btn btn-warning btn-block" onclick="handleLeaderSendBroadcast()"><i class="fa-solid fa-paper-plane"></i> Dispatch to Team Members</button>
+              </div>
+            </div>
+
+            <!-- Right: Roster & Muster -->
+            <div class="card panel-right">
+              <div class="card-header-compact">
+                <h3><i class="fa-solid fa-list-check"></i> VNIT Cycling Club Roster</h3>
+                <span class="badge-count" id="leaderRosterCount">4 Members</span>
+              </div>
+              <div class="roster-table-wrapper">
+                <table class="data-table" id="leaderRosterTable">
+                  <thead>
+                    <tr>
+                      <th>Participant</th>
+                      <th>Phone</th>
+                      <th>Muster Status</th>
+                      <th>Active Group</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leader Tab 2: Live Team Map -->
+        <div id="leader-tab-map" class="tab-content hidden">
+          <div class="card map-full-card">
+            <div class="map-header">
+              <h3><i class="fa-solid fa-satellite"></i> Live VNIT Team Telemetry & Dynamic Density Tracker</h3>
+              <div class="telemetry-pill">Avg Speed: <strong>19.2 km/h</strong> • Lead Rider: <strong>Samvidhan Sq</strong></div>
+            </div>
+            <div id="leaderMap" class="map-container-lg"></div>
+          </div>
+        </div>
+
+        <!-- Leader Tab 3: Team Analytics -->
+        <div id="leader-tab-stats" class="tab-content hidden">
+          <div class="card">
+            <h3><i class="fa-solid fa-chart-pie"></i> Team Muster & Participation Metrics</h3>
+            <div class="stats-grid">
+              <div class="stat-box">
+                <div class="stat-value" id="leaderStatEnrolled">4</div>
+                <div class="stat-label">Total Enrolled</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value text-success" id="leaderStatActive">4 (100%)</div>
+                <div class="stat-label">Active Group</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value text-warning" id="leaderStatCheckedIn">3 (75%)</div>
+                <div class="stat-label">Muster Checked-In</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value text-primary" id="leaderStatCompleted">1 (25%)</div>
+                <div class="stat-label">Completed Finish</div>
+              </div>
+            </div>
+            <button class="btn btn-outline-primary" onclick="exportAttendanceCSV()"><i class="fa-solid fa-download"></i> Export Attendance CSV</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SUPERADMIN CONSOLE VIEW ==================== -->
+    <section id="view-admin" class="role-view hidden">
+      <div class="tabbed-view-container">
+        <div class="sub-nav-tabs">
+          <button class="sub-tab active" onclick="switchAdminTab('gov')"><i class="fa-solid fa-shield"></i> Tab 1: Governance</button>
+          <button class="sub-tab" onclick="switchAdminTab('map')"><i class="fa-solid fa-map"></i> Tab 2: Domain Live Map</button>
+          <button class="sub-tab" onclick="switchAdminTab('route')"><i class="fa-solid fa-route"></i> Tab 3: Route & Schedule</button>
+          <button class="sub-tab" onclick="switchAdminTab('analytics')"><i class="fa-solid fa-chart-line"></i> Tab 4: Domain Analytics</button>
+        </div>
+
+        <!-- Admin Tab 1: Governance -->
+        <div id="admin-tab-gov" class="tab-content active">
+          <div class="view-grid">
+            <!-- Left: Escalated SOS & Broadcast Tool -->
+            <div class="card panel-left">
+              <div class="section-title text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Escalated & Direct SOS Queue</div>
+              <div class="admin-sos-queue" id="adminSosQueue">
+                <!-- Rendered dynamically -->
+              </div>
+
+              <hr class="divider"/>
+
+              <div class="section-title"><i class="fa-solid fa-tower-broadcast text-primary"></i> SuperAdmin Broadcast Tool</div>
+              <div class="admin-broadcast-box">
+                <label>Target Audience:</label>
+                <div class="radio-group">
+                  <label><input type="radio" name="adminBroadcastTarget" value="GENERAL" checked /> General Group (Domain-wide)</label>
+                  <label><input type="radio" name="adminBroadcastTarget" value="VNIT" /> Sub-Group Specific (VNIT)</label>
+                </div>
+                <textarea id="admin-broadcast-text" rows="2" placeholder="🚨 Enter urgent announcement..."></textarea>
+                <button class="btn btn-danger btn-block" onclick="handleAdminSendBroadcast()"><i class="fa-solid fa-bullhorn"></i> Send High-Priority Broadcast</button>
+              </div>
+            </div>
+
+            <!-- Right: Pending Group Applications -->
+            <div class="card panel-right">
+              <div class="card-header-compact">
+                <h3><i class="fa-solid fa-file-signature"></i> Pending Group Proposals</h3>
+                <span class="badge-count" id="pendingGroupsCount">1</span>
+              </div>
+              <div class="pending-requests-container" id="adminPendingRequests">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Tab 2: Domain Live Map -->
+        <div id="admin-tab-map" class="tab-content hidden">
+          <div class="card map-full-card">
+            <div class="map-header">
+              <div class="group-filter-selector">
+                <label for="adminSubGroupFilter">Filter By Sub-Group:</label>
+                <select id="adminSubGroupFilter" onchange="filterAdminMapGroup(this.value)">
+                  <option value="">All Domain Participants</option>
+                  <option value="VNIT Cycling Club">VNIT Cycling Club</option>
+                  <option value="Orange City Sprinters">Orange City Sprinters</option>
+                </select>
+              </div>
+              <div class="map-legend">
+                <span class="legend-dot cyan"></span> 1-25
+                <span class="legend-dot blue"></span> 25-100
+                <span class="legend-dot amber"></span> 100-300
+                <span class="legend-dot red"></span> 300-600
+                <span class="legend-dot purple"></span> 600+
+              </div>
+            </div>
+            <div id="adminMap" class="map-container-lg"></div>
+          </div>
+        </div>
+
+        <!-- Admin Tab 3: Route & Schedule -->
+        <div id="admin-tab-route" class="tab-content hidden">
+          <div class="card">
+            <h3><i class="fa-solid fa-clock"></i> Route & Event Timing Configuration</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="adminEventStart">Rally Date & Start Time</label>
+                <input type="datetime-local" id="adminEventStart" value="2026-08-14T06:00" />
+              </div>
+              <div class="form-group">
+                <label for="adminEventEnd">Rally Conclusion Time</label>
+                <input type="datetime-local" id="adminEventEnd" value="2026-08-14T11:30" />
+              </div>
+              <div class="form-group">
+                <label for="adminEventStatus">Status</label>
+                <select id="adminEventStatus">
+                  <option value="LIVE_ACTIVE" selected>LIVE_ACTIVE</option>
+                  <option value="UPCOMING">UPCOMING</option>
+                  <option value="CONCLUDED">CONCLUDED</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveEventSchedule()"><i class="fa-solid fa-floppy-disk"></i> Save Schedule & Published Route</button>
+          </div>
+        </div>
+
+        <!-- Admin Tab 4: Domain Analytics -->
+        <div id="admin-tab-analytics" class="tab-content hidden">
+          <div class="card">
+            <h3><i class="fa-solid fa-chart-line"></i> Domain-Wide Participation & Safety SLA</h3>
+            <div class="stats-grid">
+              <div class="stat-box">
+                <div class="stat-value" id="adminStatParticipants">1,248</div>
+                <div class="stat-label">Registered Participants</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value text-primary" id="adminStatSubGroups">2</div>
+                <div class="stat-label">Active Sub-Groups</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value text-danger" id="adminStatSosCount">1</div>
+                <div class="stat-label">Active SOS Incidents</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value text-success" id="adminStatSla">4.2 min</div>
+                <div class="stat-label">Avg SOS Turnaround</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== DEVELOPER PANEL VIEW ==================== -->
+    <section id="view-developer" class="role-view hidden">
+      <div class="tabbed-view-container">
+        <div class="sub-nav-tabs">
+          <button class="sub-tab active" onclick="switchDevTab('prov')"><i class="fa-solid fa-key"></i> Tab 1: SuperAdmin Provisioning</button>
+          <button class="sub-tab" onclick="switchDevTab('stats')"><i class="fa-solid fa-chart-column"></i> Tab 2: Global Cross-Domain Analytics</button>
+        </div>
+
+        <!-- Dev Tab 1: Provisioning -->
+        <div id="dev-tab-prov" class="tab-content active">
+          <div class="card">
+            <div class="card-header-compact">
+              <h3 id="devAdminSeatHeader"><i class="fa-solid fa-user-shield"></i> Provisioned SuperAdmins (5/6 Soft Cap)</h3>
+              <button class="btn btn-outline-primary" onclick="openProvisionModal()"><i class="fa-solid fa-plus"></i> Provision 6th SuperAdmin</button>
+            </div>
+            <div class="admin-provision-list" id="devSuperAdminList">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Dev Tab 2: Global Analytics -->
+        <div id="dev-tab-stats" class="tab-content hidden">
+          <div class="card">
+            <h3><i class="fa-solid fa-globe"></i> Global Multi-Tenant Cross-Domain Metrics</h3>
+            <div class="stats-grid">
+              <div class="stat-box">
+                <div class="stat-value" id="devStatDomains">3</div>
+                <div class="stat-label">Active Domains</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value" id="devStatCitizens">13</div>
+                <div class="stat-label">Registered Citizens</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value" id="devStatGroups">5</div>
+                <div class="stat-label">Total Sub-Groups</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value" id="devStatAdmins">5</div>
+                <div class="stat-label">Seated SuperAdmins</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal: Emergency SOS Trigger -->
+  <div id="sosModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-triangle-exclamation text-danger"></i> Trigger Emergency SOS</h3>
+        <button class="modal-close" onclick="closeSosModal()">&times;</button>
+      </div>
+      <p class="subtitle text-sm">Select the nature of emergency. Your live GPS coordinates will be immediately routed to your Group Leader or Domain SuperAdmins.</p>
+      <div class="sos-type-buttons">
+        <button class="btn-sos-choice active" onclick="selectSosType(this, 'MEDICAL')">
+          <i class="fa-solid fa-truck-medical"></i>
+          <span>Medical Emergency</span>
+        </button>
+        <button class="btn-sos-choice" onclick="selectSosType(this, 'BREAKDOWN')">
+          <i class="fa-solid fa-wrench"></i>
+          <span>Bicycle / Vehicle Breakdown</span>
+        </button>
+        <button class="btn-sos-choice" onclick="selectSosType(this, 'THREAT')">
+          <i class="fa-solid fa-shield-virus"></i>
+          <span>Safety / Crowd Threat</span>
+        </button>
+      </div>
+      <button class="btn btn-danger btn-block btn-lg" onclick="dispatchSosAlert()">
+        <i class="fa-solid fa-radiation"></i> BROADCAST SOS NOW
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: Change Active Sub-Group (Max 3 Limit) -->
+  <div id="subGroupModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-users"></i> My Sub-Groups (Max 3 Active Rule)</h3>
+        <button class="modal-close" onclick="closeSubGroupModal()">&times;</button>
+      </div>
+      <p class="subtitle text-sm">Select which group is ACTIVE for today's rally tracking, muster roll, and SOS routing:</p>
+      <div class="my-subgroups-list" id="mySubGroupsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Request New Sub-Group Application -->
+  <div id="requestGroupModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-pen"></i> New Group Creation Application</h3>
+        <button class="modal-close" onclick="closeRequestGroupModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label for="req-group-name">Group / Contingent Name</label>
+        <input type="text" id="req-group-name" value="Nagpur Cyclists United" />
+      </div>
+      <div class="form-group">
+        <label for="req-group-type">Organization Category</label>
+        <select id="req-group-type">
+          <option value="COLLEGE">College / University Union</option>
+          <option value="NGO" selected>NGO / Civil Society Org</option>
+          <option value="SPORTS_CLUB">Sports / Athletic Club</option>
+          <option value="CORPORATE">Corporate / Workplace Team</option>
+          <option value="RWA">Resident Welfare Association</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="req-group-count">Estimated Contingent Size</label>
+        <input type="number" id="req-group-count" value="45" />
+      </div>
+      <div class="form-group">
+        <label for="req-group-muster">Proposed Assembly / Muster Point</label>
+        <input type="text" id="req-group-muster" value="Samvidhan Square, Nagpur" />
+      </div>
+      <div class="form-group">
+        <label for="req-group-notes">Purpose Notes</label>
+        <textarea id="req-group-notes" rows="2">Civic awareness rally contingent</textarea>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitGroupApplication()">
+        <i class="fa-solid fa-paper-plane"></i> Submit Application for SuperAdmin Review
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: Leader Forward SOS to SuperAdmin -->
+  <div id="forwardSosModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-share-from-square text-warning"></i> Forward SOS to SuperAdmin</h3>
+        <button class="modal-close" onclick="closeForwardSosModal()">&times;</button>
+      </div>
+      <p class="text-sm">Attach a triage note for the SuperAdmin command center:</p>
+      <input type="hidden" id="forwardSosId" />
+      <div class="form-group">
+        <label for="forwardSosNote">Leader Triage Note</label>
+        <textarea id="forwardSosNote" rows="3" placeholder="e.g. Ambulance required urgently near Samvidhan Square..."></textarea>
+      </div>
+      <button class="btn btn-warning btn-block" onclick="confirmForwardSos()">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i> Forward with Note to SuperAdmin
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: Provision 6th SuperAdmin -->
+  <div id="provisionModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-shield text-primary"></i> Provision SuperAdmin (Seat 6/6)</h3>
+        <button class="modal-close" onclick="closeProvisionModal()">&times;</button>
+      </div>
+      <p class="text-sm text-muted">Select an existing registered citizen to grant Domain SuperAdmin authority for this event domain.</p>
+      <div class="form-group" style="margin-top: 14px;">
+        <label for="prov-user-select">Select Citizen to Seat as SuperAdmin</label>
+        <select id="prov-user-select">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="prov-admin-notes">Authority Note / Department</label>
+        <input type="text" id="prov-admin-notes" value="Nagpur Traffic Police Liaison Officer" />
+      </div>
+      <button class="btn btn-primary btn-block" onclick="handleProvisionSuperAdmin()">
+        <i class="fa-solid fa-key"></i> Confirm & Seat SuperAdmin
+      </button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
