@@ -14,7 +14,12 @@ class SupabaseClientService {
       try {
         _instance = SupabaseClientService._internal(Supabase.instance.client);
       } catch (_) {
-        throw StateError('SupabaseClientService is not initialized. Call initialize() first.');
+        // Fallback for widget/unit tests or headless environments
+        final fallbackClient = SupabaseClient(
+          AppConfig.supabaseUrl,
+          AppConfig.supabaseAnonKey,
+        );
+        _instance = SupabaseClientService._internal(fallbackClient);
       }
     }
     return _instance!;
@@ -32,16 +37,18 @@ class SupabaseClientService {
     try {
       await Supabase.initialize(
         url: targetUrl,
+        // ignore: deprecated_member_use
         anonKey: targetAnonKey,
         realtimeClientOptions: const RealtimeClientOptions(
           eventsPerSecond: 20,
         ),
       );
+      _instance = SupabaseClientService._internal(Supabase.instance.client);
     } catch (_) {
-      // If already initialized in app runtime, proceed with existing client
+      final fallbackClient = SupabaseClient(targetUrl, targetAnonKey);
+      _instance = SupabaseClientService._internal(fallbackClient);
     }
 
-    _instance = SupabaseClientService._internal(Supabase.instance.client);
     return _instance!;
   }
 

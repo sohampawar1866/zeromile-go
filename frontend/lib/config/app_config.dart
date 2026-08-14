@@ -5,11 +5,11 @@
 class AppConfig {
   static const String defaultSupabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://your-project-id.supabase.co',
+    defaultValue: 'https://lqfedsbgbxsniyzgcmvx.supabase.co',
   );
   static const String defaultSupabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'your-supabase-anon-key-here',
+    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZmVkc2JnYnhzbml5emdjbXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MjA2NDYsImV4cCI6MjEwMjI5NjY0Nn0.nGw80aonCWz2mP2HhZQokkK2vbcb4Z2yhq8yne5AnCM',
   );
   static const String defaultOneSignalAppId = String.fromEnvironment(
     'ONESIGNAL_APP_ID',

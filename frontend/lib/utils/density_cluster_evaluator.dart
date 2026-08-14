@@ -1,6 +1,8 @@
 // lib/utils/density_cluster_evaluator.dart
 
 import 'dart:math';
+import 'package:flutter/material.dart';
+import '../config/app_colors.dart';
 import '../models/user_live_location.dart';
 
 class DensityCluster {
@@ -8,6 +10,7 @@ class DensityCluster {
   final double centerLongitude;
   final int pointCount;
   final String hexColor;
+  final Color color;
   final double radius;
   final List<UserLiveLocation> locations;
 
@@ -16,6 +19,7 @@ class DensityCluster {
     required this.centerLongitude,
     required this.pointCount,
     required this.hexColor,
+    required this.color,
     required this.radius,
     required this.locations,
   });
@@ -25,6 +29,7 @@ class DensityCluster {
     double? centerLongitude,
     int? pointCount,
     String? hexColor,
+    Color? color,
     double? radius,
     List<UserLiveLocation>? locations,
   }) {
@@ -33,6 +38,7 @@ class DensityCluster {
       centerLongitude: centerLongitude ?? this.centerLongitude,
       pointCount: pointCount ?? this.pointCount,
       hexColor: hexColor ?? this.hexColor,
+      color: color ?? this.color,
       radius: radius ?? this.radius,
       locations: locations ?? this.locations,
     );
@@ -63,6 +69,14 @@ class DensityClusterEvaluator {
     if (count >= 100) return '#F1F075';
     if (count >= 25) return '#3BB2D0';
     return '#51BBD6';
+  }
+
+  static Color getClusterColorValue(int count) {
+    if (count >= 600) return AppColors.clusterDeepPurple;
+    if (count >= 300) return AppColors.clusterCoralRed;
+    if (count >= 100) return AppColors.clusterAmber;
+    if (count >= 25) return AppColors.clusterSkyBlue;
+    return AppColors.clusterCyan;
   }
 
   static double getClusterRadius(int count) {
@@ -111,6 +125,7 @@ class DensityClusterEvaluator {
           centerLongitude: sumLng / count,
           pointCount: count,
           hexColor: getClusterColor(count),
+          color: getClusterColorValue(count),
           radius: getClusterRadius(count),
           locations: bucketPings,
         ),

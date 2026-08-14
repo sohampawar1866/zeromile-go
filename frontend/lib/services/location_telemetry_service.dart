@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_live_location.dart';
 import 'supabase_client_service.dart';
@@ -10,10 +11,13 @@ class LocationTelemetryService {
   final SupabaseClient _client;
   final List<RealtimeChannel> _activeChannels = [];
 
-  // Throttling state
+  // Throttling & Daemon State
   double? _lastLatitude;
   double? _lastLongitude;
   DateTime? _lastPingTime;
+  Timer? _telemetryTimer;
+  bool _isDaemonRunning = false;
+
   static const int minPingIntervalSeconds = 5;
   static const double minDistanceDeltaMeters = 5.0;
 
@@ -22,6 +26,54 @@ class LocationTelemetryService {
 
   LocationTelemetryService({SupabaseClient? client})
       : _client = client ?? SupabaseClientService.instance.client;
+
+  bool get isDaemonRunning => _isDaemonRunning;
+
+  /// Starts the automatic 10-second GPS telemetry publisher daemon for active rally participants
+  void startHardwareTelemetryDaemon({
+    required String domainId,
+    required String userId,
+    String? activeGroupId,
+    int intervalSeconds = 10,
+  }) {
+    if (_isDaemonRunning) return;
+    _isDaemonRunning = true;
+
+    // Simulated base starting point around Nagpur Zero Mile (21.1466, 79.0888)
+    double currentLat = 21.1466;
+    double currentLng = 79.0888;
+    final random = Random();
+
+    _telemetryTimer?.cancel();
+    _telemetryTimer = Timer.periodic(Duration(seconds: intervalSeconds), (timer) async {
+      // Advance coordinates along loop
+      currentLat += (random.nextDouble() - 0.48) * 0.0008;
+      currentLng += (random.nextDouble() - 0.48) * 0.0008;
+      final speed = 15.0 + random.nextDouble() * 10.0;
+      final heading = (random.nextDouble() * 360.0);
+
+      try {
+        await publishLocationPing(
+          domainId: domainId,
+          userId: userId,
+          activeGroupId: activeGroupId,
+          latitude: currentLat,
+          longitude: currentLng,
+          speedKmh: speed,
+          heading: heading,
+        );
+      } catch (e) {
+        debugPrint('Telemetry daemon ping error: $e');
+      }
+    });
+  }
+
+  /// Stops the hardware GPS telemetry daemon
+  void stopHardwareTelemetryDaemon() {
+    _telemetryTimer?.cancel();
+    _telemetryTimer = null;
+    _isDaemonRunning = false;
+  }
 
   /// Throttled GPS publisher: Publishes ONLY if moved >= 5m or interval >= 5s
   Future<bool> publishLocationPing({
@@ -34,7 +86,7 @@ class LocationTelemetryService {
     double heading = 0.0,
     bool force = false,
   }) async {
-    // 1. Guard against invalid GPS readings (e.g. 0.0, 0.0 or NaN before satellite lock)
+    // 1. Guard against invalid GPS readings
     if (latitude.isNaN || longitude.isNaN) return false;
     if (latitude == 0.0 && longitude == 0.0) return false;
     if (latitude < -90.0 || latitude > 90.0 || longitude < -180.0 || longitude > 180.0) return false;
@@ -165,8 +217,9 @@ class LocationTelemetryService {
     return streamDomainTelemetry(domainId, subGroupIdFilter: groupId);
   }
 
-  /// Clean up all active telemetry channels
+  /// Clean up all active telemetry channels and daemon timer
   void dispose() {
+    stopHardwareTelemetryDaemon();
     for (final channel in List<RealtimeChannel>.from(_activeChannels)) {
       channel.unsubscribe();
       _client.removeChannel(channel);

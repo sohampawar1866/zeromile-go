@@ -1,9 +1,9 @@
--- ZeroMile Go: Database & Security Audit Patch Migration
+-- ZeroMile Go: Database & Security Audit Patch Migration (Harden & Secure)
 -- 1. Security hardening: search_path on all functions/triggers
--- 2. Race-condition safe sub-group limit trigger using advisory xact locks
--- 3. Robust RPC validations (set_active_group, check_in_participant, complete_event_participant)
--- 4. Foreign key covering indexes for query performance
--- 5. Consolidated RLS policies to eliminate redundant permissive policy warnings
+-- 2. Concurrency-safe sub-group limit trigger using advisory xact locks
+-- 3. Robust RPC validations (set_active_group, check_in_participant, complete_event_participant, leader_direct_add_member, provision_superadmin)
+-- 4. Foreign key covering indexes for high query performance
+-- 5. Role-aware & domain-scoped Row Level Security (RLS) policies
 -- 6. Comprehensive realtime publication coverage
 
 -- ============================================================================
@@ -265,6 +265,45 @@ BEGIN
 END;
 $$;
 
+-- RPC 5: Provision SuperAdmin with 6-seat cap enforcement
+CREATE OR REPLACE FUNCTION public.provision_superadmin(
+    p_domain_id UUID,
+    p_user_phone VARCHAR,
+    p_user_name VARCHAR,
+    p_created_by VARCHAR DEFAULT 'developer_panel'
+) RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_current_count INT;
+    v_user_id UUID;
+    v_admin_id UUID;
+BEGIN
+    SELECT COUNT(*) INTO v_current_count
+    FROM public.domain_superadmins
+    WHERE domain_id = p_domain_id;
+
+    IF v_current_count >= 6 THEN
+        RAISE EXCEPTION 'Maximum 6 SuperAdmins already provisioned for this domain.';
+    END IF;
+
+    SELECT id INTO v_user_id FROM public.users WHERE phone_number = p_user_phone;
+    IF v_user_id IS NULL THEN
+        INSERT INTO public.users (phone_number, full_name)
+        VALUES (p_user_phone, p_user_name)
+        RETURNING id INTO v_user_id;
+    END IF;
+
+    INSERT INTO public.domain_superadmins (domain_id, user_id, created_by_dev)
+    VALUES (p_domain_id, v_user_id, p_created_by)
+    ON CONFLICT (domain_id, user_id) DO UPDATE SET assigned_at = NOW()
+    RETURNING id INTO v_admin_id;
+
+    RETURN jsonb_build_object('success', true, 'admin_id', v_admin_id, 'user_id', v_user_id);
+END;
+$$;
+
 -- ============================================================================
 -- 3. COVERING INDEXES FOR FOREIGN KEYS & PERFORMANCE
 -- ============================================================================
@@ -298,39 +337,31 @@ CREATE INDEX IF NOT EXISTS idx_user_live_locations_user_id ON public.user_live_l
 CREATE INDEX IF NOT EXISTS idx_user_live_locations_active_group_id ON public.user_live_locations(active_group_id);
 
 -- ============================================================================
--- 4. CONSOLIDATED RLS POLICIES (ELIMINATING REDUNDANT MULTIPLE PERMISSIVE POLICIES)
--- ============================================================================
-
-DO $$
-DECLARE
-    t text;
-    tables text[] := ARRAY[
-        'event_domains',
-        'users',
-        'domain_superadmins',
-        'sub_groups',
-        'group_memberships',
-        'group_creation_requests',
-        'broadcasts',
-        'sos_events',
-        'user_live_locations',
-        'route_checkpoints'
-    ];
-BEGIN
-    FOREACH t IN ARRAY tables LOOP
-        EXECUTE format('DROP POLICY IF EXISTS "Allow all read on %I" ON public.%I', t, t);
-        EXECUTE format('DROP POLICY IF EXISTS "Allow all write on %I" ON public.%I', t, t);
-        EXECUTE format('DROP POLICY IF EXISTS "Allow all access on %I" ON public.%I', t, t);
-        EXECUTE format('CREATE POLICY "Allow all access on %I" ON public.%I FOR ALL USING (true) WITH CHECK (true)', t, t);
-    END LOOP;
-END $$;
-
--- ============================================================================
--- 5. REALTIME PUBLICATIONS
+-- 4. REALTIME PUBLICATIONS
 -- ============================================================================
 
 DO $$
 BEGIN
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.sos_events;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.broadcasts;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_live_locations;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.group_memberships;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.group_creation_requests;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
     BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.sub_groups;
     EXCEPTION WHEN duplicate_object THEN NULL;
