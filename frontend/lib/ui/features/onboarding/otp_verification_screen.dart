@@ -107,32 +107,39 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   final otp = _otpController.text.trim();
                                   if (otp.length < 6) return;
 
-                                  if (widget.onVerified != null) {
-                                    widget.onVerified!(
-                                      otp: otp,
-                                      fullName: 'Soham Pawar',
-                                      emergencyContact: '+91 8087167841',
-                                    );
-                                    return;
-                                  }
+                                  setState(() => _isLoading = true);
 
-                                  if (widget.authViewModel != null) {
-                                    setState(() => _isLoading = true);
-                                    final success = await widget.authViewModel!.verifyOtp(
-                                      phoneNumber: widget.phoneNumber,
-                                      token: otp,
-                                      fullName: 'Soham Pawar',
-                                      emergencyContact: '+91 8087167841',
-                                    );
-                                    setState(() => _isLoading = false);
+                                  try {
+                                    if (widget.onVerified != null) {
+                                      await widget.onVerified!(
+                                        otp: otp,
+                                        fullName: 'Soham Pawar',
+                                        emergencyContact: '+91 8087167841',
+                                      );
+                                    } else if (widget.authViewModel != null) {
+                                      final success = await widget.authViewModel!.verifyOtp(
+                                        phoneNumber: widget.phoneNumber,
+                                        token: otp,
+                                        fullName: 'Soham Pawar',
+                                        emergencyContact: '+91 8087167841',
+                                      );
 
-                                    if (context.mounted && success) {
-                                      Navigator.pushAndRemoveUntil(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => const DomainSelectionScreen()),
-                                        (route) => false,
+                                      if (context.mounted && success) {
+                                        Navigator.pushAndRemoveUntil(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => const DomainSelectionScreen()),
+                                          (route) => false,
+                                        );
+                                      }
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Verification error: $e')),
                                       );
                                     }
+                                  } finally {
+                                    if (mounted) setState(() => _isLoading = false);
                                   }
                                 },
                           child: Container(

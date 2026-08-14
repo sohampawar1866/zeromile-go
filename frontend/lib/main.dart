@@ -169,7 +169,8 @@ class _ZeroMileRootControllerState extends State<ZeroMileRootController> {
               emergencyContact: emergencyContact,
             );
             if (ok) {
-              setState(() => _onboardingStep = 2);
+              await _bootstrapData();
+              setState(() => _onboardingStep = 3);
             }
           },
         );
