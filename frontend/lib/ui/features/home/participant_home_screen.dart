@@ -63,7 +63,7 @@ class ParticipantHomeScreen extends StatelessWidget {
         child: ListView(
           padding: AppSpacing.edgeInsetsScreen,
           children: [
-            // Temporal Schedule Banner (Nike Soft Cloud Banner)
+            // Temporal Schedule Banner (Soft Cloud Banner)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
               decoration: BoxDecoration(

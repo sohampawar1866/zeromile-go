@@ -174,7 +174,7 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // Propose New Sub-Group Action (Nike Black Pill)
+          // Propose New Sub-Group Action (Black Pill Button)
           FluidTapScale(
             onTap: () {
               GroupCreationModal.show(

@@ -42,7 +42,7 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Drawer Header with Nike Styling
+            // Drawer Header
             Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: const BoxDecoration(
@@ -203,7 +203,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    'Build v2.4.0 • Nike Design Architecture',
+                    'Build v2.4.0 • ZeroMile Architecture',
                     style: AppTypography.captionXs.copyWith(color: AppColors.stone),
                   ),
                 ],

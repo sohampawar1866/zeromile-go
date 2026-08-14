@@ -125,7 +125,7 @@ class TeamHubTab extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // Quick Actions (Nike Black & Soft Cloud Pills)
+        // Quick Actions (Action Buttons)
         Row(
           children: [
             Expanded(

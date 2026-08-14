@@ -143,7 +143,7 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // Save & Publish Route Action (Nike Black Pill)
+        // Save & Publish Route Action (Black Pill Button)
         FluidTapScale(
           onTap: () async {
             if (widget.activeDomain != null) {

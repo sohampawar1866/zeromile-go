@@ -103,7 +103,7 @@ class GovernanceTab extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // Broadcast Trigger (Nike Black Pill)
+        // Broadcast Trigger (Black Pill Button)
         FluidTapScale(
           onTap: () {
             PublishBroadcastModal.show(

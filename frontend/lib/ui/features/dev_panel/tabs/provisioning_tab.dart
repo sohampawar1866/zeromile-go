@@ -34,7 +34,7 @@ class _ProvisioningTabState extends State<ProvisioningTab> {
     return ListView(
       padding: AppSpacing.edgeInsetsScreen,
       children: [
-        // Allocation Header Card (Nike Soft Cloud Card)
+        // Allocation Header Card (Soft Cloud Card)
         Card(
           child: Padding(
             padding: AppSpacing.edgeInsetsCard,

@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 /// Kinetic Athletic Tap Scale Micro-Interaction Widget
-/// Mimics Nike's signature tap collapse feedback (scale(0.96) with instant curve).
+/// Interactive tap collapse feedback (scale(0.96) with instant curve).
 class FluidTapScale extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;

@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// Typography hierarchy matching DESIGN-nike.md
+/// Central Typography Hierarchy
 abstract class AppTypography {
   // Display Campaign Tier
   static const TextStyle displayCampaign = TextStyle(
@@ -61,7 +61,7 @@ abstract class AppTypography {
     height: 1.35,
   );
 
-  // Buttons (Nike Pill CTAs)
+  // Buttons (Pill CTAs)
   static const TextStyle buttonLg = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w700,

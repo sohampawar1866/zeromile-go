@@ -38,7 +38,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Brand Header (Nike Athletic Minimal)
+                // Brand Header (Athletic Minimal)
                 Center(
                   child: Container(
                     width: 72,
@@ -68,7 +68,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xxl),
 
-                // Auth Input Container (Nike Soft Cloud Card)
+                // Auth Input Container (Soft Cloud Card)
                 Card(
                   child: Padding(
                     padding: AppSpacing.edgeInsetsCard,

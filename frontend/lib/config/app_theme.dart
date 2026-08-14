@@ -121,6 +121,6 @@ class AppTheme {
     );
   }
 
-  // Alias darkTheme to lightTheme so the Nike white canvas is universal
+  // Universal Clean Canvas Theme
   static ThemeData get darkTheme => lightTheme;
 }

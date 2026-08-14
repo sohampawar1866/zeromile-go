@@ -113,7 +113,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
           ],
         ),
         actions: [
-          // Persona Switcher Dropdown (Compact Nike pill)
+          // Persona Switcher Dropdown (Compact Black pill)
           PopupMenuButton<ActiveRolePerspective>(
             tooltip: 'Switch Role Persona',
             child: Container(
