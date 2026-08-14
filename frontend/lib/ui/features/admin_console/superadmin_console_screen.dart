@@ -33,6 +33,8 @@ class _SuperAdminConsoleScreenState extends State<SuperAdminConsoleScreen> with 
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    final domainId = widget.activeDomain?.id ?? 'cycling-domain';
+    widget.viewModel.loadAdminContext(domainId);
   }
 
   @override

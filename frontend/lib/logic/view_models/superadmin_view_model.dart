@@ -6,6 +6,7 @@ import '../../models/group_creation_request.dart';
 import '../../models/sos_event.dart';
 import '../../models/user_live_location.dart';
 import '../../models/sub_group.dart';
+import '../../models/route_checkpoint.dart';
 import '../../services/group_service.dart';
 import '../../services/sos_service.dart';
 import '../../services/location_telemetry_service.dart';
@@ -23,6 +24,7 @@ class SuperAdminViewModel extends ChangeNotifier {
   List<SosEvent> _escalatedSosQueue = [];
   List<UserLiveLocation> _allParticipantLocations = [];
   List<SubGroup> _domainGroups = [];
+  List<RouteCheckpoint> _routeCheckpoints = [];
   String _selectedGroupFilter = '';
   bool _isLoading = false;
   String? _errorMessage;
@@ -47,6 +49,7 @@ class SuperAdminViewModel extends ChangeNotifier {
   List<UserLiveLocation> get allParticipantLocations => _allParticipantLocations;
   List<SubGroup> get domainGroups => _domainGroups;
   List<SubGroup> get subGroups => _domainGroups;
+  List<RouteCheckpoint> get routeCheckpoints => _routeCheckpoints;
   String get selectedGroupFilter => _selectedGroupFilter;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -67,6 +70,7 @@ class SuperAdminViewModel extends ChangeNotifier {
       _pendingRequests = await _groupService.getPendingGroupRequests(domainId);
       _escalatedSosQueue = await _sosService.getSuperAdminSosQueue(domainId);
       _domainGroups = await _groupService.getDomainSubGroups(domainId);
+      _routeCheckpoints = await _domainService.getRouteCheckpoints(domainId);
 
       _sosSub?.cancel();
       _sosSub = _sosService.streamSosEvents(domainId).listen(

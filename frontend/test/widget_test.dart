@@ -28,11 +28,44 @@ void main() {
     });
 
     testWidgets('RouteCheckpointStepper renders milestones with icons', (WidgetTester tester) async {
+      final sampleCheckpoints = [
+        RouteCheckpoint(
+          id: 'cp-1',
+          domainId: 'domain-1',
+          name: 'Zero Mile Monument (Start Flag-off)',
+          sequenceOrder: 1,
+          checkpointType: CheckpointType.start,
+          latitude: 21.1458,
+          longitude: 79.0882,
+          createdAt: DateTime.now(),
+        ),
+        RouteCheckpoint(
+          id: 'cp-2',
+          domainId: 'domain-1',
+          name: 'Samvidhan Square (Water Point #1)',
+          sequenceOrder: 2,
+          checkpointType: CheckpointType.waterStation,
+          latitude: 21.1500,
+          longitude: 79.0800,
+          createdAt: DateTime.now(),
+        ),
+        RouteCheckpoint(
+          id: 'cp-3',
+          domainId: 'domain-1',
+          name: 'Deekshabhoomi Ground (Rally Finish & Pass)',
+          sequenceOrder: 3,
+          checkpointType: CheckpointType.finish,
+          latitude: 21.1275,
+          longitude: 79.0667,
+          createdAt: DateTime.now(),
+        ),
+      ];
+
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
           home: Scaffold(
             body: RouteCheckpointStepper(
-              checkpoints: [],
+              checkpoints: sampleCheckpoints,
               completedIndex: 1,
             ),
           ),

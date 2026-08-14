@@ -5,6 +5,7 @@ import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
 import '../../../../models/event_domain.dart';
+import '../../../../models/route_checkpoint.dart';
 import '../../../../logic/view_models/superadmin_view_model.dart';
 import '../../../core/widgets/fluid_tap_scale.dart';
 
@@ -136,17 +137,31 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '2. Official Nagpur Route & Checkpoints',
+                  '2. Official Route & Checkpoints',
                   style: AppTypography.headingMd,
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                const Text('West Nagpur Loop 2026 • 24.5 km Total Distance', style: AppTypography.caption),
+                Text(
+                  '${widget.activeDomain?.name ?? "Event Route"} • ${widget.viewModel.routeCheckpoints.length} Checkpoints Configured',
+                  style: AppTypography.caption,
+                ),
                 const SizedBox(height: AppSpacing.md),
-                _buildCheckpointPill('🚩 [Start]', 'Zero Mile Monument (06:00 AM)', AppColors.ink),
-                _buildCheckpointPill('💧 [Water 1]', 'Samvidhan Square (2.1 km)', AppColors.info),
-                _buildCheckpointPill('💧 [Water 2]', 'Shankar Nagar Square (6.8 km)', AppColors.info),
-                _buildCheckpointPill('🚑 [Medical]', 'Law College Square (12.4 km)', AppColors.sale),
-                _buildCheckpointPill('🏁 [Finish]', 'Deekshabhoomi Ground (24.5 km)', AppColors.success),
+                if (widget.viewModel.routeCheckpoints.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.canvas,
+                      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+                      border: Border.all(color: AppColors.hairlineSoft),
+                    ),
+                    child: const Text(
+                      'No official checkpoints registered for this domain route yet.',
+                      style: AppTypography.bodySm,
+                    ),
+                  )
+                else
+                  ...widget.viewModel.routeCheckpoints.map((cp) => _buildCheckpointPill(cp)),
               ],
             ),
           ),
@@ -194,7 +209,32 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
     );
   }
 
-  Widget _buildCheckpointPill(String tag, String title, Color tagColor) {
+  Widget _buildCheckpointPill(RouteCheckpoint cp) {
+    Color tagColor;
+    String tagLabel;
+    switch (cp.checkpointType) {
+      case CheckpointType.start:
+        tagColor = AppColors.ink;
+        tagLabel = '🚩 [Start]';
+        break;
+      case CheckpointType.finish:
+        tagColor = AppColors.success;
+        tagLabel = '🏁 [Finish]';
+        break;
+      case CheckpointType.waterStation:
+        tagColor = AppColors.info;
+        tagLabel = '💧 [Water]';
+        break;
+      case CheckpointType.medicalPost:
+        tagColor = AppColors.sale;
+        tagLabel = '🚑 [Medical]';
+        break;
+      case CheckpointType.diversion:
+        tagColor = AppColors.warningAccent;
+        tagLabel = '⚠️ [Diversion]';
+        break;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -205,9 +245,9 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
       ),
       child: Row(
         children: [
-          Text(tag, style: AppTypography.captionXs.copyWith(color: tagColor, fontWeight: FontWeight.bold)),
+          Text(tagLabel, style: AppTypography.captionXs.copyWith(color: tagColor, fontWeight: FontWeight.bold)),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Text(title, style: AppTypography.bodySm, overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(cp.name, style: AppTypography.bodySm, overflow: TextOverflow.ellipsis)),
         ],
       ),
     );

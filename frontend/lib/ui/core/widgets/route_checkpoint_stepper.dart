@@ -18,50 +18,23 @@ class RouteCheckpointStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final list = checkpoints.isNotEmpty
-        ? checkpoints
-        : [
-            RouteCheckpoint(
-              id: 'cp-1',
-              domainId: 'domain-1',
-              name: 'Zero Mile Monument (Start Flag-off)',
-              sequenceOrder: 1,
-              checkpointType: CheckpointType.start,
-              latitude: 21.1458,
-              longitude: 79.0882,
-              createdAt: DateTime.now(),
-            ),
-            RouteCheckpoint(
-              id: 'cp-2',
-              domainId: 'domain-1',
-              name: 'Samvidhan Square (Water Point #1)',
-              sequenceOrder: 2,
-              checkpointType: CheckpointType.waterStation,
-              latitude: 21.1500,
-              longitude: 79.0800,
-              createdAt: DateTime.now(),
-            ),
-            RouteCheckpoint(
-              id: 'cp-3',
-              domainId: 'domain-1',
-              name: 'Law College Sq (Medical Aid Unit #1)',
-              sequenceOrder: 3,
-              checkpointType: CheckpointType.medicalPost,
-              latitude: 21.1400,
-              longitude: 79.0600,
-              createdAt: DateTime.now(),
-            ),
-            RouteCheckpoint(
-              id: 'cp-4',
-              domainId: 'domain-1',
-              name: 'Deekshabhoomi Ground (Rally Finish & Pass)',
-              sequenceOrder: 4,
-              checkpointType: CheckpointType.finish,
-              latitude: 21.1275,
-              longitude: 79.0667,
-              createdAt: DateTime.now(),
-            ),
-          ];
+    if (checkpoints.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.canvas,
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+          border: Border.all(color: AppColors.hairlineSoft),
+        ),
+        child: const Text(
+          'No checkpoints published yet for this route.',
+          style: AppTypography.caption,
+        ),
+      );
+    }
+
+    final list = checkpoints;
 
     return Column(
       children: List.generate(list.length, (idx) {

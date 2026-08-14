@@ -4,8 +4,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../models/broadcast_message.dart';
 import '../../models/group_membership.dart';
+import '../../models/route_checkpoint.dart';
 import '../../models/sos_event.dart';
 import '../../services/broadcast_service.dart';
+import '../../services/domain_service.dart';
 import '../../services/group_service.dart';
 import '../../services/sos_service.dart';
 import '../../services/location_telemetry_service.dart';
@@ -15,9 +17,11 @@ class ParticipantHomeViewModel extends ChangeNotifier {
   final GroupService _groupService;
   final SosService _sosService;
   final LocationTelemetryService _telemetryService;
+  final DomainService _domainService;
 
   List<BroadcastMessage> _broadcasts = [];
   List<GroupMembership> _userMemberships = [];
+  List<RouteCheckpoint> _checkpoints = [];
   GroupMembership? _activeMembership;
   bool _isLoading = false;
   bool _isGpsSimulating = false;
@@ -30,13 +34,16 @@ class ParticipantHomeViewModel extends ChangeNotifier {
     GroupService? groupService,
     SosService? sosService,
     LocationTelemetryService? telemetryService,
+    DomainService? domainService,
   })  : _broadcastService = broadcastService ?? BroadcastService(),
         _groupService = groupService ?? GroupService(),
         _sosService = sosService ?? SosService(),
-        _telemetryService = telemetryService ?? LocationTelemetryService();
+        _telemetryService = telemetryService ?? LocationTelemetryService(),
+        _domainService = domainService ?? DomainService();
 
   List<BroadcastMessage> get broadcasts => _broadcasts;
   List<GroupMembership> get userMemberships => _userMemberships;
+  List<RouteCheckpoint> get checkpoints => _checkpoints;
   GroupMembership? get activeMembership => _activeMembership;
   bool get isLoading => _isLoading;
   bool get isGpsSimulating => _isGpsSimulating;
@@ -70,6 +77,8 @@ class ParticipantHomeViewModel extends ChangeNotifier {
         domainId: domainId,
         enrolledGroupIds: enrolledGroupIds,
       );
+
+      _checkpoints = await _domainService.getRouteCheckpoints(domainId);
 
       _setupRealtimeBroadcasts(domainId);
     } catch (e) {
