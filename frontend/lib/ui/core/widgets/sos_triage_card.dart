@@ -107,7 +107,7 @@ class SosTriageCard extends StatelessWidget {
                         children: [
                           Icon(Icons.call, size: 13, color: AppColors.ink),
                           SizedBox(width: AppSpacing.xxs),
-                          Text('Call', style: AppTypography.buttonSm),
+                          Text('Call', style: AppTypography.buttonSmSecondary),
                         ],
                       ),
                     ),

@@ -23,8 +23,8 @@ class ProvisioningTab extends StatefulWidget {
 }
 
 class _ProvisioningTabState extends State<ProvisioningTab> {
-  final _phoneCtrl = TextEditingController(text: '+91 98220 66666');
-  final _nameCtrl = TextEditingController(text: 'Anjali Sharma (SuperAdmin #6)');
+  final _phoneCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -118,13 +118,19 @@ class _ProvisioningTabState extends State<ProvisioningTab> {
                 const SizedBox(height: AppSpacing.md),
                 TextField(
                   controller: _nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Admin Full Name'),
+                  decoration: const InputDecoration(
+                    labelText: 'Admin Full Name',
+                    hintText: 'Name',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 TextField(
                   controller: _phoneCtrl,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Admin Mobile (+91 ...)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Admin Mobile (+91 ...)',
+                    hintText: '+91 98000 00000',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SizedBox(

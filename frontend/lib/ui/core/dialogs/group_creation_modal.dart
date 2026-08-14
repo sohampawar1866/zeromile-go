@@ -43,9 +43,9 @@ class GroupCreationModal extends StatefulWidget {
 }
 
 class _GroupCreationModalState extends State<GroupCreationModal> {
-  final _orgNameCtrl = TextEditingController(text: 'Nagpur Cyclists Club');
-  final _countCtrl = TextEditingController(text: '50');
-  final _musterCtrl = TextEditingController(text: 'Samvidhan Square Gate 2');
+  final _orgNameCtrl = TextEditingController();
+  final _countCtrl = TextEditingController();
+  final _musterCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String _orgType = 'College / University';
 
@@ -90,7 +90,10 @@ class _GroupCreationModalState extends State<GroupCreationModal> {
               const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: _orgNameCtrl,
-                decoration: const InputDecoration(labelText: 'Organization / Contingent Name'),
+                decoration: const InputDecoration(
+                  labelText: 'Organization / Contingent Name',
+                  hintText: 'Name',
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               DropdownButtonFormField<String>(
@@ -115,14 +118,20 @@ class _GroupCreationModalState extends State<GroupCreationModal> {
                     child: TextField(
                       controller: _countCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Expected Count'),
+                      decoration: const InputDecoration(
+                        labelText: 'Expected Count',
+                        hintText: 'Count',
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: TextField(
                       controller: _musterCtrl,
-                      decoration: const InputDecoration(labelText: 'Muster Point'),
+                      decoration: const InputDecoration(
+                        labelText: 'Muster Point',
+                        hintText: 'Location',
+                      ),
                     ),
                   ),
                 ],
@@ -130,7 +139,10 @@ class _GroupCreationModalState extends State<GroupCreationModal> {
               const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: _notesCtrl,
-                decoration: const InputDecoration(labelText: 'Additional Remarks for SuperAdmins (Optional)'),
+                decoration: const InputDecoration(
+                  labelText: 'Additional Remarks for SuperAdmins (Optional)',
+                  hintText: 'Notes',
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               FluidTapScale(

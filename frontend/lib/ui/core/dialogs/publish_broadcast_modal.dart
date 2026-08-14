@@ -40,7 +40,7 @@ class PublishBroadcastModal extends StatefulWidget {
 }
 
 class _PublishBroadcastModalState extends State<PublishBroadcastModal> {
-  final _textCtrl = TextEditingController(text: 'Water refill station active at Samvidhan Square.');
+  final _textCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {

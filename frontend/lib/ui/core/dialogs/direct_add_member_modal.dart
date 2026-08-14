@@ -31,8 +31,8 @@ class DirectAddMemberModal extends StatefulWidget {
 }
 
 class _DirectAddMemberModalState extends State<DirectAddMemberModal> {
-  final _nameCtrl = TextEditingController(text: 'Sunil Gavaskar');
-  final _phoneCtrl = TextEditingController(text: '+91 98220 77777');
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -74,13 +74,19 @@ class _DirectAddMemberModalState extends State<DirectAddMemberModal> {
             const SizedBox(height: AppSpacing.md),
             TextField(
               controller: _nameCtrl,
-              decoration: const InputDecoration(labelText: 'Member Full Name'),
+              decoration: const InputDecoration(
+                labelText: 'Member Full Name',
+                hintText: 'Name',
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Member Mobile Number (+91 ...)'),
+              decoration: const InputDecoration(
+                labelText: 'Member Mobile Number (+91 ...)',
+                hintText: '+91 98000 00000',
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             FluidTapScale(

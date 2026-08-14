@@ -63,7 +63,7 @@ abstract class AppTypography {
     height: 1.35,
   );
 
-  // Buttons (Pill CTAs)
+  // Primary Buttons (Dark / Ink background -> White text)
   static const TextStyle buttonLg = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w700,
@@ -85,6 +85,31 @@ abstract class AppTypography {
     fontWeight: FontWeight.w700,
     letterSpacing: 0.1,
     color: AppColors.onPrimary,
+    height: 1.2,
+  );
+
+  // Secondary Buttons (White / Light background -> Ink text)
+  static const TextStyle buttonLgSecondary = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.2,
+    color: AppColors.ink,
+    height: 1.2,
+  );
+
+  static const TextStyle buttonMdSecondary = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.1,
+    color: AppColors.ink,
+    height: 1.2,
+  );
+
+  static const TextStyle buttonSmSecondary = TextStyle(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.1,
+    color: AppColors.ink,
     height: 1.2,
   );
 

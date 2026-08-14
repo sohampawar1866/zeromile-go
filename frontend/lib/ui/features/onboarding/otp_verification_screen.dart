@@ -31,7 +31,7 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final _otpController = TextEditingController(text: '123456');
+  final _otpController = TextEditingController();
   bool _isLoading = false;
 
   @override

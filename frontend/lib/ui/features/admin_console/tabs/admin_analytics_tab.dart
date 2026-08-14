@@ -101,7 +101,7 @@ class AdminAnalyticsTab extends StatelessWidget {
                         children: [
                           Icon(Icons.download, size: 16, color: AppColors.ink),
                           SizedBox(width: AppSpacing.sm),
-                          Text('Download Domain Audit Log', style: AppTypography.buttonSm),
+                          Text('Download Domain Audit Log', style: AppTypography.buttonSmSecondary),
                         ],
                       ),
                     ),

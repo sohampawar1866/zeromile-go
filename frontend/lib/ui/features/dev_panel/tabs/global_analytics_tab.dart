@@ -93,7 +93,7 @@ class GlobalAnalyticsTab extends StatelessWidget {
                             children: [
                               Icon(Icons.refresh, size: 14, color: AppColors.ink),
                               SizedBox(width: AppSpacing.xs),
-                              Text('Refresh', style: AppTypography.buttonSm),
+                              Text('Refresh', style: AppTypography.buttonSmSecondary),
                             ],
                           ),
                         ),
@@ -123,7 +123,7 @@ class GlobalAnalyticsTab extends StatelessWidget {
                             children: [
                               Icon(Icons.download, size: 14, color: AppColors.ink),
                               SizedBox(width: AppSpacing.xs),
-                              Text('Export DB', style: AppTypography.buttonSm),
+                              Text('Export DB', style: AppTypography.buttonSmSecondary),
                             ],
                           ),
                         ),

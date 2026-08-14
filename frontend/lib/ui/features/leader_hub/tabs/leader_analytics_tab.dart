@@ -78,7 +78,7 @@ class LeaderAnalyticsTab extends StatelessWidget {
                         children: [
                           Icon(Icons.download, size: 16, color: AppColors.ink),
                           SizedBox(width: AppSpacing.sm),
-                          Text('Export Team Attendance CSV', style: AppTypography.buttonSm),
+                          Text('Export Team Attendance CSV', style: AppTypography.buttonSmSecondary),
                         ],
                       ),
                     ),
