@@ -25,18 +25,47 @@ class ZeroMileGoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        scaffoldBackgroundColor: const Color(0xFF0B1120),
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFF2563EB),
           secondary: Color(0xFF10B981),
           surface: Color(0xFF1E293B),
           error: Color(0xFFEF4444),
+          onSurface: Color(0xFFF8FAFC),
         ),
         cardTheme: const CardThemeData(
           color: Color(0xFF1E293B),
-          elevation: 4,
+          elevation: 0,
           shape: RoundedRectangleBorder(
+            side: BorderSide(color: Color(0xFF334155), width: 1),
             borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0B1120),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          titleTextStyle: TextStyle(
+            color: Color(0xFFF8FAFC),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            side: const BorderSide(color: Color(0xFF475569)),
+            textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           ),
         ),
         useMaterial3: true,
@@ -133,10 +162,8 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
     final domainId = _activeDomain!.id;
 
     try {
-      // 1. Fetch broadcasts
       _broadcasts = await _broadcastService.getVisibleBroadcasts(domainId: domainId);
 
-      // 2. Role-specific context
       if (_currentUser != null) {
         _userMemberships = await _groupService.getUserMemberships(
           domainId: domainId,
@@ -192,7 +219,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           checkinTime: DateTime.now(),
         );
       });
-      _showSnackbar('✅ Checked In! Muster roll attendance recorded.', const Color(0xFF10B981));
+      _showSnackbar('Checked In! Muster roll attendance recorded.', const Color(0xFF10B981));
     } catch (e) {
       _showSnackbar('Check-in status updated.', const Color(0xFF10B981));
     }
@@ -213,7 +240,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           completionTime: DateTime.now(),
         );
       });
-      _showSnackbar('🏁 Congratulations! Rally completed successfully.', const Color(0xFF3B82F6));
+      _showSnackbar('Rally completed successfully.', const Color(0xFF3B82F6));
     } catch (e) {
       _showSnackbar('Completion recorded.', const Color(0xFF3B82F6));
     }
@@ -233,7 +260,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
         heading: 180.0,
         force: true,
       );
-      _showSnackbar('📍 Live GPS Telemetry Stream Started (20 Hz Adaptive)', const Color(0xFF10B981));
+      _showSnackbar('GPS Telemetry Stream Active (20 Hz Adaptive)', const Color(0xFF10B981));
     } else {
       _showSnackbar('GPS Telemetry Stream Paused', Colors.orangeAccent);
     }
@@ -255,14 +282,14 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           children: [
             const Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+                Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 28),
                 SizedBox(width: 8),
                 Text(
                   'Emergency SOS Dispatch',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.redAccent,
+                    fontSize: 18,
+                    color: Color(0xFFF8FAFC),
                   ),
                 ),
               ],
@@ -270,7 +297,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             const SizedBox(height: 8),
             const Text(
               'Select emergency type. Instant GPS coordinates will route directly to your Group Leader and Domain SuperAdmins:',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
             ),
             const SizedBox(height: 16),
             _buildSosOption(EmergencyType.medical, 'Medical Aid / Injury', Icons.medical_services),
@@ -287,8 +314,8 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
       margin: const EdgeInsets.only(bottom: 8),
       width: double.infinity,
       child: OutlinedButton.icon(
-        icon: Icon(icon, color: Colors.redAccent),
-        label: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        icon: Icon(icon, color: const Color(0xFFEF4444)),
+        label: Text(title, style: const TextStyle(color: Color(0xFFF8FAFC), fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           side: const BorderSide(color: Color(0x66EF4444)),
@@ -303,13 +330,13 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 senderUserId: _currentUser!.id,
                 activeSubGroupId: _activeMembership?.groupId,
                 emergencyType: type,
-                latitude: 21.1420, // Variety Sq
+                latitude: 21.1420,
                 longitude: 79.0810,
               );
-              _showSnackbar('🚨 Emergency SOS dispatched to Command Center!', Colors.redAccent);
+              _showSnackbar('Emergency SOS dispatched to Command Center.', const Color(0xFFEF4444));
               await _refreshDomainContext();
             } catch (e) {
-              _showSnackbar('SOS alert recorded.', Colors.redAccent);
+              _showSnackbar('SOS alert recorded.', const Color(0xFFEF4444));
             }
           }
         },
@@ -338,7 +365,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             const SizedBox(height: 6),
             const Text(
               'Select which group your live telemetry and SOS broadcasts route through:',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -354,12 +381,12 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             ListTile(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               tileColor: const Color(0xFF0F172A),
-              leading: const Icon(Icons.people_outline, color: Colors.grey),
+              leading: const Icon(Icons.people_outline, color: Color(0xFF94A3B8)),
               title: const Text('General Domain Contingent'),
               subtitle: const Text('Muster: Zero Mile Monument'),
               onTap: () {
                 Navigator.pop(context);
-                _showSnackbar('Switched active group to General Contingent.', Colors.blueAccent);
+                _showSnackbar('Switched active group to General Contingent.', const Color(0xFF3B82F6));
               },
             ),
           ],
@@ -442,7 +469,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                         expectedCount: int.tryParse(countCtrl.text) ?? 30,
                         musterPoint: musterCtrl.text,
                       );
-                      _showSnackbar('Application submitted! Domain SuperAdmins notified.', const Color(0xFF10B981));
+                      _showSnackbar('Application submitted. Domain SuperAdmins notified.', const Color(0xFF10B981));
                     } catch (e) {
                       _showSnackbar('Application submitted.', const Color(0xFF10B981));
                     }
@@ -487,7 +514,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             const SizedBox(height: 4),
             const Text(
               'Adds participant directly to your roster and domain general muster:',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -520,7 +547,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                         memberPhone: phoneCtrl.text.trim(),
                         memberName: nameCtrl.text.trim(),
                       );
-                      _showSnackbar('Added ${nameCtrl.text} to team roster!', const Color(0xFF10B981));
+                      _showSnackbar('Added participant to team roster.', const Color(0xFF10B981));
                       await _refreshDomainContext();
                     } catch (e) {
                       _showSnackbar('Member added.', const Color(0xFF10B981));
@@ -559,11 +586,11 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSuperAdmin ? '🚨 Dispatch Domain-Wide Broadcast' : '📣 Send Team Announcement',
+              isSuperAdmin ? 'Dispatch Domain-Wide Broadcast' : 'Send Team Announcement',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isSuperAdmin ? Colors.redAccent : Colors.orangeAccent,
+                color: isSuperAdmin ? const Color(0xFFEF4444) : Colors.orangeAccent,
               ),
             ),
             const SizedBox(height: 12),
@@ -602,7 +629,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                           messageText: msgCtrl.text,
                         );
                       }
-                      _showSnackbar('Broadcast sent to all subscribers!', const Color(0xFF10B981));
+                      _showSnackbar('Broadcast sent to all subscribers.', const Color(0xFF10B981));
                       await _refreshDomainContext();
                     } catch (e) {
                       _showSnackbar('Broadcast dispatched.', const Color(0xFF10B981));
@@ -621,7 +648,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   void _showSnackbar(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -633,12 +660,11 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
         title: Row(
           children: [
-            const Icon(Icons.directions_bike, color: Color(0xFF38BDF8)),
+            const Icon(Icons.directions_bike, color: Color(0xFF38BDF8), size: 22),
             const SizedBox(width: 8),
-            const Text('ZeroMile Go', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text('ZeroMile Go'),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -651,16 +677,15 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           ],
         ),
         actions: [
-          // Fast Role Persona Switcher
           PopupMenuButton<String>(
             icon: const Icon(Icons.switch_account, color: Color(0xFF60A5FA)),
             tooltip: 'Fast Switch Persona',
             onSelected: (role) => _switchRole(role),
             itemBuilder: (ctx) => [
-              const PopupMenuItem(value: 'PARTICIPANT', child: Text('🚲 Participant: Priya Verma')),
-              const PopupMenuItem(value: 'LEADER', child: Text('👥 Leader: Aniket Deshmukh')),
-              const PopupMenuItem(value: 'SUPERADMIN', child: Text('🛡️ SuperAdmin: Rajesh Sharma')),
-              const PopupMenuItem(value: 'DEVELOPER', child: Text('⚡ Developer Console')),
+              const PopupMenuItem(value: 'PARTICIPANT', child: Text('Participant: Priya Verma')),
+              const PopupMenuItem(value: 'LEADER', child: Text('Leader: Aniket Deshmukh')),
+              const PopupMenuItem(value: 'SUPERADMIN', child: Text('SuperAdmin: Rajesh Sharma')),
+              const PopupMenuItem(value: 'DEVELOPER', child: Text('Developer Console')),
             ],
           ),
         ],
@@ -702,8 +727,8 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openSosModal,
         backgroundColor: const Color(0xFFEF4444),
-        icon: const Icon(Icons.sos, color: Colors.white, size: 28),
-        label: const Text('EMERGENCY SOS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.emergency_share, color: Colors.white, size: 24),
+        label: const Text('EMERGENCY SOS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
       ),
     );
   }
@@ -724,12 +749,12 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                     children: [
                       Text(
                         _activeDomain?.name ?? 'Cycling Rally 2026',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 2),
                       const Text(
                         'Zero Mile -> Deekshabhoomi Loop (14.2 km)',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                       ),
                     ],
                   ),
@@ -754,11 +779,11 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.person, size: 16, color: Colors.grey),
+                    const Icon(Icons.person, size: 16, color: Color(0xFF94A3B8)),
                     const SizedBox(width: 6),
                     Text(
                       'User: ${_currentUser?.fullName ?? "Citizen"}',
-                      style: const TextStyle(fontSize: 12, color: Colors.white70),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFFCBD5E1)),
                     ),
                   ],
                 ),
@@ -769,14 +794,14 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                       Icon(
                         _isGpsSimulating ? Icons.gps_fixed : Icons.gps_not_fixed,
                         size: 16,
-                        color: _isGpsSimulating ? const Color(0xFF10B981) : Colors.grey,
+                        color: _isGpsSimulating ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _isGpsSimulating ? 'GPS Online' : 'Sim GPS',
+                        _isGpsSimulating ? 'GPS Online' : 'Simulate GPS',
                         style: TextStyle(
                           fontSize: 12,
-                          color: _isGpsSimulating ? const Color(0xFF10B981) : Colors.grey,
+                          color: _isGpsSimulating ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -832,7 +857,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
               children: [
                 Text(
                   'Active Group: ${_activeMembership?.groupName ?? "VNIT Cycling Club"}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                 ),
                 InkWell(
                   onTap: _openSwitchSubGroupModal,
@@ -845,12 +870,11 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: Icon(isCheckedIn ? Icons.check_circle : Icons.location_on),
+                    icon: Icon(isCheckedIn ? Icons.check_circle : Icons.location_on, size: 18),
                     label: Text(isCheckedIn ? 'Checked In' : 'Check-In at Muster'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isCheckedIn ? Colors.green.shade700 : const Color(0xFF2563EB),
+                      backgroundColor: isCheckedIn ? const Color(0xFF059669) : const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: _handleCheckIn,
                   ),
@@ -858,12 +882,11 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: const Icon(Icons.flag_circle),
+                    icon: const Icon(Icons.flag, size: 18),
                     label: const Text('Mark Finish'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: isCompleted ? Colors.blueAccent : Colors.white70,
-                      side: BorderSide(color: isCompleted ? Colors.blueAccent : Colors.grey.shade700),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      foregroundColor: isCompleted ? Colors.blueAccent : const Color(0xFFCBD5E1),
+                      side: BorderSide(color: isCompleted ? Colors.blueAccent : const Color(0xFF475569)),
                     ),
                     onPressed: _handleComplete,
                   ),
@@ -874,7 +897,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             Center(
               child: TextButton.icon(
                 icon: const Icon(Icons.group_add, size: 16),
-                label: const Text('Propose / Create New Sub-Group Contingent', style: TextStyle(fontSize: 12)),
+                label: const Text('Propose / Create New Contingent', style: TextStyle(fontSize: 12)),
                 onPressed: _openRequestGroupModal,
               ),
             ),
@@ -899,7 +922,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 children: [
                   Icon(
                     cp['done'] ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: cp['done'] ? Colors.greenAccent : Colors.grey,
+                    color: cp['done'] ? const Color(0xFF10B981) : const Color(0xFF64748B),
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -908,7 +931,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                       cp['name'] as String,
                       style: TextStyle(
                         fontSize: 13,
-                        color: cp['done'] ? Colors.white : Colors.grey,
+                        color: cp['done'] ? const Color(0xFFF8FAFC) : const Color(0xFF94A3B8),
                       ),
                     ),
                   ),
@@ -937,7 +960,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             ),
             const SizedBox(height: 12),
             if (_broadcasts.isEmpty)
-              const Text('No broadcasts posted yet.', style: TextStyle(color: Colors.grey, fontSize: 12))
+              const Text('No broadcasts posted yet.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12))
             else
               ..._broadcasts.take(3).map((b) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -954,21 +977,21 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          b.senderRole == SenderRole.superAdmin ? '🚨 SUPERADMIN ALERT' : '📣 LEADER NOTE',
+                          b.senderRole == SenderRole.superAdmin ? 'SUPERADMIN ALERT' : 'LEADER NOTE',
                           style: TextStyle(
-                            color: b.senderRole == SenderRole.superAdmin ? Colors.redAccent : Colors.orangeAccent,
+                            color: b.senderRole == SenderRole.superAdmin ? const Color(0xFFEF4444) : Colors.orangeAccent,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           '${b.createdAt.hour.toString().padLeft(2, '0')}:${b.createdAt.minute.toString().padLeft(2, '0')}',
-                          style: const TextStyle(color: Colors.grey, fontSize: 10),
+                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(b.messageText, style: const TextStyle(fontSize: 12)),
+                    Text(b.messageText, style: const TextStyle(fontSize: 12, color: Color(0xFFF1F5F9))),
                   ],
                 ),
               )),
@@ -992,19 +1015,18 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             const SizedBox(height: 8),
             const Text(
               'Manage your contingent, triage local SOS incidents, and direct-add participants by phone.',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.person_add),
+                    icon: const Icon(Icons.person_add, size: 18),
                     label: const Text('Add Member'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: _openLeaderAddMemberModal,
                   ),
@@ -1012,11 +1034,8 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: const Icon(Icons.campaign),
+                    icon: const Icon(Icons.campaign, size: 18),
                     label: const Text('Team Broadcast'),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
                     onPressed: () => _openPublishBroadcastModal(isSuperAdmin: false),
                   ),
                 ),
@@ -1041,7 +1060,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             ),
             const SizedBox(height: 8),
             if (_sosEvents.isEmpty)
-              const Text('No active emergencies in your team.', style: TextStyle(color: Colors.grey, fontSize: 12))
+              const Text('No active emergencies in your team.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12))
             else
               ..._sosEvents.map((s) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -1053,13 +1072,13 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('🚑 ${s.emergencyType.name.toUpperCase()} • ${s.senderName ?? "Rider"}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('${s.emergencyType.name.toUpperCase()} • ${s.senderName ?? "Rider"}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
                     Row(
                       children: [
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
-                          onPressed: () => _showSnackbar('Resolved locally.', Colors.green),
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF059669), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
+                          onPressed: () => _showSnackbar('Resolved locally.', const Color(0xFF10B981)),
                           child: const Text('Resolve Locally', style: TextStyle(fontSize: 11)),
                         ),
                         const SizedBox(width: 6),
@@ -1090,13 +1109,13 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             SizedBox(height: 8),
             ListTile(
               dense: true,
-              leading: Icon(Icons.check_circle, color: Colors.greenAccent),
+              leading: Icon(Icons.check_circle, color: Color(0xFF10B981)),
               title: Text('Priya Verma (+91 98240 11111)'),
               subtitle: Text('Checked in at 06:15 AM • Active in Team'),
             ),
             ListTile(
               dense: true,
-              leading: Icon(Icons.check_circle, color: Colors.greenAccent),
+              leading: Icon(Icons.check_circle, color: Color(0xFF10B981)),
               title: Text('Rohan Gupta (+91 98240 22222)'),
               subtitle: Text('Checked in at 06:18 AM • Active in Team'),
             ),
@@ -1115,15 +1134,14 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           children: [
             const Text('Domain SuperAdmin Command Center', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            const Text('Sector oversight, group approvals, and high-priority broadcasts.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            const Text('Sector oversight, group approvals, and high-priority broadcasts.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
             const SizedBox(height: 12),
             ElevatedButton.icon(
-              icon: const Icon(Icons.campaign),
+              icon: const Icon(Icons.campaign, size: 18),
               label: const Text('Publish Domain-Wide Broadcast Alert'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => _openPublishBroadcastModal(isSuperAdmin: true),
             ),
@@ -1146,7 +1164,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
             ),
             const SizedBox(height: 8),
             if (_pendingGroupRequests.isEmpty)
-              const Text('No pending contingent applications.', style: TextStyle(color: Colors.grey, fontSize: 12))
+              const Text('No pending contingent applications.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12))
             else
               ..._pendingGroupRequests.map((req) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -1160,7 +1178,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                   children: [
                     Text(req.orgName, style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
-                    Text('Muster: ${req.musterPoint} • ${req.expectedCount} Riders', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                    Text('Muster: ${req.musterPoint} • ${req.expectedCount} Riders', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -1179,7 +1197,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
                         ),
                         const SizedBox(width: 6),
                         OutlinedButton(
-                          style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
+                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFEF4444), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
                           onPressed: () async {
                             await _groupService.reviewGroupRequest(
                               requestId: req.id,
@@ -1211,7 +1229,7 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           children: [
             const Text(
               'Escalated Emergency Response Queue',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.redAccent),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
             ),
             const SizedBox(height: 8),
             Container(
@@ -1224,14 +1242,14 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('🚨 MEDICAL • Ramesh Patil (General)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                  const Text('MEDICAL • Ramesh Patil (General)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444))),
                   const SizedBox(height: 4),
-                  const Text('Note: Dehydration & dizziness near Law College Square.', style: TextStyle(fontSize: 12, color: Colors.amberAccent)),
+                  const Text('Note: Dehydration & dizziness near Law College Square.', style: TextStyle(fontSize: 12, color: Color(0xFFFBBF24))),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.emergency),
+                    icon: const Icon(Icons.medical_services, size: 18),
                     label: const Text('Dispatch Ambulance & Mark Resolved'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white),
                     onPressed: () => _showSnackbar('Ambulance dispatched & incident resolved.', const Color(0xFF10B981)),
                   ),
                 ],
@@ -1252,10 +1270,10 @@ class _ZeroMileMainDashboardState extends State<ZeroMileMainDashboard> {
           children: [
             const Text('Developer Provisioning & Platform Status', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text('Provisioned SuperAdmins: ${_provisionedAdmins.length}/6 (Soft-Cap)', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text('Provisioned SuperAdmins: ${_provisionedAdmins.length}/6 (Soft-Cap)', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
             const SizedBox(height: 12),
             ElevatedButton.icon(
-              icon: const Icon(Icons.security),
+              icon: const Icon(Icons.security, size: 18),
               label: const Text('Provision 6th SuperAdmin Seat'),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB), foregroundColor: Colors.white),
               onPressed: () => _showSnackbar('6th SuperAdmin seat provisioned.', const Color(0xFF10B981)),
