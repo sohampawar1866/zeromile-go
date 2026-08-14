@@ -47,19 +47,25 @@ class _DevPanelScreenState extends State<DevPanelScreen> with SingleTickerProvid
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AppBar(
-        title: const Text('Developer Master Control'),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppColors.ink,
-          indicatorWeight: 2.5,
-          labelColor: AppColors.ink,
-          unselectedLabelColor: AppColors.mute,
-          labelStyle: AppTypography.buttonSm,
-          tabs: const [
-            Tab(icon: Icon(Icons.key), text: 'Provisioning'),
-            Tab(icon: Icon(Icons.analytics_outlined), text: 'Global Analytics'),
-          ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(42),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.canvas,
+            border: Border(bottom: BorderSide(color: AppColors.hairlineSoft, width: 1.0)),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            indicatorColor: AppColors.ink,
+            indicatorWeight: 2.0,
+            labelColor: AppColors.ink,
+            unselectedLabelColor: AppColors.mute,
+            labelStyle: AppTypography.buttonSm,
+            tabs: const [
+              Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.key, size: 16), SizedBox(width: 6), Text('Provisioning')])),
+              Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.analytics_outlined, size: 16), SizedBox(width: 6), Text('Global Analytics')])),
+            ],
+          ),
         ),
       ),
       body: ListenableBuilder(

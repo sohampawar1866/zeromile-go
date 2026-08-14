@@ -48,20 +48,26 @@ class _LeaderHubScreenState extends State<LeaderHubScreen> with SingleTickerProv
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AppBar(
-        title: const Text('Group Leader Hub'),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppColors.ink,
-          indicatorWeight: 2.5,
-          labelColor: AppColors.ink,
-          unselectedLabelColor: AppColors.mute,
-          labelStyle: AppTypography.buttonSm,
-          tabs: const [
-            Tab(icon: Icon(Icons.groups_outlined), text: 'Team Hub'),
-            Tab(icon: Icon(Icons.location_on_outlined), text: 'Live Map'),
-            Tab(icon: Icon(Icons.bar_chart), text: 'Analytics'),
-          ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(42),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.canvas,
+            border: Border(bottom: BorderSide(color: AppColors.hairlineSoft, width: 1.0)),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            indicatorColor: AppColors.ink,
+            indicatorWeight: 2.0,
+            labelColor: AppColors.ink,
+            unselectedLabelColor: AppColors.mute,
+            labelStyle: AppTypography.buttonSm,
+            tabs: const [
+              Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.groups_outlined, size: 16), SizedBox(width: 6), Text('Team Hub')])),
+              Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.location_on_outlined, size: 16), SizedBox(width: 6), Text('Live Map')])),
+              Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.bar_chart, size: 16), SizedBox(width: 6), Text('Analytics')])),
+            ],
+          ),
         ),
       ),
       body: ListenableBuilder(
