@@ -1,5 +1,6 @@
 // lib/services/push_notification_service.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class PushNotificationService {
@@ -9,6 +10,9 @@ class PushNotificationService {
     String appId = defaultOneSignalAppId,
     void Function(Map<String, dynamic> data)? onNotificationClicked,
   }) async {
+    // OneSignal flutter SDK is native mobile only (Android & iOS)
+    if (kIsWeb) return;
+
     try {
       // 1. Set Log Level
       OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
@@ -27,7 +31,7 @@ class PushNotificationService {
         }
       });
     } catch (_) {
-      // Graceful fallback for headless environments or unsupported platforms
+      // Graceful fallback for unsupported platforms
     }
   }
 
@@ -38,6 +42,8 @@ class PushNotificationService {
     String? activeGroupId,
     String role = 'PARTICIPANT', // SUPERADMIN, GROUP_LEADER, PARTICIPANT
   }) async {
+    if (kIsWeb) return;
+
     try {
       // 1. Identify User in OneSignal
       await OneSignal.login(userId);
@@ -55,6 +61,8 @@ class PushNotificationService {
 
   /// Remove tags when exiting or concluding event
   static Future<void> clearUserTags() async {
+    if (kIsWeb) return;
+
     try {
       await OneSignal.User.removeTags(['domain_id', 'active_group_id', 'role']);
     } catch (_) {
