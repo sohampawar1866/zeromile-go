@@ -202,6 +202,49 @@ class SuperAdminViewModel extends ChangeNotifier {
     }
   }
 
+  /// SuperAdmin Route Studio: Persist the node-wise route to Supabase
+  Future<bool> saveInteractiveRoute({
+    required String domainId,
+    required Map<String, dynamic> routeGeojson,
+    required List<Map<String, dynamic>> waypoints,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _domainService.saveRouteForDomain(
+        domainId: domainId,
+        routeGeojson: routeGeojson,
+        waypoints: waypoints,
+      );
+      // Reload route checkpoints for this domain
+      _routeCheckpoints = await _domainService.getRouteCheckpoints(domainId);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Save active route as Sunday Default Template preset
+  Future<bool> saveDefaultRouteTemplate(Map<String, dynamic> template) async {
+    try {
+      await _domainService.saveDefaultRouteTemplate(template);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return false;
+    }
+  }
+
+  /// Load Sunday Default Route Template preset
+  Map<String, dynamic> getDefaultRouteTemplate() {
+    return _domainService.getDefaultRouteTemplate();
+  }
+
   @override
   void dispose() {
     _sosSub?.cancel();

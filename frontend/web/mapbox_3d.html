@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mapbox Standard 3D Map</title>
+  <title>Mapbox Standard 3D Route Studio</title>
   
   <!-- Mapbox GL JS 3.0.1 -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
@@ -16,7 +16,62 @@
     html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0f19; font-family: 'Outfit', sans-serif; }
     #map { width: 100%; height: 100%; }
 
-    /* Custom Rider Marker */
+    /* Custom 3D Node Marker */
+    .waypoint-marker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translate(-50%, -100%);
+      cursor: pointer;
+      z-index: 10;
+    }
+    .waypoint-pin {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2.5px solid #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: #0b0f19;
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.9);
+      transition: transform 0.2s;
+    }
+    .waypoint-pin:hover {
+      transform: scale(1.2);
+    }
+    .waypoint-pin.start {
+      background: #00FF66 !important;
+      box-shadow: 0 0 18px rgba(0, 255, 102, 0.95);
+    }
+    .waypoint-pin.end {
+      background: #FF1744 !important;
+      color: #FFFFFF;
+      box-shadow: 0 0 18px rgba(255, 23, 68, 0.95);
+    }
+    .waypoint-pin.way {
+      background: #00F2FE !important;
+      box-shadow: 0 0 18px rgba(0, 242, 254, 0.95);
+    }
+    .waypoint-label {
+      margin-top: 4px;
+      background: rgba(11, 15, 25, 0.94);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #FFFFFF;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+    .waypoint-label.start { color: #00FF66; border-color: rgba(0, 255, 102, 0.6); }
+    .waypoint-label.end { color: #FF1744; border-color: rgba(255, 23, 68, 0.6); }
+    .waypoint-label.way { color: #00F2FE; border-color: rgba(0, 242, 254, 0.6); }
+
+    /* Custom Live Rider Marker */
     .rider-marker {
       display: flex;
       flex-direction: column;
@@ -70,14 +125,22 @@
 
     const defaultNagpur = [79.0882, 21.1458];
     
-    // Strict Nagpur District Geographic Bounds (Bhivapur/Umred to Ramtek/Saoner, Katol to Mauda)
+    // Strict Nagpur District Bounds (Bhivapur/Umred to Ramtek/Saoner, Katol to Mauda)
     const NAGPUR_DISTRICT_BOUNDS = [
       [78.25, 20.55], // Southwest coordinates (Lng, Lat)
       [79.70, 21.75]  // Northeast coordinates (Lng, Lat)
     ];
 
     let map;
+    let waypoints = []; // [{name, lat, lng, tag}]
+    let pointSelectMode = 'start'; // 'start', 'end', 'way'
+    let isInteractiveRouteBuilder = true;
+    let waypointMarkers = [];
     let riderMarkers = [];
+
+    // History stack for Undo / Redo
+    let historyStack = [];
+    let redoStack = [];
 
     // Initialize Mapbox Standard 3D strictly locked to Nagpur District
     map = new mapboxgl.Map({
@@ -100,23 +163,14 @@
         map.setConfigProperty('basemap', 'show3dObjects', true);
       } catch (e) {}
 
-      // Default sample Nagpur route coordinates
-      const sampleCoords = [
-        [79.0882, 21.1458], // Samvidhan Sq
-        [79.0750, 21.1410], // Law College
-        [79.0600, 21.1310], // Shankar Nagar
-        [79.0670, 21.1290], // Deekshabhoomi
-        [79.0520, 21.1280]  // VNIT Gate
-      ];
-
-      // Add Glowing Route Polyline
+      // Add Glowing Route Polyline Source
       map.addSource('route-source', {
         type: 'geojson',
         data: {
           type: 'Feature',
           geometry: {
             type: 'LineString',
-            coordinates: sampleCoords
+            coordinates: []
           }
         }
       });
@@ -129,7 +183,7 @@
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#00FF66',
-          'line-width': 20,
+          'line-width': 22,
           'line-opacity': 0.75,
           'line-blur': 7
         }
@@ -143,7 +197,7 @@
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#00F2FE',
-          'line-width': 9,
+          'line-width': 10,
           'line-opacity': 0.9,
           'line-blur': 2
         }
@@ -162,56 +216,220 @@
         }
       });
 
-      // Initial Demo Riders
-      addDemoRiders();
+      // Default sample route load
+      renderRouteAndMarkers(false);
     });
 
-    function addDemoRiders() {
-      const demoRiders = [
-        { name: 'Rajesh Sharma ★', isLeader: true, lng: 79.0750, lat: 21.1410, color: '#ff9100' },
-        { name: 'Aniket Deshmukh', isLeader: false, lng: 79.0820, lat: 21.1440, color: '#00f2fe' },
-        { name: 'Priya Verma', isLeader: false, lng: 79.0640, lat: 21.1305, color: '#00ff66' },
-        { name: 'Saurabh Joshi', isLeader: false, lng: 79.0550, lat: 21.1285, color: '#2979ff' }
-      ];
+    // Map Tap / Click Handler for Interactive Node Placement
+    map.on('click', (e) => {
+      if (!isInteractiveRouteBuilder) return;
+      const lat = e.lngLat.lat;
+      const lng = e.lngLat.lng;
 
-      riderMarkers.forEach(m => m.remove());
-      riderMarkers = [];
+      // Ensure click is inside Nagpur District
+      if (lat < 20.55 || lat > 21.75 || lng < 78.25 || lng > 79.70) return;
 
-      demoRiders.forEach(r => {
+      pushStateToHistory();
+      handleMapClickSelection(lat, lng);
+    });
+
+    function handleMapClickSelection(lat, lng) {
+      const placeName = `Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+      if (pointSelectMode === 'start') {
+        waypoints[0] = { lat, lng, name: `Start: ${placeName}`, tag: 'Start Point' };
+        pointSelectMode = 'end';
+      } else if (pointSelectMode === 'end') {
+        if (waypoints.length === 0) {
+          waypoints.push({ lat, lng, name: `Start: ${placeName}`, tag: 'Start Point' });
+        }
+        waypoints[waypoints.length > 1 ? waypoints.length - 1 : 1] = {
+          lat, lng, name: `End: ${placeName}`, tag: 'End Point'
+        };
+        pointSelectMode = 'way';
+      } else if (pointSelectMode === 'way') {
+        if (waypoints.length < 2) {
+          waypoints.push({ lat, lng, name: `Start: ${placeName}`, tag: 'Start Point' });
+        }
+        waypoints.splice(waypoints.length - 1, 0, {
+          lat, lng, name: placeName, tag: `Checkpoint ${waypoints.length}`
+        });
+      }
+
+      renderRouteAndMarkers(true);
+    }
+
+    // Render Route Polyline and Markers
+    function renderRouteAndMarkers(notifyFlutter = true) {
+      waypointMarkers.forEach(m => m.remove());
+      waypointMarkers = [];
+
+      if (waypoints.length === 0) {
+        if (map.getSource('route-source')) {
+          map.getSource('route-source').setData({
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: [] }
+          });
+        }
+        if (notifyFlutter) emitWaypointsUpdated();
+        return;
+      }
+
+      // Draw Node Markers
+      waypoints.forEach((wp, idx) => {
+        const isStart = idx === 0;
+        const isEnd = idx === waypoints.length - 1 && waypoints.length > 1;
+        const typeClass = isStart ? 'start' : (isEnd ? 'end' : 'way');
+        const pinIcon = isStart ? '🚩' : (isEnd ? '🏁' : `${idx}`);
+
         const el = document.createElement('div');
-        el.className = 'rider-marker';
-        
-        const dot = document.createElement('div');
-        dot.className = 'rider-dot' + (r.isLeader ? ' leader' : '');
-        dot.style.backgroundColor = r.color;
+        el.className = 'waypoint-marker';
+
+        const pin = document.createElement('div');
+        pin.className = `waypoint-pin ${typeClass}`;
+        pin.innerText = pinIcon;
 
         const label = document.createElement('div');
-        label.className = 'rider-label' + (r.isLeader ? ' leader' : '');
-        label.innerText = r.name;
+        label.className = `waypoint-label ${typeClass}`;
+        label.innerText = wp.name || wp.tag || `Node ${idx + 1}`;
 
-        el.appendChild(dot);
+        el.appendChild(pin);
         el.appendChild(label);
 
         const marker = new mapboxgl.Marker({ element: el })
-          .setLngLat([r.lng, r.lat])
+          .setLngLat([wp.lng, wp.lat])
           .addTo(map);
 
-        riderMarkers.push(marker);
+        waypointMarkers.push(marker);
       });
+
+      // Calculate path coordinates
+      let coords = [];
+      if (waypoints.length >= 2) {
+        coords = waypoints.map(w => [w.lng, w.lat]);
+      } else if (waypoints.length === 1) {
+        coords = [[waypoints[0].lng, waypoints[0].lat]];
+      }
+
+      if (map.getSource('route-source')) {
+        map.getSource('route-source').setData({
+          type: 'Feature',
+          geometry: { type: 'LineString', coordinates: coords }
+        });
+      }
+
+      if (notifyFlutter) emitWaypointsUpdated();
     }
 
-    // Listen for messages from Flutter Web
+    function emitWaypointsUpdated() {
+      const distanceKm = calculateTotalDistanceKm();
+      const durationMinutes = Math.round(distanceKm * 3.5);
+      const coords = waypoints.map(w => [w.lng, w.lat]);
+
+      const payload = {
+        type: 'WAYPOINTS_UPDATED',
+        waypoints: waypoints.map((w, i) => ({
+          name: w.name,
+          latitude: w.lat,
+          longitude: w.lng,
+          tag: w.tag,
+          sequence: i + 1
+        })),
+        distanceKm: distanceKm,
+        durationMinutes: durationMinutes,
+        coordinates: coords,
+        currentMode: pointSelectMode
+      };
+
+      try {
+        window.parent.postMessage(JSON.stringify(payload), '*');
+      } catch (e) {}
+    }
+
+    function calculateTotalDistanceKm() {
+      if (waypoints.length < 2) return 0.0;
+      let total = 0.0;
+      for (let i = 0; i < waypoints.length - 1; i++) {
+        const p1 = waypoints[i];
+        const p2 = waypoints[i + 1];
+        const dLat = (p2.lat - p1.lat) * 111.0;
+        const dLon = (p2.lng - p1.lng) * 111.0 * 0.93;
+        total += Math.sqrt(dLat * dLat + dLon * dLon);
+      }
+      return parseFloat(total.toFixed(2));
+    }
+
+    // History Stack Helpers
+    function pushStateToHistory() {
+      historyStack.push(JSON.stringify(waypoints));
+      redoStack = [];
+    }
+
+    function undoRouteAction() {
+      if (historyStack.length === 0) return;
+      redoStack.push(JSON.stringify(waypoints));
+      waypoints = JSON.parse(historyStack.pop());
+      renderRouteAndMarkers(true);
+    }
+
+    function redoRouteAction() {
+      if (redoStack.length === 0) return;
+      historyStack.push(JSON.stringify(waypoints));
+      waypoints = JSON.parse(redoStack.pop());
+      renderRouteAndMarkers(true);
+    }
+
+    // Camera Controls
+    function toggle3DPitch() {
+      const pitch = map.getPitch();
+      map.easeTo({ pitch: pitch > 15 ? 0 : 55, bearing: pitch > 15 ? 0 : 15, duration: 600 });
+    }
+
+    function rotate3DView() {
+      const b = map.getBearing();
+      map.easeTo({ bearing: b + 45, duration: 600 });
+    }
+
+    function reset3DBearing() {
+      map.easeTo({ bearing: 0, duration: 600 });
+    }
+
+    // Listen for Messages from Flutter App
     window.addEventListener('message', (event) => {
       if (!event.data) return;
       try {
         const msg = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (msg.type === 'SET_ROUTE' && Array.isArray(msg.coordinates)) {
-          if (map && map.getSource('route-source')) {
-            map.getSource('route-source').setData({
-              type: 'Feature',
-              geometry: { type: 'LineString', coordinates: msg.coordinates }
-            });
-          }
+
+        if (msg.type === 'SET_MODE') {
+          pointSelectMode = msg.mode;
+        } else if (msg.type === 'SET_WAYPOINTS' && Array.isArray(msg.waypoints)) {
+          pushStateToHistory();
+          waypoints = msg.waypoints.map(w => ({
+            lat: w.latitude || w.lat,
+            lng: w.longitude || w.lng,
+            name: w.name,
+            tag: w.tag
+          }));
+          renderRouteAndMarkers(true);
+        } else if (msg.type === 'DELETE_WAYPOINT' && typeof msg.index === 'number') {
+          pushStateToHistory();
+          waypoints.splice(msg.index, 1);
+          renderRouteAndMarkers(true);
+        } else if (msg.type === 'CLEAR_ROUTE') {
+          pushStateToHistory();
+          waypoints = [];
+          pointSelectMode = 'start';
+          renderRouteAndMarkers(true);
+        } else if (msg.type === 'UNDO') {
+          undoRouteAction();
+        } else if (msg.type === 'REDO') {
+          redoRouteAction();
+        } else if (msg.type === 'TOGGLE_3D_PITCH') {
+          toggle3DPitch();
+        } else if (msg.type === 'ROTATE_3D') {
+          rotate3DView();
+        } else if (msg.type === 'RESET_BEARING') {
+          reset3DBearing();
         }
       } catch (e) {}
     });

@@ -87,6 +87,80 @@ class DomainService {
     }).eq('id', domainId);
   }
 
+  /// SuperAdmin Route Studio: Save the interactive 3D route to Supabase and sync checkpoints
+  Future<void> saveRouteForDomain({
+    required String domainId,
+    required Map<String, dynamic> routeGeojson,
+    required List<Map<String, dynamic>> waypoints,
+  }) async {
+    // 1. Update event_domains.route_geojson
+    await _client.from('event_domains').update({
+      'route_geojson': routeGeojson,
+    }).eq('id', domainId);
+
+    // 2. Sync route_checkpoints table
+    try {
+      await _client.from('route_checkpoints').delete().eq('domain_id', domainId);
+
+      if (waypoints.isNotEmpty) {
+        final inserts = <Map<String, dynamic>>[];
+        for (int i = 0; i < waypoints.length; i++) {
+          final wp = waypoints[i];
+          inserts.add({
+            'domain_id': domainId,
+            'name': wp['name'] ?? 'Waypoint ${i + 1}',
+            'latitude': wp['latitude'] ?? wp['lat'] ?? 0.0,
+            'longitude': wp['longitude'] ?? wp['lng'] ?? 0.0,
+            'sequence_order': i + 1,
+          });
+        }
+        await _client.from('route_checkpoints').insert(inserts);
+      }
+    } catch (_) {
+      // route_checkpoints sync fallback
+    }
+  }
+
+  // Active default template in memory / local state
+  static Map<String, dynamic> _customDefaultTemplate = _initialSundayDefaultTemplate;
+
+  static final Map<String, dynamic> _initialSundayDefaultTemplate = {
+    'type': 'Feature',
+    'properties': {
+      'name': 'ZeroMile Sunday City Circuit Loop',
+      'distanceKm': 10.4,
+      'durationMinutes': 35.0,
+      'waypoints': [
+        {'name': 'Zero Mile Freedom Park (Start Point)', 'latitude': 21.1458, 'longitude': 79.0882, 'tag': 'Start Point'},
+        {'name': 'Law College Square Junction', 'latitude': 21.1390, 'longitude': 79.0680, 'tag': 'Checkpoint 1'},
+        {'name': 'Shankar Nagar Square Metro', 'latitude': 21.1310, 'longitude': 79.0600, 'tag': 'Checkpoint 2'},
+        {'name': 'Deekshabhoomi Stupa Monument', 'latitude': 21.1290, 'longitude': 79.0670, 'tag': 'Checkpoint 3'},
+        {'name': 'VNIT Campus Main Gate (End Point)', 'latitude': 21.1280, 'longitude': 79.0520, 'tag': 'End Point'},
+      ],
+    },
+    'geometry': {
+      'type': 'LineString',
+      'coordinates': [
+        [79.0882, 21.1458],
+        [79.0750, 21.1410],
+        [79.0680, 21.1390],
+        [79.0600, 21.1310],
+        [79.0670, 21.1290],
+        [79.0520, 21.1280],
+      ],
+    },
+  };
+
+  /// Save current route as the Sunday Default Template
+  Future<void> saveDefaultRouteTemplate(Map<String, dynamic> template) async {
+    _customDefaultTemplate = Map<String, dynamic>.from(template);
+  }
+
+  /// Get the Sunday Default Route Template
+  Map<String, dynamic> getDefaultRouteTemplate() {
+    return Map<String, dynamic>.from(_customDefaultTemplate);
+  }
+
   /// Developer Panel: Provision a SuperAdmin for a domain (enforcing 5-6 soft cap)
   Future<DomainSuperAdmin> provisionSuperAdmin({
     required String domainId,

@@ -46,6 +46,7 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
         MapboxRouteStudioCard(
           activeDomain: widget.activeDomain,
           existingCheckpoints: widget.viewModel.routeCheckpoints,
+          viewModel: widget.viewModel,
           onRouteSaved: (waypoints, distanceKm) {
             if (widget.activeDomain != null) {
               widget.viewModel.updateRouteAndSchedule(
