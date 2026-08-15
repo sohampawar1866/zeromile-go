@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/sub_group.dart';
 import '../models/group_membership.dart';
 import '../models/group_creation_request.dart';
+import '../utils/phone_utils.dart';
 import 'supabase_client_service.dart';
 
 class GroupService {
@@ -176,11 +177,12 @@ class GroupService {
     required String memberPhone,
     required String memberName,
   }) async {
+    final cleanPhone = PhoneUtils.toDbFormat(memberPhone);
     final response = await _client.rpc('leader_direct_add_member', params: {
       'p_domain_id': domainId,
       'p_group_id': groupId,
       'p_leader_user_id': leaderUserId,
-      'p_member_phone': memberPhone,
+      'p_member_phone': cleanPhone,
       'p_member_name': memberName,
     });
     return response != null ? Map<String, dynamic>.from(response as Map) : {};

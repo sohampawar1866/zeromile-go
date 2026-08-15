@@ -27,6 +27,11 @@ class PhoneUtils {
     return formatWithPrefix(input);
   }
 
+  /// Extracts exactly 10 digits for clean database storage (no +91, no spaces).
+  static String toDbFormat(String input) {
+    return extract10Digits(input);
+  }
+
   /// Validates that input contains exactly 10 digits.
   static bool isValid10Digits(String input) {
     final digits = extract10Digits(input);

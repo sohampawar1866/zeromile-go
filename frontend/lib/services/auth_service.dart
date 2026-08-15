@@ -74,9 +74,9 @@ class AuthService {
       final userId = authResponse?.user?.id;
       final insertPayload = {
         if (userId != null) 'id': userId,
-        'phone_number': canonicalPhone,
+        'phone_number': cleanDigits,
         'full_name': fallbackFullName ?? 'Citizen Participant',
-        if (emergencyContact != null) 'emergency_contact': emergencyContact,
+        if (emergencyContact != null) 'emergency_contact': PhoneUtils.toDbFormat(emergencyContact),
       };
 
       final inserted = await _client
@@ -99,7 +99,7 @@ class AuthService {
     final List<dynamic> users = await _client
         .from('users')
         .select()
-        .inFilter('phone_number', [canonicalPhone, e164NoSpace, cleanDigits]);
+        .inFilter('phone_number', [cleanDigits, canonicalPhone, e164NoSpace]);
 
     if (users.isEmpty) {
       throw Exception('User persona with phone $phoneNumber not found in database.');
@@ -134,7 +134,7 @@ class AuthService {
         .update({
           'full_name': fullName,
           if (avatarUrl != null) 'avatar_url': avatarUrl,
-          if (emergencyContact != null) 'emergency_contact': emergencyContact,
+          if (emergencyContact != null) 'emergency_contact': PhoneUtils.toDbFormat(emergencyContact),
         })
         .eq('id', _currentUser!.id)
         .select()

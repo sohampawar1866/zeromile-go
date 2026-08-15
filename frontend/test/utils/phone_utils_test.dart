@@ -15,6 +15,13 @@ void main() {
       expect(PhoneUtils.formatWithPrefix('9822012345', space: false), equals('+919822012345'));
     });
 
+    test('toDbFormat extracts pure 10 digits for DB storage', () {
+      expect(PhoneUtils.toDbFormat('+91 8087167841'), equals('8087167841'));
+      expect(PhoneUtils.toDbFormat('+918087167841'), equals('8087167841'));
+      expect(PhoneUtils.toDbFormat('8087167841'), equals('8087167841'));
+      expect(PhoneUtils.toDbFormat('+91 80871 67841'), equals('8087167841'));
+    });
+
     test('isValid10Digits validates 10 digits accurately', () {
       expect(PhoneUtils.isValid10Digits('9822012345'), isTrue);
       expect(PhoneUtils.isValid10Digits('+91 98220 12345'), isTrue);

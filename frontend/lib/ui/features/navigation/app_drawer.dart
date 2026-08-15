@@ -9,6 +9,7 @@ import '../../../models/user_profile.dart';
 import '../../../logic/view_models/domain_context_view_model.dart';
 import '../../core/dialogs/switch_domain_modal.dart';
 import '../../core/widgets/fluid_tap_scale.dart';
+import '../../../utils/phone_utils.dart';
 
 class AppDrawer extends StatelessWidget {
   final UserProfile? currentUser;
@@ -84,7 +85,7 @@ class AppDrawer extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    currentUser?.phoneNumber ?? '+91 8087167841',
+                    PhoneUtils.formatDisplay(currentUser?.phoneNumber ?? '8087167841'),
                     style: AppTypography.caption,
                   ),
                 ],

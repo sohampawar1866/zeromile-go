@@ -184,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            user?.phoneNumber ?? '+91 8087167841',
+                            PhoneUtils.formatDisplay(user?.phoneNumber ?? '8087167841'),
                             style: AppTypography.bodySm.copyWith(color: AppColors.mute),
                           ),
                           const SizedBox(height: AppSpacing.xs),
@@ -217,15 +217,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.directions_bike_outlined, color: AppColors.ink, size: 20),
+                    Icon(Icons.hub_outlined, color: AppColors.ink, size: 20),
                     SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'Event & Contingent Affiliation',
-                        style: AppTypography.headingMd,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                    Text('Active Event & Contingent', style: AppTypography.headingMd),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -278,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
-                      ? 'Next-of-Kin: ${user.emergencyContact}'
+                      ? 'Next-of-Kin: ${PhoneUtils.formatDisplay(user.emergencyContact!)}'
                       : 'No emergency next-of-kin contact registered. Tap edit to configure.',
                   style: AppTypography.bodySm.copyWith(
                     color: (user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty)

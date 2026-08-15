@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/event_domain.dart';
 import '../models/route_checkpoint.dart';
 import '../models/domain_superadmin.dart';
+import '../utils/phone_utils.dart';
 import 'supabase_client_service.dart';
 
 class DomainService {
@@ -104,10 +105,11 @@ class DomainService {
     }
 
     // 2. Ensure user exists
+    final cleanPhone = PhoneUtils.toDbFormat(userPhone);
     var user = await _client
         .from('users')
         .select('id')
-        .eq('phone_number', userPhone)
+        .inFilter('phone_number', [cleanPhone, '+91 $cleanPhone', '+91$cleanPhone'])
         .maybeSingle();
 
     String userId;
@@ -115,7 +117,7 @@ class DomainService {
       final newUser = await _client
           .from('users')
           .insert({
-            'phone_number': userPhone,
+            'phone_number': cleanPhone,
             'full_name': userName,
           })
           .select('id')
