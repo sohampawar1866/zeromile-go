@@ -7,6 +7,8 @@ import '../../../../config/app_typography.dart';
 import '../../../../models/group_membership.dart';
 import '../../../core/widgets/fluid_tap_scale.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../../core/components/shad_button.dart';
+import '../../../core/components/shad_card.dart';
 
 class PresenceTrackerCard extends StatelessWidget {
   final GroupMembership? membership;

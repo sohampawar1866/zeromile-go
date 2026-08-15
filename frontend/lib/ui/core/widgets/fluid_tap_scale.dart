@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 /// Interactive tap collapse feedback (scale(0.96) with instant curve).
 class FluidTapScale extends StatefulWidget {
   final Widget child;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const FluidTapScale({
     super.key,
     required this.child,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
@@ -43,12 +43,16 @@ class _FluidTapScaleState extends State<FluidTapScale> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    if (widget.onTap == null) {
+      return widget.child;
+    }
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) {
         _controller.reverse();
-        widget.onTap();
+        widget.onTap?.call();
       },
       onTapCancel: () => _controller.reverse(),
       child: ScaleTransition(

@@ -6,6 +6,8 @@ import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
 import '../../../../models/group_membership.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../../core/components/shad_button.dart';
+import '../../../core/components/shad_card.dart';
 
 class ActiveGroupCard extends StatelessWidget {
   final GroupMembership? membership;

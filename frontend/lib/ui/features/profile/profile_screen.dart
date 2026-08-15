@@ -13,6 +13,8 @@ import '../../../logic/view_models/groups_view_model.dart';
 import '../../../utils/phone_utils.dart';
 import '../../core/widgets/fluid_tap_scale.dart';
 import '../../core/widgets/status_badge.dart';
+import '../../core/components/shad_button.dart';
+import '../../core/components/shad_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserProfile? currentUser;

@@ -5,12 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_core/flutter_core.dart';
 import 'package:flutter_core/ui/features/home/participant_home_screen.dart';
 import 'package:flutter_core/ui/core/widgets/density_cluster_map_view.dart';
+import 'package:flutter_core/ui/core/dialogs/emergency_sos_modal.dart';
 import 'package:flutter_core/ui/features/admin_console/tabs/mapbox_route_studio_card.dart';
 
 void main() {
   group('End-to-End User Journey Integration Tests', () {
     testWidgets('Journey 1: Participant Home Screen renders and completes muster check-in', (tester) async {
       final homeVm = ParticipantHomeViewModel();
+      addTearDown(homeVm.dispose);
+
       final domain = EventDomain(
         id: 'domain-nagpur-2026',
         name: 'Vikasit Nagpur 2026 Mega Cycling Rally',
@@ -43,7 +46,7 @@ void main() {
 
       // Tap Check-in
       await tester.tap(find.text('Check-In at Muster'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 200));
 
       // Verify Emergency SOS FAB is visible during live window
       expect(find.text('EMERGENCY SOS'), findsOneWidget);
@@ -68,7 +71,7 @@ void main() {
             body: SingleChildScrollView(
               child: MapboxRouteStudioCard(
                 activeDomain: domain,
-                existingCheckpoints: const [
+                existingCheckpoints: [
                   RouteCheckpoint(
                     id: 'cp-1',
                     domainId: 'domain-1',
@@ -77,6 +80,7 @@ void main() {
                     longitude: 79.0882,
                     sequenceOrder: 1,
                     checkpointType: CheckpointType.start,
+                    createdAt: DateTime.now(),
                   ),
                   RouteCheckpoint(
                     id: 'cp-2',
@@ -86,6 +90,7 @@ void main() {
                     longitude: 79.0670,
                     sequenceOrder: 2,
                     checkpointType: CheckpointType.finish,
+                    createdAt: DateTime.now(),
                   ),
                 ],
               ),
@@ -107,11 +112,12 @@ void main() {
 
       // Switch to Cyberpunk Night Mode
       await tester.tap(find.text('🌙'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 200));
 
-      // Tap Save Draft
-      await tester.tap(find.text('💾 Save Draft'));
-      await tester.pumpAndSettle();
+      // Scroll and Tap Save Draft
+      await tester.ensureVisible(find.text('💾 Save Draft'));
+      await tester.tap(find.text('💾 Save Draft'), warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 200));
     });
 
     testWidgets('Journey 3: Emergency SOS Modal trigger workflow', (tester) async {

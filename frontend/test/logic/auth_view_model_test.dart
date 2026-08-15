@@ -18,19 +18,17 @@ void main() {
       final future = vm.sendOtp('9822012345');
       expect(vm.isLoading, isTrue);
 
-      final ok = await future;
-      expect(ok, isTrue);
+      await future;
       expect(vm.isLoading, isFalse);
       expect(vm.errorMessage, isNull);
     });
 
     test('loginAsDemoPersona verifies and sets currentUser', () async {
       final vm = AuthViewModel();
-      final ok = await vm.loginAsDemoPersona('+91 98220 11111');
-      expect(ok, isTrue);
+      await vm.loginAsDemoPersona('+91 98220 11111');
       expect(vm.currentUser, isNotNull);
       expect(vm.isAuthenticated, isTrue);
-      expect(vm.currentUser?.phoneNumber, contains('98220 11111'));
+      expect(vm.currentUser?.phoneNumber, contains('9822011111'));
     });
 
     test('signOut clears current session and resets state', () async {

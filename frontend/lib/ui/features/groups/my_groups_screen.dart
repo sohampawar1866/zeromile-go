@@ -8,6 +8,8 @@ import '../../../logic/view_models/groups_view_model.dart';
 import '../../core/widgets/fluid_tap_scale.dart';
 import '../../core/widgets/status_badge.dart';
 import '../../core/dialogs/group_creation_modal.dart';
+import '../../core/components/shad_button.dart';
+import '../../core/components/shad_card.dart';
 
 class MyGroupsScreen extends StatefulWidget {
   final GroupsViewModel viewModel;

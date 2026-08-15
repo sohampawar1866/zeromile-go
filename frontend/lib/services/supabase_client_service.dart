@@ -14,10 +14,10 @@ class SupabaseClientService {
       try {
         _instance = SupabaseClientService._internal(Supabase.instance.client);
       } catch (_) {
-        // Fallback for widget/unit tests or headless environments
         final fallbackClient = SupabaseClient(
           AppConfig.supabaseUrl,
           AppConfig.supabaseAnonKey,
+          authOptions: const AuthClientOptions(autoRefreshToken: false),
         );
         _instance = SupabaseClientService._internal(fallbackClient);
       }
