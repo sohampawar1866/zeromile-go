@@ -32,7 +32,9 @@ class ZeroMileGoApp extends StatelessWidget {
     return MaterialApp(
       title: 'ZeroMile Go',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light,
       home: const ZeroMileRootController(),
     );
   }

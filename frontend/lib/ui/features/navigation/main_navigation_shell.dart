@@ -18,7 +18,6 @@ import '../admin_console/superadmin_console_screen.dart';
 import '../dev_panel/dev_panel_screen.dart';
 import '../profile/profile_screen.dart';
 import 'app_drawer.dart';
-import '../../core/dialogs/group_creation_modal.dart';
 
 class MainNavigationShell extends StatefulWidget {
   final DomainContextViewModel domainContextVm;
@@ -44,29 +43,8 @@ class MainNavigationShell extends StatefulWidget {
   State<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> with SingleTickerProviderStateMixin {
+class _MainNavigationShellState extends State<MainNavigationShell> {
   int _bottomNavIndex = 0;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 0.90, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +58,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
         titleSpacing: 0,
+        backgroundColor: AppColors.canvas,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -91,24 +70,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
                 style: AppTypography.headingMd,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            ScaleTransition(
-              scale: _pulseAnimation,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.liveIndicatorBg,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Text(
-                  'LIVE',
-                  style: AppTypography.captionXs.copyWith(
-                    color: AppColors.liveIndicatorText,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
               ),
             ),
           ],
@@ -153,16 +114,18 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
       bottomNavigationBar: role == ActiveRolePerspective.participant
           ? Container(
               decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.hairlineSoft, width: 1.0)),
+                color: AppColors.surface,
+                border: Border(top: BorderSide(color: AppColors.hairline, width: 1.0)),
               ),
               child: BottomNavigationBar(
                 currentIndex: _bottomNavIndex,
                 onTap: (idx) => setState(() => _bottomNavIndex = idx),
-                backgroundColor: AppColors.canvas,
+                backgroundColor: AppColors.surface,
                 selectedItemColor: AppColors.ink,
                 unselectedItemColor: AppColors.mute,
                 selectedLabelStyle: AppTypography.captionXs.copyWith(fontWeight: FontWeight.w700),
                 unselectedLabelStyle: AppTypography.captionXs,
+                elevation: 0,
                 items: const [
                   BottomNavigationBarItem(
                     icon: Icon(Icons.home_outlined),
@@ -226,28 +189,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
             activeMembership: widget.participantHomeVm.activeMembership,
             authVm: widget.authVm,
             groupsVm: widget.groupsVm,
-            onOpenProposeModal: () {
-              GroupCreationModal.show(
-                context,
-                onSubmit: ({
-                  required orgName,
-                  required orgType,
-                  required expectedCount,
-                  required musterPoint,
-                  leaderNotes,
-                }) async {
-                  await widget.groupsVm.submitGroupProposal(
-                    domainId: domainId,
-                    applicantUserId: userId,
-                    orgName: orgName,
-                    orgType: orgType,
-                    expectedCount: expectedCount,
-                    musterPoint: musterPoint,
-                    leaderNotes: leaderNotes,
-                  );
-                },
-              );
-            },
             onManageContingents: () => setState(() => _bottomNavIndex = 1),
           );
         }
@@ -257,28 +198,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
           viewModel: widget.participantHomeVm,
           currentUserId: userId,
           onNavigateToGroups: () => setState(() => _bottomNavIndex = 1),
-          onOpenProposeModal: () {
-            GroupCreationModal.show(
-              context,
-              onSubmit: ({
-                required orgName,
-                required orgType,
-                required expectedCount,
-                required musterPoint,
-                leaderNotes,
-              }) async {
-                await widget.groupsVm.submitGroupProposal(
-                  domainId: domainId,
-                  applicantUserId: userId,
-                  orgName: orgName,
-                  orgType: orgType,
-                  expectedCount: expectedCount,
-                  musterPoint: musterPoint,
-                  leaderNotes: leaderNotes,
-                );
-              },
-            );
-          },
         );
     }
   }

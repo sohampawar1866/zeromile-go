@@ -5,7 +5,6 @@ import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
 import '../../../../models/group_membership.dart';
-import '../../../core/widgets/fluid_tap_scale.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../core/components/shad_button.dart';
 import '../../../core/components/shad_card.dart';
@@ -31,13 +30,13 @@ class PresenceTrackerCard extends StatelessWidget {
     final isCompleted = status == ParticipationStatus.completed;
 
     return ShadCard(
-      title: 'Event Participation Status',
+      title: 'Event Participation',
       trailing: StatusBadge(
         label: isCompleted
-            ? 'COMPLETED'
+            ? 'Completed'
             : isCheckedIn
-                ? 'CHECKED IN'
-                : 'NOT CHECKED IN',
+                ? 'Checked In'
+                : 'Not Checked In',
         type: isCompleted
             ? StatusBadgeType.primary
             : isCheckedIn
@@ -47,38 +46,80 @@ class PresenceTrackerCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isCompleted
-                ? '🏁 Congratulations! You have successfully completed the rally loop. Finish certificate registered.'
-                : isCheckedIn
-                    ? '📍 Present at muster point${membership?.checkinTime != null ? " since ${membership!.checkinTime!.hour}:${membership!.checkinTime!.minute.toString().padLeft(2, '0')}" : ""}. Live GPS Telemetry Online.'
-                    : 'ℹ️ Please tap "Check-in at Muster" when arriving at your assigned assembly point.',
-            style: AppTypography.bodySm,
-          ),
-          const SizedBox(height: AppSpacing.md),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: ShadButton(
-                  text: isCheckedIn ? 'Checked In' : 'Check-In at Muster',
-                  icon: isCheckedIn ? Icons.check_circle : Icons.location_on,
-                  size: ShadButtonSize.sm,
-                  variant: isCheckedIn ? ShadButtonVariant.secondary : ShadButtonVariant.primary,
-                  onPressed: isCheckedIn || isCompleted ? null : onCheckIn,
-                ),
+              Icon(
+                isCompleted
+                    ? Icons.military_tech_outlined
+                    : isCheckedIn
+                        ? Icons.check_circle_outline
+                        : Icons.info_outline,
+                color: isCompleted
+                    ? AppColors.ink
+                    : isCheckedIn
+                        ? AppColors.success
+                        : AppColors.mute,
+                size: 18,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
-                child: ShadButton(
-                  text: isCompleted ? 'Finished' : 'Mark Completed',
-                  icon: Icons.flag,
-                  size: ShadButtonSize.sm,
-                  variant: isCompleted ? ShadButtonVariant.secondary : ShadButtonVariant.outline,
-                  onPressed: isCompleted ? null : onComplete,
+                child: Text(
+                  isCompleted
+                      ? 'Congratulations! You have completed the rally loop. Finish certificate recorded.'
+                      : isCheckedIn
+                          ? 'Present at muster point${membership?.checkinTime != null ? " since ${membership!.checkinTime!.hour.toString().padLeft(2, '0')}:${membership!.checkinTime!.minute.toString().padLeft(2, '0')}" : ""}. Live GPS telemetry active.'
+                          : 'Please tap "Check In" upon arriving at your assigned muster assembly point.',
+                  style: AppTypography.bodySm,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Adaptive, stateful action button (prevents 2-button horizontal collision)
+          if (!isCheckedIn && !isCompleted)
+            ShadButton(
+              text: 'Check In at Muster',
+              icon: Icons.location_on_outlined,
+              size: ShadButtonSize.md,
+              isFullWidth: true,
+              variant: ShadButtonVariant.primary,
+              onPressed: onCheckIn,
+            )
+          else if (isCheckedIn)
+            Row(
+              children: [
+                const Expanded(
+                  child: ShadButton(
+                    text: 'Checked In',
+                    icon: Icons.check,
+                    size: ShadButtonSize.sm,
+                    variant: ShadButtonVariant.secondary,
+                    onPressed: null,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: ShadButton(
+                    text: 'Finish Rally',
+                    icon: Icons.flag_outlined,
+                    size: ShadButtonSize.sm,
+                    variant: ShadButtonVariant.primary,
+                    onPressed: onComplete,
+                  ),
+                ),
+              ],
+            )
+          else
+            const ShadButton(
+              text: 'Rally Completed ✓',
+              icon: Icons.emoji_events_outlined,
+              size: ShadButtonSize.md,
+              isFullWidth: true,
+              variant: ShadButtonVariant.secondary,
+              onPressed: null,
+            ),
         ],
       ),
     );

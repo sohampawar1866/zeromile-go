@@ -22,7 +22,7 @@ void main() {
       expect(TemporalWindowEvaluator.isLiveInteractive(domain), isTrue);
 
       final banner = TemporalWindowEvaluator.getScheduleBanner(domain);
-      expect(banner, contains('LIVE RALLY ACTIVE'));
+      expect(banner, contains('Live Rally Active'));
     });
 
     test('evaluate returns preEvent when event is upcoming or before start time', () {
@@ -42,7 +42,7 @@ void main() {
       expect(TemporalWindowEvaluator.isLiveInteractive(domain), isFalse);
 
       final banner = TemporalWindowEvaluator.getScheduleBanner(domain);
-      expect(banner, contains('PRE-EVENT PREPARATION'));
+      expect(banner, contains('Pre-Event Standby'));
     });
 
     test('evaluate returns concluded when status is concluded or after end time', () {
@@ -62,7 +62,7 @@ void main() {
       expect(TemporalWindowEvaluator.isLiveInteractive(domain), isFalse);
 
       final banner = TemporalWindowEvaluator.getScheduleBanner(domain);
-      expect(banner, contains('EVENT CONCLUDED'));
+      expect(banner, contains('Event Concluded'));
     });
   });
 }

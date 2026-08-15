@@ -6,10 +6,11 @@ import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
 import '../widgets/fluid_tap_scale.dart';
 
-enum ShadButtonVariant { primary, secondary, outline, ghost, destructive }
+enum ShadButtonVariant { primary, secondary, outline, ghost, destructive, success }
 enum ShadButtonSize { sm, md, lg }
 
 /// Reusable atomic button adhering to Shadcn UI design patterns
+/// Guaranteed overflow-safe on ultra-narrow mobile viewports.
 class ShadButton extends StatelessWidget {
   final String text;
   final IconData? icon;
@@ -40,29 +41,30 @@ class ShadButton extends StatelessWidget {
           : (AppColors.ink, AppColors.onPrimary, null),
       ShadButtonVariant.secondary => isDark
           ? (const Color(0xFF27272A), const Color(0xFFF4F4F5), Border.all(color: const Color(0xFF3F3F46)))
-          : (AppColors.softCloud, AppColors.ink, Border.all(color: AppColors.hairlineSoft)),
+          : (AppColors.softCloud, AppColors.ink, Border.all(color: AppColors.hairline)),
       ShadButtonVariant.outline => isDark
           ? (Colors.transparent, const Color(0xFFF4F4F5), Border.all(color: const Color(0xFF3F3F46)))
-          : (AppColors.canvas, AppColors.ink, Border.all(color: AppColors.hairline)),
+          : (AppColors.surface, AppColors.ink, Border.all(color: AppColors.borderLight)),
       ShadButtonVariant.ghost => (Colors.transparent, isDark ? const Color(0xFFF4F4F5) : AppColors.ink, null),
       ShadButtonVariant.destructive => (AppColors.sale, AppColors.onPrimary, null),
+      ShadButtonVariant.success => (AppColors.success, AppColors.onPrimary, null),
     };
 
     final (padding, textStyle, iconSize) = switch (size) {
       ShadButtonSize.sm => (
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           AppTypography.buttonSm,
           14.0,
         ),
       ShadButtonSize.md => (
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
           AppTypography.buttonMd,
           16.0,
         ),
       ShadButtonSize.lg => (
-          const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           AppTypography.buttonLg,
-          20.0,
+          18.0,
         ),
     };
 
@@ -80,11 +82,21 @@ class ShadButton extends StatelessWidget {
               : bgColor,
           borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
           border: border,
+          boxShadow: (!isDisabled && variant == ShadButtonVariant.primary && !isDark)
+              ? const [
+                  BoxShadow(
+                    color: Color(0x140F172A),
+                    offset: Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ]
+              : null,
         ),
-        alignment: isFullWidth ? Alignment.center : null,
+        alignment: Alignment.center,
         child: Row(
           mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (isLoading) ...[
               SizedBox(
@@ -95,7 +107,7 @@ class ShadButton extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation<Color>(fgColor),
                 ),
               ),
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: 6),
             ] else if (icon != null) ...[
               Icon(
                 icon,
@@ -104,9 +116,10 @@ class ShadButton extends StatelessWidget {
                     ? (isDark ? const Color(0xFF71717A) : AppColors.buttonDisabledText)
                     : fgColor,
               ),
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: 6),
             ],
             Flexible(
+              fit: isFullWidth ? FlexFit.loose : FlexFit.loose,
               child: Text(
                 text,
                 maxLines: 1,

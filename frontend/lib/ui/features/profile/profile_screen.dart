@@ -11,7 +11,6 @@ import '../../../models/user_profile.dart';
 import '../../../logic/view_models/auth_view_model.dart';
 import '../../../logic/view_models/groups_view_model.dart';
 import '../../../utils/phone_utils.dart';
-import '../../core/widgets/fluid_tap_scale.dart';
 import '../../core/widgets/status_badge.dart';
 import '../../core/components/shad_button.dart';
 import '../../core/components/shad_card.dart';
@@ -23,7 +22,6 @@ class ProfileScreen extends StatefulWidget {
   final AuthViewModel authVm;
   final GroupsViewModel groupsVm;
   final VoidCallback? onManageContingents;
-  final VoidCallback onOpenProposeModal;
 
   const ProfileScreen({
     super.key,
@@ -33,7 +31,6 @@ class ProfileScreen extends StatefulWidget {
     required this.authVm,
     required this.groupsVm,
     this.onManageContingents,
-    required this.onOpenProposeModal,
   });
 
   @override
@@ -48,25 +45,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
       text: PhoneUtils.extract10Digits(user?.emergencyContact ?? ''),
     );
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.canvas,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.only(
+          left: AppSpacing.lg,
+          right: AppSpacing.lg,
+          top: AppSpacing.lg,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.lg,
         ),
-        title: const Text('Update Profile Details', style: AppTypography.headingMd),
-        content: Column(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        ),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.hairline,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Text('Update Profile Details', style: AppTypography.headingLg),
+            const SizedBox(height: AppSpacing.xs),
+            const Text(
+              'Keep your identity and distress contact updated for rally safety.',
+              style: AppTypography.caption,
+            ),
+            const SizedBox(height: AppSpacing.lg),
             TextField(
               controller: nameCtrl,
               decoration: const InputDecoration(
                 labelText: 'Full Name',
-                hintText: 'Name',
+                hintText: 'Your name',
+                prefixIcon: Icon(Icons.person_outline, size: 20),
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.md),
             TextField(
               controller: emergencyCtrl,
               keyboardType: TextInputType.phone,
@@ -74,62 +98,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(10),
               ],
-              decoration: InputDecoration(
-                labelText: 'Emergency Contact',
+              decoration: const InputDecoration(
+                labelText: 'Emergency Distress Phone',
                 prefixText: '+91 ',
-                prefixStyle: AppTypography.bodyStrong.copyWith(color: AppColors.ink),
+                prefixIcon: Icon(Icons.phone_outlined, size: 20),
                 hintText: '98000 00000',
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: ShadButton(
+                    text: 'Cancel',
+                    variant: ShadButtonVariant.outline,
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: ShadButton(
+                    text: 'Save Details',
+                    variant: ShadButtonVariant.primary,
+                    onPressed: () async {
+                      final newName = nameCtrl.text.trim();
+                      final rawEmerg = PhoneUtils.extract10Digits(emergencyCtrl.text);
+
+                      if (newName.isNotEmpty) {
+                        if (rawEmerg.isNotEmpty && rawEmerg.length != 10) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Emergency contact must be 10 digits.'),
+                              backgroundColor: AppColors.warning,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final canonicalEmerg = rawEmerg.isNotEmpty
+                            ? PhoneUtils.formatWithPrefix(rawEmerg, space: true)
+                            : null;
+
+                        Navigator.pop(ctx);
+                        await widget.authVm.updateProfile(
+                          fullName: newName,
+                          emergencyContact: canonicalEmerg,
+                        );
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile details updated successfully.'),
+                              backgroundColor: AppColors.ink,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: AppTypography.buttonSmSecondary),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.ink,
-              foregroundColor: AppColors.onPrimary,
-            ),
-            onPressed: () async {
-              final newName = nameCtrl.text.trim();
-              final rawEmerg = PhoneUtils.extract10Digits(emergencyCtrl.text);
-
-              if (newName.isNotEmpty) {
-                if (rawEmerg.isNotEmpty && rawEmerg.length != 10) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Emergency contact must be 10 digits.'),
-                      backgroundColor: AppColors.warning,
-                    ),
-                  );
-                  return;
-                }
-
-                final canonicalEmerg = rawEmerg.isNotEmpty
-                    ? PhoneUtils.formatWithPrefix(rawEmerg, space: true)
-                    : null;
-
-                Navigator.pop(ctx);
-                await widget.authVm.updateProfile(
-                  fullName: newName,
-                  emergencyContact: canonicalEmerg,
-                );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Profile details updated successfully.'),
-                      backgroundColor: AppColors.ink,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Save Details', style: AppTypography.buttonSm),
-          ),
-        ],
       ),
     );
   }
@@ -149,14 +179,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // User Identity Card
         ShadCard(
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: AppColors.ink,
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.hairline, width: 2),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -164,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? user!.fullName.substring(0, 1).toUpperCase()
                       : 'U',
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.onPrimary,
                   ),
@@ -183,11 +218,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 2),
                     Text(
                       PhoneUtils.formatDisplay(user?.phoneNumber ?? '8087167841'),
-                      style: AppTypography.bodySm.copyWith(color: AppColors.mute),
+                      style: AppTypography.caption,
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     StatusBadge(
-                      label: isLeader ? 'GROUP LEADER' : 'PARTICIPANT',
+                      label: isLeader ? 'Group Leader' : 'Participant',
                       type: isLeader ? StatusBadgeType.warning : StatusBadgeType.primary,
                     ),
                   ],
@@ -232,30 +267,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         // Emergency SOS & Next-of-Kin Contact
         ShadCard(
-          title: 'Emergency Distress Contact',
-          trailing: IconButton(
-            icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.ink),
-            tooltip: 'Update Emergency Contact',
-            onPressed: _showEditProfileDialog,
+          title: 'Distress Contact',
+          trailing: InkWell(
+            onTap: _showEditProfileDialog,
+            borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
+            child: const Padding(
+              padding: EdgeInsets.all(6),
+              child: Icon(Icons.edit_outlined, size: 18, color: AppColors.ink),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
-                    ? 'Next-of-Kin: ${PhoneUtils.formatDisplay(user.emergencyContact!)}'
-                    : 'No emergency next-of-kin contact registered. Tap edit to configure.',
-                style: AppTypography.bodySm.copyWith(
-                  color: (user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty)
-                      ? AppColors.ink
-                      : AppColors.sale,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              const Text(
-                'This contact number receives instant SMS alerts during critical distress signals.',
-                style: AppTypography.caption,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: AppColors.softCloud,
+                      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
+                      border: Border.all(color: AppColors.hairline),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                          ? Icons.verified_user_outlined
+                          : Icons.contact_phone_outlined,
+                      size: 18,
+                      color: user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                          ? AppColors.success
+                          : AppColors.mute,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                              ? 'Next-of-Kin: ${PhoneUtils.formatDisplay(user.emergencyContact!)}'
+                              : 'No contact registered',
+                          style: AppTypography.bodyStrong,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                              ? 'Receives instant emergency SMS alerts.'
+                              : 'Tap edit to configure emergency contact.',
+                          style: AppTypography.captionXs.copyWith(color: AppColors.mute),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -264,31 +333,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         // Telemetry & Device Sensors Card
         ShadCard(
-          title: 'Telemetry & Device Sensors',
+          title: 'Device & Telemetry',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfoRow('GPS Telemetry Stream', 'Online (1Hz High-Precision Stream)'),
-              _buildInfoRow('Density Heatmap Sync', 'Synchronized (WebSocket Channels)'),
+              _buildInfoRow('GPS Telemetry Stream', 'Online (High-Precision 1Hz)'),
+              _buildInfoRow('Density Heatmap Sync', 'Synchronized (WebSocket)'),
               _buildInfoRow('Device Identifier', user?.id.substring(0, 13) ?? 'u0000000-0000'),
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
-
-        // Bottom Action Button: Propose New Sub-Group
-        ShadButton(
-          text: 'Propose New Sub-Group',
-          icon: Icons.add_business_outlined,
-          isFullWidth: true,
-          variant: ShadButtonVariant.primary,
-          onPressed: widget.onOpenProposeModal,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-
         // Sign Out Button
         ShadButton(
-          text: 'Sign Out of Session',
+          text: 'Sign Out',
           icon: Icons.logout,
           isFullWidth: true,
           variant: ShadButtonVariant.outline,

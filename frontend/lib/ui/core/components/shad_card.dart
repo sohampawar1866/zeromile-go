@@ -5,7 +5,7 @@ import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
 
-/// Structured Card component following Shadcn UI layout paradigms:
+/// Structured Card component following modern Shadcn UI layout paradigms:
 /// Header (Title, Subtitle, Trailing Action) -> Content (Child) -> Footer (Actions)
 class ShadCard extends StatelessWidget {
   final Widget? header;
@@ -33,12 +33,22 @@ class ShadCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF18181B) : AppColors.softCloud,
-        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+        color: isDark ? const Color(0xFF18181B) : AppColors.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
         border: Border.all(
-          color: isDark ? const Color(0xFF27272A) : AppColors.hairlineSoft,
+          color: isDark ? const Color(0xFF27272A) : AppColors.hairline,
           width: 1.0,
         ),
+        boxShadow: isDark
+            ? []
+            : const [
+                BoxShadow(
+                  color: Color(0x08000000),
+                  offset: Offset(0, 1),
+                  blurRadius: 3,
+                  spreadRadius: 0,
+                ),
+              ],
       ),
       padding: padding,
       child: Column(
@@ -51,7 +61,7 @@ class ShadCard extends StatelessWidget {
           ] else if (title != null) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Column(
@@ -62,6 +72,7 @@ class ShadCard extends StatelessWidget {
                         style: AppTypography.headingMd.copyWith(
                           color: isDark ? const Color(0xFFF4F4F5) : AppColors.ink,
                         ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (description != null) ...[
@@ -77,7 +88,7 @@ class ShadCard extends StatelessWidget {
                   ),
                 ),
                 if (trailing != null) ...[
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: AppSpacing.xs),
                   trailing!,
                 ],
               ],

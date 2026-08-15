@@ -34,11 +34,11 @@ class TemporalWindowEvaluator {
     final lifecycle = evaluate(domain, currentTime: currentTime);
     switch (lifecycle) {
       case EventWindowLifecycle.preEvent:
-        return '🏁 PRE-EVENT PREPARATION • Live GPS & SOS activates at ${_formatTime(domain.startTime)}';
+        return 'Pre-Event Standby • GPS & SOS activates at ${_formatTime(domain.startTime)}';
       case EventWindowLifecycle.liveActive:
-        return '🟢 LIVE RALLY ACTIVE • Real-time GPS Tracking, Muster & SOS Online';
+        return 'Live Rally Active • GPS Telemetry & SOS Online';
       case EventWindowLifecycle.concluded:
-        return '🏁 EVENT CONCLUDED • Static route preview & certificate downloads open';
+        return 'Event Concluded • Certificates Available';
     }
   }
 

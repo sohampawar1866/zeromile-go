@@ -8,7 +8,6 @@ import '../../../../models/event_domain.dart';
 import '../../../../models/route_checkpoint.dart';
 import '../../../../services/mapbox_service.dart';
 import '../../../core/widgets/density_cluster_map_view.dart';
-import '../../../core/widgets/fluid_tap_scale.dart';
 import '../../../core/components/shad_button.dart';
 import '../../../core/components/shad_card.dart';
 

@@ -11,14 +11,12 @@ import '../../../core/components/shad_card.dart';
 
 class ActiveGroupCard extends StatelessWidget {
   final GroupMembership? membership;
-  final VoidCallback onSwitchGroup;
-  final VoidCallback onProposeGroup;
+  final VoidCallback onManageGroups;
 
   const ActiveGroupCard({
     super.key,
     required this.membership,
-    required this.onSwitchGroup,
-    required this.onProposeGroup,
+    required this.onManageGroups,
   });
 
   @override
@@ -28,9 +26,9 @@ class ActiveGroupCard extends StatelessWidget {
     final isLeader = membership?.isLeader ?? false;
 
     return ShadCard(
-      title: 'Your Active Sub-Group',
+      title: 'Active Sub-Group',
       trailing: StatusBadge(
-        label: !isEnrolled ? 'GENERAL' : (isLeader ? 'LEADER' : 'MEMBER'),
+        label: !isEnrolled ? 'General' : (isLeader ? 'Leader' : 'Member'),
         type: !isEnrolled ? StatusBadgeType.muted : (isLeader ? StatusBadgeType.warning : StatusBadgeType.primary),
       ),
       child: Column(
@@ -39,38 +37,36 @@ class ActiveGroupCard extends StatelessWidget {
           Container(
             padding: AppSpacing.edgeInsetsCard,
             decoration: BoxDecoration(
-              color: AppColors.canvas,
+              color: AppColors.softCloud,
               borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-              border: Border.all(color: AppColors.hairlineSoft),
+              border: Border.all(color: AppColors.hairline),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   groupName,
-                  style: AppTypography.headingMd,
+                  style: AppTypography.bodyStrong,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: AppSpacing.xxs),
+                const SizedBox(height: 3),
                 Text(
                   isEnrolled
-                      ? 'Muster Point: Samvidhan Square • Active Telemetry Linked'
-                      : 'Muster Point: Zero Mile Monument (Start Flag-off) • General Route',
+                      ? 'Muster Point: Samvidhan Square • Telemetry Online'
+                      : 'Muster Point: Zero Mile Monument (Start Point) • General Route',
                   style: AppTypography.caption,
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.xs + 2),
                 Row(
                   children: [
-                    const Icon(Icons.shield_outlined, size: 13, color: AppColors.ink),
+                    const Icon(Icons.shield_outlined, size: 14, color: AppColors.ink),
                     const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
                         isEnrolled
-                            ? 'SOS routes to: Assigned Contingent Leader'
+                            ? 'SOS routes to: Contingent Leader'
                             : 'SOS routes to: SuperAdmin Command Center',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.ink,
+                        style: AppTypography.captionXs.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -82,28 +78,13 @@ class ActiveGroupCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: ShadButton(
-                  text: 'Change Group',
-                  icon: Icons.swap_horiz,
-                  size: ShadButtonSize.sm,
-                  variant: ShadButtonVariant.outline,
-                  onPressed: onSwitchGroup,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: ShadButton(
-                  text: 'Propose Group',
-                  icon: Icons.add_circle_outline,
-                  size: ShadButtonSize.sm,
-                  variant: ShadButtonVariant.secondary,
-                  onPressed: onProposeGroup,
-                ),
-              ),
-            ],
+          ShadButton(
+            text: 'Browse & Switch Contingent',
+            icon: Icons.groups_outlined,
+            isFullWidth: true,
+            size: ShadButtonSize.md,
+            variant: ShadButtonVariant.outline,
+            onPressed: onManageGroups,
           ),
         ],
       ),

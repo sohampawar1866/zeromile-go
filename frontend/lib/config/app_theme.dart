@@ -8,14 +8,14 @@ import 'app_typography.dart';
 
 class AppTheme {
   static const Color background = AppColors.canvas;
-  static const Color surface = AppColors.softCloud;
+  static const Color surface = AppColors.surface;
   static const Color surfaceElevated = AppColors.surfaceElevated;
-  static const Color border = AppColors.hairlineSoft;
-  static const Color borderLight = AppColors.hairline;
+  static const Color border = AppColors.hairline;
+  static const Color borderLight = AppColors.borderLight;
 
-  static const Color primary = AppColors.ink;
-  static const Color primaryLight = AppColors.info;
-  static const Color primaryDark = AppColors.ink;
+  static const Color primary = AppColors.primary;
+  static const Color primaryLight = AppColors.primaryLight;
+  static const Color primaryDark = AppColors.primary;
 
   static const Color success = AppColors.success;
   static const Color successBg = AppColors.successBg;
@@ -27,9 +27,9 @@ class AppTheme {
   static const Color error = AppColors.sale;
   static const Color errorBg = AppColors.errorBg;
 
-  static const Color textPrimary = AppColors.ink;
-  static const Color textSecondary = AppColors.mute;
-  static const Color textMuted = AppColors.stone;
+  static const Color textPrimary = AppColors.textPrimary;
+  static const Color textSecondary = AppColors.textSecondary;
+  static const Color textMuted = AppColors.textMuted;
 
   static ThemeData get lightTheme {
     final emojiFont = GoogleFonts.notoColorEmoji().fontFamily;
@@ -51,18 +51,18 @@ class AppTheme {
         onPrimary: AppColors.onPrimary,
         primaryContainer: AppColors.softCloud,
         onPrimaryContainer: AppColors.ink,
-        surface: AppColors.softCloud,
+        surface: AppColors.surface,
         onSurface: AppColors.ink,
         error: AppColors.sale,
         onError: AppColors.white,
-        outline: AppColors.hairlineSoft,
+        outline: AppColors.hairline,
       ),
       cardTheme: const CardThemeData(
-        color: AppColors.softCloud,
+        color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-          side: BorderSide(color: AppColors.hairlineSoft, width: 1.0),
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+          side: BorderSide(color: AppColors.hairline, width: 1.0),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -76,20 +76,26 @@ class AppTheme {
         titleTextStyle: AppTypography.headingMd,
       ),
       dividerTheme: const DividerThemeData(
-        color: AppColors.hairlineSoft,
+        color: AppColors.hairline,
         thickness: 1.0,
         space: AppSpacing.lg,
       ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.ink,
+        unselectedLabelColor: AppColors.mute,
+        indicatorColor: AppColors.ink,
+        indicatorSize: TabBarIndicatorSize.tab,
+      ),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.softCloud,
+        fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-          borderSide: BorderSide(color: AppColors.hairlineSoft),
+          borderSide: BorderSide(color: AppColors.hairline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-          borderSide: BorderSide(color: AppColors.hairlineSoft),
+          borderSide: BorderSide(color: AppColors.hairline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
@@ -123,7 +129,7 @@ class AppTheme {
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.canvas,
+        backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.ink,
         unselectedItemColor: AppColors.mute,
         elevation: 0,
@@ -168,7 +174,7 @@ class AppTheme {
         color: darkSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
           side: BorderSide(color: darkBorder, width: 1.0),
         ),
         margin: EdgeInsets.zero,
@@ -186,6 +192,12 @@ class AppTheme {
         color: darkBorder,
         thickness: 1.0,
         space: AppSpacing.lg,
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: darkInk,
+        unselectedLabelColor: darkMute,
+        indicatorColor: darkInk,
+        indicatorSize: TabBarIndicatorSize.tab,
       ),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,

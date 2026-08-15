@@ -7,6 +7,7 @@ import '../../../../config/app_typography.dart';
 import '../../../../models/route_checkpoint.dart';
 import '../../../core/widgets/density_cluster_map_view.dart';
 import '../../../core/widgets/route_checkpoint_stepper.dart';
+import '../../../core/components/shad_card.dart';
 
 class LiveRouteCard extends StatelessWidget {
   final List<RouteCheckpoint> checkpoints;
@@ -20,45 +21,43 @@ class LiveRouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: AppSpacing.edgeInsetsCard,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  isLiveWindow ? Icons.map_outlined : Icons.preview,
-                  color: AppColors.ink,
-                  size: 20,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    isLiveWindow ? 'Interactive Live Rally Route' : 'Published Static Route Preview',
-                    style: AppTypography.headingMd,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+    return ShadCard(
+      title: isLiveWindow ? 'Live Rally Route' : 'Route Preview',
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isLiveWindow ? Icons.sensors : Icons.map_outlined,
+            color: isLiveWindow ? AppColors.success : AppColors.mute,
+            size: 16,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isLiveWindow ? 'Live GPS' : 'Static',
+            style: AppTypography.captionXs.copyWith(
+              color: isLiveWindow ? AppColors.success : AppColors.mute,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: AppSpacing.md),
-            DensityClusterMapView(
-              title: isLiveWindow ? 'Nagpur Loop (Live Telemetry Online)' : 'Nagpur Loop (Static Geometry)',
-            ),
-            const SizedBox(height: AppSpacing.md),
-            const Text(
-              'Official Route Checkpoints',
-              style: AppTypography.headingMd,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            RouteCheckpointStepper(
-              checkpoints: checkpoints,
-              completedIndex: isLiveWindow ? 1 : 0,
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DensityClusterMapView(
+            title: isLiveWindow ? 'Nagpur Loop (Live Telemetry Online)' : 'Nagpur Loop (Static Geometry)',
+          ),
+          const SizedBox(height: AppSpacing.md),
+          const Text(
+            'Official Route Checkpoints',
+            style: AppTypography.headingMd,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          RouteCheckpointStepper(
+            checkpoints: checkpoints,
+            completedIndex: isLiveWindow ? 1 : 0,
+          ),
+        ],
       ),
     );
   }

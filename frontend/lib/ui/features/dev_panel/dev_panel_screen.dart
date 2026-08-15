@@ -48,16 +48,20 @@ class _DevPanelScreenState extends State<DevPanelScreen> with SingleTickerProvid
     return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(42),
+        preferredSize: const Size.fromHeight(48),
         child: Container(
           decoration: const BoxDecoration(
-            color: AppColors.canvas,
-            border: Border(bottom: BorderSide(color: AppColors.hairlineSoft, width: 1.0)),
+            color: AppColors.surface,
+            border: Border(bottom: BorderSide(color: AppColors.hairline, width: 1.0)),
           ),
           child: TabBar(
             controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            padding: EdgeInsets.zero,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
             indicatorColor: AppColors.ink,
-            indicatorWeight: 2.0,
+            indicatorWeight: 2.5,
             labelColor: AppColors.ink,
             unselectedLabelColor: AppColors.mute,
             labelStyle: AppTypography.buttonSm,

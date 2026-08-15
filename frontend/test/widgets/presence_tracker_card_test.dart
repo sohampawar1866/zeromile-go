@@ -25,11 +25,11 @@ void main() {
         ),
       );
 
-      expect(find.text('Event Participation Status'), findsOneWidget);
-      expect(find.text('NOT CHECKED IN'), findsOneWidget);
-      expect(find.text('Check-In at Muster'), findsOneWidget);
+      expect(find.text('Event Participation'), findsOneWidget);
+      expect(find.text('Not Checked In'), findsOneWidget);
+      expect(find.text('Check In at Muster'), findsOneWidget);
 
-      await tester.tap(find.text('Check-In at Muster'));
+      await tester.tap(find.text('Check In at Muster'));
       await tester.pumpAndSettle();
 
       expect(checkedInTapped, isTrue);
@@ -64,8 +64,7 @@ void main() {
         ),
       );
 
-      expect(find.text('CHECKED IN'), findsOneWidget);
-      expect(find.text('Checked In'), findsOneWidget);
+      expect(find.text('Checked In'), findsWidgets);
       expect(find.textContaining('6:30'), findsOneWidget);
     });
   });

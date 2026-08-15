@@ -34,22 +34,21 @@ void main() {
             viewModel: homeVm,
             currentUserId: 'user-soham-1',
             onNavigateToGroups: () {},
-            onOpenProposeModal: () {},
           ),
         ),
       );
 
       // Verify header schedule banner
-      expect(find.text('Event Participation Status'), findsOneWidget);
-      expect(find.text('NOT CHECKED IN'), findsOneWidget);
-      expect(find.text('Check-In at Muster'), findsOneWidget);
+      expect(find.text('Event Participation'), findsOneWidget);
+      expect(find.text('Not Checked In'), findsOneWidget);
+      expect(find.text('Check In at Muster'), findsOneWidget);
 
       // Tap Check-in
-      await tester.tap(find.text('Check-In at Muster'));
+      await tester.tap(find.text('Check In at Muster'));
       await tester.pump(const Duration(milliseconds: 200));
 
       // Verify Emergency SOS FAB is visible during live window
-      expect(find.text('EMERGENCY SOS'), findsOneWidget);
+      expect(find.text('SOS DISTRESS'), findsOneWidget);
     });
 
     testWidgets('Journey 2: Mapbox 3D Route Studio interaction and time-of-day mode switcher', (tester) async {
