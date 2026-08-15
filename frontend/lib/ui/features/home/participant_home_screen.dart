@@ -11,12 +11,12 @@ import '../../../utils/temporal_window_evaluator.dart';
 import '../../../logic/view_models/participant_home_view_model.dart';
 import '../../core/widgets/broadcast_card.dart';
 import '../../core/dialogs/emergency_sos_modal.dart';
+import '../../core/dialogs/mandatory_checkin_modal.dart';
 import '../../core/components/shad_card.dart';
-import 'components/presence_tracker_card.dart';
 import 'components/live_route_card.dart';
 import 'components/active_group_card.dart';
 
-class ParticipantHomeScreen extends StatelessWidget {
+class ParticipantHomeScreen extends StatefulWidget {
   final EventDomain? activeDomain;
   final List<RouteCheckpoint> checkpoints;
   final ParticipantHomeViewModel viewModel;
@@ -34,13 +34,67 @@ class ParticipantHomeScreen extends StatelessWidget {
     this.onNavigateToMap,
   });
 
+  @override
+  State<ParticipantHomeScreen> createState() => _ParticipantHomeScreenState();
+}
+
+class _ParticipantHomeScreenState extends State<ParticipantHomeScreen> {
+  bool _isModalOpen = false;
+
+  void _checkAndTriggerMandatoryCheckIn(EventDomain domain, GroupMembership? membership) {
+    final isCheckedIn = membership?.checkinTime != null ||
+        membership?.participationStatus == ParticipationStatus.checkedIn ||
+        membership?.participationStatus == ParticipationStatus.completed;
+
+    final now = DateTime.now();
+    final isLive = domain.status == EventDomainStatus.liveActive;
+    final isWithin5MinsOfStart = now.isAfter(domain.startTime.subtract(const Duration(minutes: 5)));
+    final isEventOpenForCheckIn = isLive || isWithin5MinsOfStart;
+
+    final shouldTriggerModal = !isCheckedIn && isEventOpenForCheckIn;
+
+    if (shouldTriggerModal && !_isModalOpen) {
+      _isModalOpen = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final meetingPoint = membership?.groupName != null
+            ? 'Samvidhan Square (Assembly Point)'
+            : 'Zero Mile Monument (Start Line)';
+
+        MandatoryCheckInModal.show(
+          context: context,
+          domainName: domain.name,
+          meetingPoint: meetingPoint,
+          onCheckIn: () async {
+            final ok = await widget.viewModel.checkInAtMuster(
+              domainId: domain.id,
+              userId: widget.currentUserId,
+            );
+            if (mounted && ok) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Checked In! Attendance recorded successfully.'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            }
+            return ok;
+          },
+        ).then((_) {
+          if (mounted) {
+            setState(() => _isModalOpen = false);
+          }
+        });
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: viewModel,
+      listenable: widget.viewModel,
       builder: (context, _) {
-        final domain = activeDomain ?? EventDomain(
+        final domain = widget.activeDomain ?? EventDomain(
           id: 'default-domain',
           name: 'Cycling Rally 2026',
           slug: 'cycling-2026',
@@ -53,28 +107,19 @@ class ParticipantHomeScreen extends StatelessWidget {
 
         final isLive = domain.status == EventDomainStatus.liveActive;
         final bannerText = TemporalWindowEvaluator.getScheduleBanner(domain);
+        final membership = widget.viewModel.activeMembership;
 
-        final membership = viewModel.activeMembership;
-        final isCheckedIn = membership?.checkinTime != null ||
-            membership?.participationStatus == ParticipationStatus.checkedIn ||
-            membership?.participationStatus == ParticipationStatus.completed;
-
-        final now = DateTime.now();
-        final isWithin5MinsOfStart = now.isAfter(domain.startTime.subtract(const Duration(minutes: 5)));
-        final isEventOpenForCheckIn = isLive || isWithin5MinsOfStart;
-
-        // Check in component should only be visible if user has NOT yet checked in AND event has started (or <= 5 mins to start)
-        final showCheckInCard = !isCheckedIn && isEventOpenForCheckIn;
-
+        // Automatically trigger non-closable check-in popup when eligible (5 mins before start or while live)
+        _checkAndTriggerMandatoryCheckIn(domain, membership);
 
         return Scaffold(
           backgroundColor: AppColors.canvas,
           body: RefreshIndicator(
             color: AppColors.ink,
             backgroundColor: AppColors.surface,
-            onRefresh: () => viewModel.loadParticipantContext(
+            onRefresh: () => widget.viewModel.loadParticipantContext(
               domainId: domain.id,
-              userId: currentUserId,
+              userId: widget.currentUserId,
             ),
             child: ListView(
               padding: AppSpacing.edgeInsetsScreen,
@@ -122,59 +167,21 @@ class ParticipantHomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                // Presence / Check-In Card (Conditioned: only when not checked in & event open for check-in)
-                if (showCheckInCard) ...[
-                  PresenceTrackerCard(
-                    membership: viewModel.activeMembership,
-                    isLiveWindow: isLive,
-                    onCheckIn: () async {
-                      final ok = await viewModel.checkInAtMuster(
-                        domainId: domain.id,
-                        userId: currentUserId,
-                      );
-                      if (context.mounted && ok) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Checked In! Attendance recorded successfully.'),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
-                      }
-                    },
-                    onComplete: () async {
-                      final ok = await viewModel.completeRally(
-                        domainId: domain.id,
-                        userId: currentUserId,
-                      );
-                      if (context.mounted && ok) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Rally finish recorded! Pass registered.'),
-                            backgroundColor: AppColors.ink,
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-
                 // Official Route Checkpoints
                 LiveRouteCard(
-                  checkpoints: checkpoints,
+                  checkpoints: widget.checkpoints,
                   isLiveWindow: isLive,
-                  onNavigateToMap: onNavigateToMap,
+                  onNavigateToMap: widget.onNavigateToMap,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-
-                // Broadcasts Feed Card
+                // Safety Broadcasts Feed Card
                 ShadCard(
                   title: 'Safety Broadcasts',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (viewModel.broadcasts.isEmpty)
+                      if (widget.viewModel.broadcasts.isEmpty)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
                           child: Text(
@@ -183,7 +190,7 @@ class ParticipantHomeScreen extends StatelessWidget {
                           ),
                         )
                       else
-                        ...viewModel.broadcasts.take(3).map((b) => BroadcastCard(message: b)),
+                        ...widget.viewModel.broadcasts.take(3).map((b) => BroadcastCard(message: b)),
                     ],
                   ),
                 ),
@@ -191,8 +198,8 @@ class ParticipantHomeScreen extends StatelessWidget {
 
                 // Active Group Card
                 ActiveGroupCard(
-                  membership: viewModel.activeMembership,
-                  onManageGroups: onNavigateToGroups,
+                  membership: widget.viewModel.activeMembership,
+                  onManageGroups: widget.onNavigateToGroups,
                 ),
                 const SizedBox(height: 88),
               ],
@@ -217,9 +224,9 @@ class ParticipantHomeScreen extends StatelessWidget {
                       EmergencySosModal.show(
                         context,
                         onTrigger: (type) async {
-                          final ok = await viewModel.triggerEmergencySos(
+                          final ok = await widget.viewModel.triggerEmergencySos(
                             domainId: domain.id,
-                            userId: currentUserId,
+                            userId: widget.currentUserId,
                             emergencyType: type,
                           );
                           if (context.mounted && ok) {

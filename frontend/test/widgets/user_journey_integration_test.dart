@@ -37,20 +37,21 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
-      // Verify header schedule banner
-      expect(find.text('Event Participation'), findsOneWidget);
-      expect(find.text('Not Checked In'), findsOneWidget);
+
+      // Verify mandatory check-in modal appears
+      expect(find.text('Event Check-In'), findsOneWidget);
       expect(find.text('Check In Now'), findsOneWidget);
 
       // Tap Check-in
       await tester.tap(find.text('Check In Now'));
-      await tester.pump(const Duration(milliseconds: 200));
-
+      await tester.pumpAndSettle();
 
       // Verify Emergency SOS FAB is visible during live window
       expect(find.text('SOS DISTRESS'), findsOneWidget);
     });
+
 
     testWidgets('Journey 2: Mapbox 3D Route Studio interaction and time-of-day mode switcher', (tester) async {
       final domain = EventDomain(
