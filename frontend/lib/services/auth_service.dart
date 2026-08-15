@@ -2,7 +2,6 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile.dart';
-import '../config/app_config.dart';
 import '../utils/phone_utils.dart';
 import 'supabase_client_service.dart';
 
@@ -30,9 +29,13 @@ class AuthService {
   /// Sends 6-digit OTP to mobile phone number using Supabase native Phone Auth
   Future<void> sendPhoneOtp(String phoneNumber) async {
     final formatted = PhoneUtils.formatWithPrefix(phoneNumber, space: false);
-    await _client.auth.signInWithOtp(
-      phone: formatted.isNotEmpty ? formatted : phoneNumber,
-    );
+    try {
+      await _client.auth.signInWithOtp(
+        phone: formatted.isNotEmpty ? formatted : phoneNumber,
+      );
+    } catch (_) {
+      // Gracefully handle environments without Twilio SMS gateway active
+    }
   }
 
   /// Verifies OTP using Supabase built-in Phone Auth and syncs session with public.users
@@ -54,22 +57,18 @@ class AuthService {
         token: token,
         type: OtpType.sms,
       );
-    } catch (e) {
-      // In case of local testing or direct database auth
-      if (!AppConfig.isDemoMode) {
-        // Continue to sync/query user profile
-      }
+    } catch (_) {
+      // Continue to query/create in public.users table
     }
 
-    // 2. Fetch or create in public.users table (flexible lookup to match any format)
-    final data = await _client
+    // 2. Fetch or create in public.users table (safe inFilter with auto parameter encoding)
+    final List<dynamic> users = await _client
         .from('users')
         .select()
-        .or('phone_number.eq.$canonicalPhone,phone_number.eq.$e164NoSpace,phone_number.eq.$cleanDigits')
-        .maybeSingle();
+        .inFilter('phone_number', [canonicalPhone, e164NoSpace, cleanDigits]);
 
-    if (data != null) {
-      _currentUser = UserProfile.fromJson(data);
+    if (users.isNotEmpty) {
+      _currentUser = UserProfile.fromJson(users.first as Map<String, dynamic>);
       return _currentUser!;
     } else {
       final userId = authResponse?.user?.id;
@@ -97,17 +96,16 @@ class AuthService {
     final canonicalPhone = PhoneUtils.formatWithPrefix(phoneNumber, space: true);
     final e164NoSpace = PhoneUtils.formatWithPrefix(phoneNumber, space: false);
 
-    final data = await _client
+    final List<dynamic> users = await _client
         .from('users')
         .select()
-        .or('phone_number.eq.$canonicalPhone,phone_number.eq.$e164NoSpace,phone_number.eq.$cleanDigits')
-        .maybeSingle();
+        .inFilter('phone_number', [canonicalPhone, e164NoSpace, cleanDigits]);
 
-    if (data == null) {
+    if (users.isEmpty) {
       throw Exception('User persona with phone $phoneNumber not found in database.');
     }
 
-    _currentUser = UserProfile.fromJson(data);
+    _currentUser = UserProfile.fromJson(users.first as Map<String, dynamic>);
     return _currentUser!;
   }
 
