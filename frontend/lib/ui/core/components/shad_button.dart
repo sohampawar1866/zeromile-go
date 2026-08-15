@@ -95,17 +95,28 @@ class ShadButton extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation<Color>(fgColor),
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-            ] else if (icon != null) ...[
-              Icon(icon, size: iconSize, color: isDisabled ? (isDark ? const Color(0xFF71717A) : AppColors.buttonDisabledText) : fgColor),
               const SizedBox(width: AppSpacing.xs),
-            ],
-            Text(
-              text,
-              style: textStyle.copyWith(
+            ] else if (icon != null) ...[
+              Icon(
+                icon,
+                size: iconSize,
                 color: isDisabled
                     ? (isDark ? const Color(0xFF71717A) : AppColors.buttonDisabledText)
                     : fgColor,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: textStyle.copyWith(
+                  color: isDisabled
+                      ? (isDark ? const Color(0xFF71717A) : AppColors.buttonDisabledText)
+                      : fgColor,
+                ),
               ),
             ),
           ],

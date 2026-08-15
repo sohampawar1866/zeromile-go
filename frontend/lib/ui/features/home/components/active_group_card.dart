@@ -88,15 +88,17 @@ class ActiveGroupCard extends StatelessWidget {
                 child: ShadButton(
                   text: 'Change Group',
                   icon: Icons.swap_horiz,
+                  size: ShadButtonSize.sm,
                   variant: ShadButtonVariant.outline,
                   onPressed: onSwitchGroup,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: ShadButton(
                   text: 'Propose Group',
                   icon: Icons.add_circle_outline,
+                  size: ShadButtonSize.sm,
                   variant: ShadButtonVariant.secondary,
                   onPressed: onProposeGroup,
                 ),

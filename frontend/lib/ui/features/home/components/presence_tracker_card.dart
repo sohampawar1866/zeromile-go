@@ -62,15 +62,17 @@ class PresenceTrackerCard extends StatelessWidget {
                 child: ShadButton(
                   text: isCheckedIn ? 'Checked In' : 'Check-In at Muster',
                   icon: isCheckedIn ? Icons.check_circle : Icons.location_on,
+                  size: ShadButtonSize.sm,
                   variant: isCheckedIn ? ShadButtonVariant.secondary : ShadButtonVariant.primary,
                   onPressed: isCheckedIn || isCompleted ? null : onCheckIn,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: ShadButton(
                   text: isCompleted ? 'Finished' : 'Mark Completed',
                   icon: Icons.flag,
+                  size: ShadButtonSize.sm,
                   variant: isCompleted ? ShadButtonVariant.secondary : ShadButtonVariant.outline,
                   onPressed: isCompleted ? null : onComplete,
                 ),
