@@ -22,6 +22,7 @@ import '../../../logic/view_models/map_test_mode_notifier.dart';
 import '../../core/dialogs/emergency_sos_modal.dart';
 import '../../core/widgets/route_tracking_bottom_sheet.dart';
 import '../widgets/map_view_platform/map_view_platform.dart';
+import '../../../utils/nagpur_poi_registry.dart';
 
 // ─── Nagpur Centre ───────────────────────────────────────────────────────────
 const _kNagpurLng = 79.0882;
@@ -230,15 +231,19 @@ class _LiveMapFullscreenScreenState extends State<LiveMapFullscreenScreen>
     setState(() => _simRiders = []);
   }
 
-  // ── Effective rider list ──────────────────────────────────────────────────
+  // ── Effective rider list (strictly constrained to Nagpur District) ───────
   List<UserLiveLocation> get _effectiveRiders {
     final real = widget.liveLocations;
     final testMode =
         context.watch<MapTestModeNotifier?>()?.isTestMode ?? false;
-    if (testMode && _simRiders.isNotEmpty) {
-      return [...real, ..._simRiders];
-    }
-    return real;
+    final combined = (testMode && _simRiders.isNotEmpty)
+        ? [...real, ..._simRiders]
+        : real;
+
+    // Reject any points outside Nagpur District bounds
+    return combined.where((r) {
+      return NagpurDistrictBounds.isWithinDistrict(r.latitude, r.longitude);
+    }).toList();
   }
 
   // ── Clustering (SuperAdmin only) ──────────────────────────────────────────

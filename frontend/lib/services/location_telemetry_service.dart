@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_live_location.dart';
+import '../utils/nagpur_poi_registry.dart';
 import 'supabase_client_service.dart';
 
 class LocationTelemetryService {
@@ -110,10 +111,14 @@ class LocationTelemetryService {
     double heading = 0.0,
     bool force = false,
   }) async {
-    // 1. Guard against invalid GPS readings
+    // 1. Guard against invalid GPS readings & enforce strict Nagpur District area
     if (latitude.isNaN || longitude.isNaN) return false;
     if (latitude == 0.0 && longitude == 0.0) return false;
     if (latitude < -90.0 || latitude > 90.0 || longitude < -180.0 || longitude > 180.0) return false;
+    if (!NagpurDistrictBounds.isWithinDistrict(latitude, longitude)) {
+      debugPrint('Location ping rejected: ($latitude, $longitude) is outside Nagpur District bounds.');
+      return false;
+    }
 
     final now = DateTime.now();
 
@@ -220,7 +225,9 @@ class LocationTelemetryService {
 
     void emitCurrentLocations() {
       if (controller.isClosed) return;
-      var list = locationMap.values.toList();
+      var list = locationMap.values
+          .where((loc) => NagpurDistrictBounds.isWithinDistrict(loc.latitude, loc.longitude))
+          .toList();
       if (subGroupIdFilter != null && subGroupIdFilter.isNotEmpty) {
         list = list.where((loc) => loc.activeGroupId == subGroupIdFilter).toList();
       }

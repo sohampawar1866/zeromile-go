@@ -69,17 +69,27 @@
     mapboxgl.accessToken = 'pk.eyJ1IjoicmFrc2hpdGxhZGRhIiwiYSI6ImNtc3RrN2cweTBsbDEyeHIwZnA5aXY5dHkifQ.0J-JnWi4wBW3T-8Nbtmgjg';
 
     const defaultNagpur = [79.0882, 21.1458];
+    
+    // Strict Nagpur District Geographic Bounds (Bhivapur/Umred to Ramtek/Saoner, Katol to Mauda)
+    const NAGPUR_DISTRICT_BOUNDS = [
+      [78.25, 20.55], // Southwest coordinates (Lng, Lat)
+      [79.70, 21.75]  // Northeast coordinates (Lng, Lat)
+    ];
+
     let map;
     let riderMarkers = [];
 
-    // Initialize Mapbox Standard 3D
+    // Initialize Mapbox Standard 3D strictly locked to Nagpur District
     map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/standard',
       center: defaultNagpur,
       zoom: 14.8,
+      minZoom: 10.0,
+      maxZoom: 18.5,
       pitch: 55,
-      bearing: 15
+      bearing: 15,
+      maxBounds: NAGPUR_DISTRICT_BOUNDS
     });
 
     map.on('style.load', () => {

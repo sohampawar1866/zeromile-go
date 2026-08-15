@@ -201,3 +201,39 @@ class NagpurPoiRegistry {
     return (dLat * dLat + dLon * dLon);
   }
 }
+
+/// Official Nagpur District Boundary Coordinates & Geofencing Validator
+/// Restricts map camera panning, route creation, and rider GPS telemetry
+/// exclusively to the Nagpur District jurisdiction.
+class NagpurDistrictBounds {
+  // Complete Nagpur District Geographic Boundaries (Katol to Ramtek to Umred)
+  static const double minLat = 20.55; // South (Bhivapur / Umred)
+  static const double maxLat = 21.75; // North (Saoner / Parseoni / Ramtek)
+  static const double minLng = 78.25; // West (Narkhed / Katol)
+  static const double maxLng = 79.70; // East (Mauda / Kuhi)
+
+  // Core Nagpur Urban & Metro Circuit Bounds
+  static const double rallyMinLat = 20.90;
+  static const double rallyMaxLat = 21.40;
+  static const double rallyMinLng = 78.80;
+  static const double rallyMaxLng = 79.35;
+
+  /// Validates whether a given coordinate falls strictly inside Nagpur District.
+  static bool isWithinDistrict(double lat, double lng) {
+    return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+  }
+
+  /// Validates whether a given coordinate falls inside Nagpur Rally bounds.
+  static bool isWithinRallyArea(double lat, double lng) {
+    return lat >= rallyMinLat && lat <= rallyMaxLat && lng >= rallyMinLng && lng <= rallyMaxLng;
+  }
+
+  /// Clamps coordinates to prevent GPS drift outside Nagpur District.
+  static ({double lat, double lng}) clampToDistrict(double lat, double lng) {
+    return (
+      lat: lat.clamp(minLat, maxLat),
+      lng: lng.clamp(minLng, maxLng),
+    );
+  }
+}
+

@@ -30,6 +30,17 @@ Widget buildMapboxView({
             bearing: 15,
           ),
         );
+        map.setBounds(
+          CameraBoundsOptions(
+            bounds: CoordinateBounds(
+              southwest: Point(coordinates: Position(78.25, 20.55)),
+              northeast: Point(coordinates: Position(79.70, 21.75)),
+              infiniteBounds: false,
+            ),
+            minZoom: 10.0,
+            maxZoom: 18.5,
+          ),
+        );
         map.style.setStyleURI(MapboxStyles.STANDARD);
       } catch (_) {}
       onMapCreated(map);

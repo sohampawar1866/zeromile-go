@@ -203,9 +203,9 @@ class MapboxService {
     }
 
     try {
-      final searchQuery = clean.contains('nagpur') ? clean : '$clean, Nagpur';
+      final searchQuery = clean.contains('nagpur') ? clean : '$clean, Nagpur, Maharashtra';
       final url = Uri.parse(
-        'https://api.mapbox.com/geocoding/v5/mapbox.places/${Uri.encodeComponent(searchQuery)}.json?access_token=$_accessToken&proximity=79.0882,21.1458&bbox=78.8,20.9,79.4,21.5&limit=6',
+        'https://api.mapbox.com/geocoding/v5/mapbox.places/${Uri.encodeComponent(searchQuery)}.json?access_token=$_accessToken&proximity=79.0882,21.1458&bbox=78.25,20.55,79.70,21.75&country=IN&limit=8',
       );
 
       final response = await _httpClient.get(url).timeout(const Duration(seconds: 5));
@@ -219,6 +219,11 @@ class MapboxService {
             if (center != null && center.length >= 2) {
               final lng = (center[0] as num).toDouble();
               final lat = (center[1] as num).toDouble();
+
+              // Verify result is strictly inside Nagpur District
+              if (!NagpurDistrictBounds.isWithinDistrict(lat, lng)) {
+                continue;
+              }
 
               // Avoid duplicates with local matches
               final isDuplicate = results.any(
