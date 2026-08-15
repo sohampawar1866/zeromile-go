@@ -1,6 +1,5 @@
 // lib/ui/features/admin_console/tabs/mapbox_route_studio_card.dart
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
@@ -46,10 +45,25 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
 
   bool _isSaving = false;
 
+  /// Route is strictly editable ONLY before the event starts (status == UPCOMING).
+  /// Once the event becomes LIVE_ACTIVE, CONCLUDED, or ARCHIVED, route editing is locked.
+  bool get _isRouteEditable {
+    if (widget.activeDomain == null) return true;
+    return widget.activeDomain!.status == EventDomainStatus.upcoming;
+  }
+
   @override
   void initState() {
     super.initState();
     _loadInitialRoute();
+  }
+
+  @override
+  void didUpdateWidget(covariant MapboxRouteStudioCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activeDomain?.id != widget.activeDomain?.id) {
+      _loadInitialRoute();
+    }
   }
 
   void _loadInitialRoute() {
@@ -79,7 +93,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
   }
 
   void _undo() {
-    if (_undoHistory.isEmpty) return;
+    if (!_isRouteEditable || _undoHistory.isEmpty) return;
     _redoHistory.add(List<MapPoint>.from(_currentWaypoints));
     setState(() {
       _currentWaypoints = _undoHistory.removeLast();
@@ -88,7 +102,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
   }
 
   void _redo() {
-    if (_redoHistory.isEmpty) return;
+    if (!_isRouteEditable || _redoHistory.isEmpty) return;
     _undoHistory.add(List<MapPoint>.from(_currentWaypoints));
     setState(() {
       _currentWaypoints = _redoHistory.removeLast();
@@ -97,6 +111,16 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
   }
 
   void _addPoint(double lat, double lng, {String? customName}) {
+    if (!_isRouteEditable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔒 Route is locked because this event is live or concluded.'),
+          backgroundColor: AppColors.sale,
+        ),
+      );
+      return;
+    }
+
     if (!NagpurDistrictBounds.isWithinDistrict(lat, lng)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -158,6 +182,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
   }
 
   void _deleteWaypoint(int index) {
+    if (!_isRouteEditable) return;
     if (index >= 0 && index < _currentWaypoints.length) {
       _pushHistory();
       setState(() {
@@ -174,6 +199,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
   }
 
   void _clearRoute() {
+    if (!_isRouteEditable) return;
     _pushHistory();
     setState(() {
       _currentWaypoints.clear();
@@ -206,6 +232,16 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
   }
 
   void _loadSundayDefaultRoute({bool silent = false}) {
+    if (!_isRouteEditable && !silent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔒 Route cannot be changed because the event has already started.'),
+          backgroundColor: AppColors.sale,
+        ),
+      );
+      return;
+    }
+
     _pushHistory();
     final defaultData = widget.viewModel?.getDefaultRouteTemplate();
     final waypointsList = defaultData?['properties']?['waypoints'] as List?;
@@ -265,6 +301,16 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
   }
 
   Future<void> _saveRouteForEvent() async {
+    if (!_isRouteEditable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔒 Route cannot be edited after event has started.'),
+          backgroundColor: AppColors.sale,
+        ),
+      );
+      return;
+    }
+
     if (_currentWaypoints.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -304,7 +350,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '💾 Route successfully saved to Supabase (${_calculatedDistanceKm.toStringAsFixed(1)} km)!',
+            '💾 Route saved for "${widget.activeDomain?.name ?? 'Event'}" (${_calculatedDistanceKm.toStringAsFixed(1)} km)!',
           ),
           backgroundColor: AppColors.success,
         ),
@@ -329,12 +375,112 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
 
   @override
   Widget build(BuildContext context) {
+    final eventName = widget.activeDomain?.name ?? 'ZeroMile Cycling Rally 2026';
+    final isEditable = _isRouteEditable;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── 0. Active Event Context Header ──────────────────────────────────
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: isEditable ? AppColors.softCloud : const Color(0xFFFEF2F2),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: isEditable ? AppColors.hairline : const Color(0xFFFCA5A5),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isEditable ? Icons.event_available_outlined : Icons.lock_clock_outlined,
+                size: 18,
+                color: isEditable ? AppColors.ink : AppColors.sale,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'CONFIGURING ROUTE FOR:',
+                          style: TextStyle(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                            color: isEditable ? AppColors.mute : AppColors.sale,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: isEditable ? AppColors.successBg : AppColors.errorBg,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: Text(
+                            isEditable ? 'UPCOMING • EDITABLE' : 'EVENT LIVE • LOCKED',
+                            style: TextStyle(
+                              fontSize: 7.5,
+                              fontWeight: FontWeight.w900,
+                              color: isEditable ? AppColors.success : AppColors.sale,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      eventName,
+                      style: AppTypography.bodyStrong.copyWith(
+                        color: isEditable ? AppColors.charcoal : AppColors.sale,
+                        fontSize: 12.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Locked Banner (when event is live/concluded)
+        if (!isEditable)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, size: 15, color: Color(0xFFD97706)),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Route is locked because the rally has started. Route edits are strictly allowed only before the event begins.',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF92400E),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
         // ── 1. Mapbox Standard 3D Route Studio Canvas ────────────────────────
         Container(
-          height: 330,
+          height: 320,
           width: double.infinity,
           decoration: BoxDecoration(
             color: const Color(0xFF0B0F19),
@@ -351,86 +497,97 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                 ),
               ),
 
-              // Top Controls Header
+              // Top Controls Header (Non-overflowing flexible layout)
               Positioned(
-                top: AppSpacing.sm,
-                left: AppSpacing.sm,
-                right: AppSpacing.sm,
+                top: 6,
+                left: 6,
+                right: 6,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xEE0F172A),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: Colors.white12),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xEE0F172A),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.view_in_ar_rounded, color: Color(0xFF00F2FE), size: 12),
+                            SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                '3D STUDIO (NAGPUR)',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.3,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: const Row(
+                    ),
+                    const SizedBox(width: 4),
+                    if (isEditable)
+                      Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.view_in_ar_rounded, color: Color(0xFF00F2FE), size: 14),
-                          SizedBox(width: 5),
-                          Text(
-                            'MAPBOX STANDARD 3D (NAGPUR)',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.4,
-                            ),
+                          _buildMiniIconBtn(
+                            icon: Icons.undo_rounded,
+                            tooltip: 'Undo',
+                            enabled: _undoHistory.isNotEmpty,
+                            onTap: _undo,
+                          ),
+                          const SizedBox(width: 3),
+                          _buildMiniIconBtn(
+                            icon: Icons.redo_rounded,
+                            tooltip: 'Redo',
+                            enabled: _redoHistory.isNotEmpty,
+                            onTap: _redo,
+                          ),
+                          const SizedBox(width: 3),
+                          _buildMiniIconBtn(
+                            icon: Icons.delete_sweep_outlined,
+                            tooltip: 'Clear Route',
+                            enabled: _currentWaypoints.isNotEmpty,
+                            onTap: _clearRoute,
                           ),
                         ],
                       ),
-                    ),
-                    Row(
-                      children: [
-                        _buildMiniIconBtn(
-                          icon: Icons.undo_rounded,
-                          tooltip: 'Undo',
-                          enabled: _undoHistory.isNotEmpty,
-                          onTap: _undo,
-                        ),
-                        const SizedBox(width: 4),
-                        _buildMiniIconBtn(
-                          icon: Icons.redo_rounded,
-                          tooltip: 'Redo',
-                          enabled: _redoHistory.isNotEmpty,
-                          onTap: _redo,
-                        ),
-                        const SizedBox(width: 4),
-                        _buildMiniIconBtn(
-                          icon: Icons.delete_sweep_outlined,
-                          tooltip: 'Clear Route',
-                          enabled: _currentWaypoints.isNotEmpty,
-                          onTap: _clearRoute,
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
 
               // Bottom Mode Hint Pill
               Positioned(
-                bottom: AppSpacing.sm,
-                left: AppSpacing.sm,
-                right: AppSpacing.sm,
+                bottom: 6,
+                left: 6,
+                right: 6,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xEE0F172A),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(color: Colors.white10),
                     ),
                     child: Text(
-                      _getModeInstruction(),
+                      isEditable
+                          ? _getModeInstruction()
+                          : '🔒 Live Route Display (Read-Only Mode)',
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 10,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w600,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
@@ -442,53 +599,55 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
         const SizedBox(height: AppSpacing.sm),
 
         // ── 2. Mode Selector Bar (Start / End / Waypoint) ─────────────────────
-        Row(
-          children: [
-            Expanded(
-              child: _buildModeButton(
-                mode: PointSelectMode.start,
-                label: '🚩 Set Start',
-                color: const Color(0xFF10B981),
-                isActive: _selectMode == PointSelectMode.start,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Expanded(
-              child: _buildModeButton(
-                mode: PointSelectMode.end,
-                label: '🏁 Set End',
-                color: const Color(0xFFEF4444),
-                isActive: _selectMode == PointSelectMode.end,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Expanded(
-              child: _buildModeButton(
-                mode: PointSelectMode.waypoint,
-                label: '📍 Add Waypoint',
-                color: const Color(0xFF00F2FE),
-                isActive: _selectMode == PointSelectMode.waypoint,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: AppSpacing.sm),
-
-        // Quick Nagpur Landmark Node Chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+        if (isEditable) ...[
+          Row(
             children: [
-              _buildQuickLandmarkChip('🚩 Zero Mile', 21.1458, 79.0882),
-              _buildQuickLandmarkChip('📍 Law College Sq', 21.1390, 79.0680),
-              _buildQuickLandmarkChip('📍 Shankar Nagar', 21.1310, 79.0600),
-              _buildQuickLandmarkChip('📍 Deekshabhoomi', 21.1290, 79.0670),
-              _buildQuickLandmarkChip('🏁 VNIT Gate', 21.1280, 79.0520),
-              _buildQuickLandmarkChip('📍 Futala Lake', 21.1550, 79.0450),
+              Expanded(
+                child: _buildModeButton(
+                  mode: PointSelectMode.start,
+                  label: '🚩 Set Start',
+                  color: const Color(0xFF10B981),
+                  isActive: _selectMode == PointSelectMode.start,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: _buildModeButton(
+                  mode: PointSelectMode.end,
+                  label: '🏁 Set End',
+                  color: const Color(0xFFEF4444),
+                  isActive: _selectMode == PointSelectMode.end,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: _buildModeButton(
+                  mode: PointSelectMode.waypoint,
+                  label: '📍 Add Waypoint',
+                  color: const Color(0xFF00F2FE),
+                  isActive: _selectMode == PointSelectMode.waypoint,
+                ),
+              ),
             ],
           ),
-        ),
+
+          const SizedBox(height: AppSpacing.xs),
+
+          // Quick Nagpur Landmark Node Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildQuickLandmarkChip('🚩 Zero Mile', 21.1458, 79.0882),
+                _buildQuickLandmarkChip('📍 Law College Sq', 21.1390, 79.0680),
+                _buildQuickLandmarkChip('📍 Shankar Nagar', 21.1310, 79.0600),
+                _buildQuickLandmarkChip('📍 Deekshabhoomi', 21.1290, 79.0670),
+                _buildQuickLandmarkChip('🏁 VNIT Gate', 21.1280, 79.0520),
+                _buildQuickLandmarkChip('📍 Futala Lake', 21.1550, 79.0450),
+              ],
+            ),
+          ),
+        ],
 
         const SizedBox(height: AppSpacing.md),
 
@@ -512,7 +671,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                       Text(
                         '${_calculatedDistanceKm.toStringAsFixed(1)} km',
                         style: const TextStyle(
-                          fontSize: 26,
+                          fontSize: 24,
                           fontWeight: FontWeight.w900,
                           color: AppColors.ink,
                           letterSpacing: -0.5,
@@ -521,7 +680,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                       const Text(
                         'OFFICIAL ROUTE DISTANCE',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.mute,
                           letterSpacing: 0.5,
@@ -535,7 +694,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                       Text(
                         '~$_estimatedDurationMin mins',
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.w800,
                           color: AppColors.ink,
                         ),
@@ -543,7 +702,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                       const Text(
                         'CYCLING TIME',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.mute,
                           letterSpacing: 0.5,
@@ -553,51 +712,53 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-              const Divider(color: AppColors.hairline, height: 1),
-              const SizedBox(height: AppSpacing.sm),
-              // Template Preset Action Row
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _loadSundayDefaultRoute(),
-                      icon: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.info),
-                      label: const Text(
-                        'Load Sunday Route',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.ink,
-                        side: const BorderSide(color: AppColors.hairline),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
+              if (isEditable) ...[
+                const SizedBox(height: AppSpacing.sm),
+                const Divider(color: AppColors.hairline, height: 1),
+                const SizedBox(height: AppSpacing.sm),
+                // Template Preset Action Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _loadSundayDefaultRoute(),
+                        icon: const Icon(Icons.bolt_rounded, size: 15, color: AppColors.info),
+                        label: const Text(
+                          'Load Sunday Route',
+                          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.ink,
+                          side: const BorderSide(color: AppColors.hairline),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _saveAsDefaultTemplate,
-                      icon: const Icon(Icons.star_outline_rounded, size: 16, color: AppColors.warningAccent),
-                      label: const Text(
-                        'Save as Default',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.ink,
-                        side: const BorderSide(color: AppColors.hairline),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _saveAsDefaultTemplate,
+                        icon: const Icon(Icons.star_outline_rounded, size: 15, color: AppColors.warningAccent),
+                        label: const Text(
+                          'Save as Default',
+                          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.ink,
+                          side: const BorderSide(color: AppColors.hairline),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -607,7 +768,9 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
         // ── 4. Waypoints List ────────────────────────────────────────────────
         ShadCard(
           title: 'Route Nodes (${_currentWaypoints.length})',
-          description: 'Sequential checkpoints connecting the official 3D route.',
+          description: isEditable
+              ? 'Sequential checkpoints connecting the official 3D route.'
+              : 'Official checkpoints (Route Locked during active rally).',
           child: _currentWaypoints.isEmpty
               ? const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
@@ -649,7 +812,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                               tag,
                               style: TextStyle(
                                 color: color,
-                                fontSize: 9.5,
+                                fontSize: 9,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -662,12 +825,13 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.mute),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () => _deleteWaypoint(idx),
-                          ),
+                          if (isEditable)
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 15, color: AppColors.mute),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => _deleteWaypoint(idx),
+                            ),
                         ],
                       ),
                     );
@@ -681,10 +845,12 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
         SizedBox(
           width: double.infinity,
           child: ShadButton(
-            text: _isSaving ? 'Saving Route to Supabase...' : '💾 Save Route for this Event',
-            icon: Icons.cloud_upload_outlined,
-            variant: ShadButtonVariant.primary,
-            onPressed: _isSaving ? () {} : _saveRouteForEvent,
+            text: !isEditable
+                ? '🔒 Route is Locked (Event has started)'
+                : (_isSaving ? 'Saving Route to Supabase...' : '💾 Save Route for "$eventName"'),
+            icon: !isEditable ? Icons.lock_outline : Icons.cloud_upload_outlined,
+            variant: isEditable ? ShadButtonVariant.primary : ShadButtonVariant.secondary,
+            onPressed: isEditable && !_isSaving ? _saveRouteForEvent : null,
           ),
         ),
       ],
@@ -700,7 +866,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
     return GestureDetector(
       onTap: () => setState(() => _selectMode = mode),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 9),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: isActive ? AppColors.ink : AppColors.softCloud,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -713,7 +879,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: FontWeight.w800,
               color: isActive ? Colors.white : AppColors.charcoal,
             ),
@@ -732,7 +898,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
           color: const Color(0xEE0F172A),
           shape: BoxShape.circle,
@@ -741,7 +907,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
         child: Icon(
           icon,
           color: enabled ? Colors.white : Colors.white24,
-          size: 15,
+          size: 13,
         ),
       ),
     );
@@ -749,12 +915,12 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
 
   Widget _buildQuickLandmarkChip(String label, double lat, double lng) {
     return Padding(
-      padding: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsets.only(right: 5),
       child: ActionChip(
-        label: Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+        label: Text(label, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.canvas,
         side: const BorderSide(color: AppColors.hairlineSoft),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 0),
         onPressed: () => _addPoint(lat, lng, customName: label.replaceAll('🚩 ', '').replaceAll('🏁 ', '').replaceAll('📍 ', '')),
       ),
     );
