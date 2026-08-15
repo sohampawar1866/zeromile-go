@@ -46,6 +46,7 @@ export 'logic/app_state_scope.dart';
 // UI Components
 export 'ui/core/components/shad_button.dart';
 export 'ui/core/components/shad_card.dart';
+export 'ui/core/widgets/route_tracking_bottom_sheet.dart';
 
 // Utils
 export 'utils/density_cluster_evaluator.dart';

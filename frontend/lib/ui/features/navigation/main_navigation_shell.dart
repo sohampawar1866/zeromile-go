@@ -11,6 +11,7 @@ import '../../../logic/view_models/groups_view_model.dart';
 import '../../../logic/view_models/leader_hub_view_model.dart';
 import '../../../logic/view_models/superadmin_view_model.dart';
 import '../../../logic/view_models/dev_panel_view_model.dart';
+import '../../core/dialogs/switch_domain_modal.dart';
 import '../home/participant_home_screen.dart';
 import '../home/participant_live_map_screen.dart';
 import '../groups/my_groups_screen.dart';
@@ -46,6 +47,7 @@ class MainNavigationShell extends StatefulWidget {
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _bottomNavIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -54,51 +56,78 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     final user = widget.authVm.currentUser;
     final domainId = domain?.id ?? '00000000-0000-0000-0000-000000000001';
     final userId = user?.id ?? '00000000-0000-0000-0000-000000000001';
+    final isMapTab = role == ActiveRolePerspective.participant && _bottomNavIndex == 1;
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.canvas,
-      appBar: AppBar(
+      appBar: isMapTab
+          ? null
+          : AppBar(
         titleSpacing: 0,
-        backgroundColor: AppColors.canvas,
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: AppSpacing.sm),
+          child: GestureDetector(
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            child: Center(
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.primaryLight.withOpacity(0.15),
+                child: const Icon(Icons.person, color: AppColors.primary, size: 20),
+              ),
+            ),
+          ),
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.directions_bike, color: AppColors.ink, size: 20),
-            const SizedBox(width: AppSpacing.xs + 2),
+            const Icon(Icons.location_on, color: AppColors.primary, size: 18),
+            const SizedBox(width: 4),
             Flexible(
-              child: Text(
-                domain?.name ?? 'ZeroMile Go',
-                style: AppTypography.headingMd,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Location',
+                    style: AppTypography.captionXs.copyWith(color: AppColors.mute, fontSize: 9),
+                  ),
+                  Text(
+                    'Nagpur, MH',
+                    style: AppTypography.bodySm.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ],
               ),
             ),
           ],
         ),
         actions: [
-          // Quick Role Badge Chip
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.md),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: role == ActiveRolePerspective.superAdmin
-                      ? AppColors.sale
-                      : role == ActiveRolePerspective.leader
-                          ? AppColors.ink
-                          : AppColors.softCloud,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(
-                    color: role == ActiveRolePerspective.participant
-                        ? AppColors.hairline
-                        : Colors.transparent,
-                  ),
-                ),
+          // Role Perspective Chip
+          GestureDetector(
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: role == ActiveRolePerspective.superAdmin
+                    ? AppColors.sale
+                    : role == ActiveRolePerspective.leader
+                        ? AppColors.ink
+                        : AppColors.softCloud,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Center(
                 child: Text(
                   widget.domainContextVm.roleString.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
                     color: (role == ActiveRolePerspective.superAdmin || role == ActiveRolePerspective.leader)
@@ -109,6 +138,43 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ),
             ),
           ),
+          const SizedBox(width: 8),
+
+          // Notification Bell
+          IconButton(
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications_outlined, color: AppColors.ink, size: 22),
+                if (widget.participantHomeVm.broadcasts.isNotEmpty)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: AppColors.sale,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    widget.participantHomeVm.broadcasts.isNotEmpty
+                        ? 'Latest: ${widget.participantHomeVm.broadcasts.first.messageText}'
+                        : 'No new notifications.',
+                  ),
+                  backgroundColor: AppColors.ink,
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: AppSpacing.xs),
         ],
       ),
       drawer: AppDrawer(
@@ -164,7 +230,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           onTap: (idx) => setState(() => _bottomNavIndex = idx),
           type: BottomNavigationBarType.fixed,
           backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.ink,
+          selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.mute,
           selectedLabelStyle: AppTypography.captionXs.copyWith(fontWeight: FontWeight.w700),
           unselectedLabelStyle: AppTypography.captionXs,
@@ -176,19 +242,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.map_outlined),
-              activeIcon: Icon(Icons.map),
-              label: 'Live Route',
+              icon: Icon(Icons.near_me_outlined),
+              activeIcon: Icon(Icons.near_me),
+              label: 'Ongoing',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.groups_outlined),
               activeIcon: Icon(Icons.groups),
-              label: 'My Groups',
+              label: 'Groups',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: 'Pass & ID',
+              label: 'Profile',
             ),
           ],
         ),
@@ -205,7 +271,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           currentIndex: _bottomNavIndex.clamp(0, 2),
           onTap: (idx) => setState(() => _bottomNavIndex = idx),
           backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.ink,
+          selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.mute,
           selectedLabelStyle: AppTypography.captionXs.copyWith(fontWeight: FontWeight.w700),
           unselectedLabelStyle: AppTypography.captionXs,
@@ -302,6 +368,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             activeMembership: widget.participantHomeVm.activeMembership,
             authVm: widget.authVm,
             groupsVm: widget.groupsVm,
+            domainContextVm: widget.domainContextVm,
             onManageGroups: () => setState(() => _bottomNavIndex = 2),
           );
         }
@@ -316,4 +383,3 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     }
   }
 }
-

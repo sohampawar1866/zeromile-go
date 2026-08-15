@@ -116,6 +116,26 @@ class LeaderHubViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> checkInRider({
+    required String domainId,
+    required String groupId,
+    required String userId,
+  }) async {
+    try {
+      await _groupService.checkInParticipant(
+        domainId: domainId,
+        groupId: groupId,
+        userId: userId,
+      );
+      await loadLeaderContext(domainId: domainId, groupId: groupId);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> directAddMemberByPhone({
     required String domainId,
     required String groupId,

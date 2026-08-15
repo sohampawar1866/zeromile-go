@@ -198,20 +198,40 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    isComplete
-                        ? Icons.military_tech
-                        : isChecked
-                            ? Icons.check_circle
-                            : Icons.radio_button_unchecked,
-                    color: isComplete
-                        ? AppColors.ink
-                        : isChecked
-                            ? AppColors.success
-                            : AppColors.mute,
-                    size: 20,
+                  IconButton(
+                    icon: Icon(
+                      isComplete
+                          ? Icons.military_tech
+                          : isChecked
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                      color: isComplete
+                          ? AppColors.ink
+                          : isChecked
+                              ? AppColors.success
+                              : AppColors.mute,
+                      size: 24,
+                    ),
+                    tooltip: isChecked ? 'Mark Not Checked In' : 'Mark Checked In',
+                    onPressed: () async {
+                      if (!isChecked) {
+                        final ok = await widget.viewModel.checkInRider(
+                          domainId: widget.domainId,
+                          groupId: widget.groupId,
+                          userId: m.userId,
+                        );
+                        if (context.mounted && ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Marked ${m.userFullName ?? "Rider"} as Checked In.'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -34,6 +34,7 @@ void main() {
           home: Scaffold(
             body: DensityClusterMapView(
               title: 'Nagpur Domain Loop',
+              isInteractiveRouteBuilder: true,
             ),
           ),
         ),
@@ -153,6 +154,50 @@ void main() {
 
       await tester.tap(find.text('Resolve Locally'));
       expect(resolved, isTrue);
+    });
+
+    testWidgets('RouteTrackingBottomSheet renders milestone stepper and ETA', (WidgetTester tester) async {
+      final sampleCheckpoints = [
+        RouteCheckpoint(
+          id: 'cp-1',
+          domainId: 'domain-1',
+          name: 'Zero Mile',
+          sequenceOrder: 1,
+          checkpointType: CheckpointType.start,
+          latitude: 21.1458,
+          longitude: 79.0882,
+          createdAt: DateTime.now(),
+        ),
+        RouteCheckpoint(
+          id: 'cp-2',
+          domainId: 'domain-1',
+          name: 'Water Point 1',
+          sequenceOrder: 2,
+          checkpointType: CheckpointType.waterStation,
+          latitude: 21.1500,
+          longitude: 79.0800,
+          createdAt: DateTime.now(),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RouteTrackingBottomSheet(
+              checkpoints: sampleCheckpoints,
+              activeCheckpointIndex: 1,
+              distanceRemainingKm: 3.5,
+              estimatedArrivalTime: '8:15 AM',
+              nextCheckpointName: 'Water Point 1',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Heading to Water Point 1'), findsOneWidget);
+      expect(find.text('8:15 AM'), findsOneWidget);
+      expect(find.text('Zero Mile'), findsOneWidget);
+      expect(find.text('Water Point 1'), findsNWidgets(2)); // Title & milestone node
     });
   });
 }

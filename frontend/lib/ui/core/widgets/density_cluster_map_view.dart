@@ -537,27 +537,28 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
               ),
             ),
 
-          // Lighting Mode Widget (Top-Left under header)
-          Positioned(
-            top: widget.isInteractiveRouteBuilder ? 80 : 42,
-            left: AppSpacing.sm,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: AppColors.canvas,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(color: AppColors.hairlineSoft),
-              ),
-              child: Row(
-                children: [
-                  _buildLightingButton('🌅', MapLightingMode.dawn),
-                  _buildLightingButton('☀️', MapLightingMode.day),
-                  _buildLightingButton('🌇', MapLightingMode.dusk),
-                  _buildLightingButton('🌙', MapLightingMode.night),
-                ],
+          // Lighting Mode Widget (Top-Left under header - only for interactive builder)
+          if (widget.showControls && widget.isInteractiveRouteBuilder)
+            Positioned(
+              top: widget.isInteractiveRouteBuilder ? 80 : 42,
+              left: AppSpacing.sm,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: AppColors.canvas,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: AppColors.hairlineSoft),
+                ),
+                child: Row(
+                  children: [
+                    _buildLightingButton('🌅', MapLightingMode.dawn),
+                    _buildLightingButton('☀️', MapLightingMode.day),
+                    _buildLightingButton('🌇', MapLightingMode.dusk),
+                    _buildLightingButton('🌙', MapLightingMode.night),
+                  ],
+                ),
               ),
             ),
-          ),
 
           // 3D Controls (Right Bottom)
           if (widget.showControls)
@@ -611,10 +612,11 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
               ),
             ),
 
-          // Density Heatmap Legend (Bottom-Left)
-          Positioned(
-            left: AppSpacing.sm,
-            bottom: AppSpacing.sm,
+          // Density Heatmap Legend (Bottom-Left - only for interactive builder)
+          if (widget.showControls && widget.isInteractiveRouteBuilder)
+            Positioned(
+              left: AppSpacing.sm,
+              bottom: AppSpacing.sm,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
               decoration: BoxDecoration(
