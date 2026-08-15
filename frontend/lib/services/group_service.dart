@@ -202,4 +202,22 @@ class GroupService {
 
     return (data as List).map((json) => GroupMembership.fromJson(json)).toList();
   }
+
+  /// Group Leader Hub: Fetch high-performance aggregated squad summary via RPC
+  Future<Map<String, dynamic>> getLeaderSquadSummary({
+    required String domainId,
+    required String groupId,
+  }) async {
+    try {
+      final res = await _client.rpc('get_leader_squad_summary', params: {
+        'p_domain_id': domainId,
+        'p_group_id': groupId,
+      });
+      return res != null ? Map<String, dynamic>.from(res as Map) : {};
+    } catch (_) {
+      return {};
+    }
+  }
 }
+
+

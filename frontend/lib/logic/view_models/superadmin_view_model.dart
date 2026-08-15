@@ -25,6 +25,7 @@ class SuperAdminViewModel extends ChangeNotifier {
   List<UserLiveLocation> _allParticipantLocations = [];
   List<SubGroup> _domainGroups = [];
   List<RouteCheckpoint> _routeCheckpoints = [];
+  List<Map<String, dynamic>> _sectorDensities = [];
   String _selectedGroupFilter = '';
   bool _isLoading = false;
   String? _errorMessage;
@@ -50,6 +51,7 @@ class SuperAdminViewModel extends ChangeNotifier {
   List<SubGroup> get domainGroups => _domainGroups;
   List<SubGroup> get subGroups => _domainGroups;
   List<RouteCheckpoint> get routeCheckpoints => _routeCheckpoints;
+  List<Map<String, dynamic>> get sectorDensities => _sectorDensities;
   String get selectedGroupFilter => _selectedGroupFilter;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -71,6 +73,7 @@ class SuperAdminViewModel extends ChangeNotifier {
       _escalatedSosQueue = await _sosService.getSuperAdminSosQueue(domainId);
       _domainGroups = await _groupService.getDomainSubGroups(domainId);
       _routeCheckpoints = await _domainService.getRouteCheckpoints(domainId);
+      _sectorDensities = await _domainService.getSectorDensityMetrics(domainId);
 
       _sosSub?.cancel();
       _sosSub = _sosService.streamSosEvents(domainId).listen(
@@ -89,6 +92,7 @@ class SuperAdminViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
 
   void setGroupFilter(String domainId, String groupId) {
     _selectedGroupFilter = groupId;

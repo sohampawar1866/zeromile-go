@@ -19,6 +19,7 @@ class LeaderHubViewModel extends ChangeNotifier {
   List<GroupMembership> _roster = [];
   List<SosEvent> _teamSosAlerts = [];
   List<UserLiveLocation> _teamLocations = [];
+  Map<String, dynamic> _squadSummary = {};
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -37,18 +38,24 @@ class LeaderHubViewModel extends ChangeNotifier {
   List<GroupMembership> get roster => _roster;
   List<SosEvent> get teamSosAlerts => _teamSosAlerts;
   List<UserLiveLocation> get teamLocations => _teamLocations;
+  Map<String, dynamic> get squadSummary => _squadSummary;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
   int get totalMembers => _roster.length;
-  int get totalEnrolled => _roster.length;
-  String get groupName => _roster.firstOrNull?.groupName ?? 'Contingent Group';
-  int get activeToday => _teamLocations.isNotEmpty ? _teamLocations.length : _roster.where((m) => m.isActive).length;
-  int get checkedInCount => _roster.where((m) => m.participationStatus == ParticipationStatus.checkedIn).length;
+  int get totalEnrolled => _squadSummary['total_enrolled'] as int? ?? _roster.length;
+  String get groupName => _squadSummary['group_name'] as String? ?? _roster.firstOrNull?.groupName ?? 'Contingent Group';
+  String get musterPoint => _squadSummary['muster_point'] as String? ?? 'General Muster Point';
+  int get activeToday => _teamLocations.isNotEmpty ? _teamLocations.length : (_squadSummary['active_telemetry'] as int? ?? _roster.where((m) => m.isActive).length);
+  int get checkedInCount => _squadSummary['checked_in'] as int? ?? _roster.where((m) => m.participationStatus == ParticipationStatus.checkedIn).length;
   int get checkedInMuster => checkedInCount;
-  int get completedCount => _roster.where((m) => m.participationStatus == ParticipationStatus.completed).length;
-  double get checkinPercent => _roster.isEmpty ? 0.0 : (checkedInCount / _roster.length) * 100.0;
-  double get completionPercent => _roster.isEmpty ? 0.0 : (completedCount / _roster.length) * 100.0;
+  int get completedCount => _squadSummary['completed'] as int? ?? _roster.where((m) => m.participationStatus == ParticipationStatus.completed).length;
+  double get checkinPercent => _squadSummary['checkin_percentage'] != null
+      ? (_squadSummary['checkin_percentage'] as num).toDouble()
+      : (_roster.isEmpty ? 0.0 : (checkedInCount / _roster.length) * 100.0);
+  double get completionPercent => _squadSummary['completion_percentage'] != null
+      ? (_squadSummary['completion_percentage'] as num).toDouble()
+      : (_roster.isEmpty ? 0.0 : (completedCount / _roster.length) * 100.0);
 
   Future<void> loadLeaderContext({
     required String domainId,
@@ -59,6 +66,7 @@ class LeaderHubViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _squadSummary = await _groupService.getLeaderSquadSummary(domainId: domainId, groupId: groupId);
       _roster = await _groupService.getGroupRoster(domainId: domainId, groupId: groupId);
       _teamSosAlerts = await _sosService.getGroupLeaderSosAlerts(domainId: domainId, groupId: groupId);
 
@@ -77,6 +85,7 @@ class LeaderHubViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
 
   Future<bool> directAddMember({
     required String domainId,

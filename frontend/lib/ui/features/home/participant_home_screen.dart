@@ -21,6 +21,7 @@ class ParticipantHomeScreen extends StatelessWidget {
   final ParticipantHomeViewModel viewModel;
   final String currentUserId;
   final VoidCallback onNavigateToGroups;
+  final VoidCallback? onNavigateToMap;
 
   const ParticipantHomeScreen({
     super.key,
@@ -29,7 +30,9 @@ class ParticipantHomeScreen extends StatelessWidget {
     required this.viewModel,
     required this.currentUserId,
     required this.onNavigateToGroups,
+    this.onNavigateToMap,
   });
+
 
   @override
   Widget build(BuildContext context) {

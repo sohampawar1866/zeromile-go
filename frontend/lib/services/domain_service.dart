@@ -180,4 +180,20 @@ class DomainService {
       'totalLiveLocations': totalLiveLocations,
     };
   }
+
+  /// SuperAdmin / Map HUD: Fetch aggregated sector crowd density metrics via RPC
+  Future<List<Map<String, dynamic>>> getSectorDensityMetrics(String domainId) async {
+    try {
+      final res = await _client.rpc('get_sector_density_metrics', params: {
+        'p_domain_id': domainId,
+      });
+      if (res is List) {
+        return res.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
 }
+

@@ -6,7 +6,7 @@ import '../../../config/app_typography.dart';
 import '../../../models/event_domain.dart';
 import '../../../logic/view_models/leader_hub_view_model.dart';
 import 'tabs/team_hub_tab.dart';
-import 'tabs/leader_live_map_tab.dart';
+import 'tabs/leader_roster_tab.dart';
 import 'tabs/leader_analytics_tab.dart';
 
 class LeaderHubScreen extends StatefulWidget {
@@ -67,9 +67,36 @@ class _LeaderHubScreenState extends State<LeaderHubScreen> with SingleTickerProv
             unselectedLabelColor: AppColors.mute,
             labelStyle: AppTypography.buttonSm,
             tabs: const [
-              Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.groups_outlined, size: 16), SizedBox(width: 6), Text('Team Hub')])),
-              Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.location_on_outlined, size: 16), SizedBox(width: 6), Text('Live Map')])),
-              Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.bar_chart, size: 16), SizedBox(width: 6), Text('Analytics')])),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.shield_outlined, size: 16),
+                    SizedBox(width: 6),
+                    Text('Triage & Telemetry'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.how_to_reg_outlined, size: 16),
+                    SizedBox(width: 6),
+                    Text('Muster Roster'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.bar_chart_outlined, size: 16),
+                    SizedBox(width: 6),
+                    Text('Comms & Stats'),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -85,9 +112,13 @@ class _LeaderHubScreenState extends State<LeaderHubScreen> with SingleTickerProv
                 domainId: domainId,
                 groupId: widget.groupId,
                 leaderUserId: widget.leaderUserId,
+                onNavigateToRoster: () => _tabController.animateTo(1),
               ),
-              LeaderLiveMapTab(
+              LeaderRosterTab(
                 viewModel: widget.viewModel,
+                domainId: domainId,
+                groupId: widget.groupId,
+                leaderUserId: widget.leaderUserId,
               ),
               LeaderAnalyticsTab(
                 viewModel: widget.viewModel,

@@ -100,7 +100,7 @@ class AppDrawer extends StatelessWidget {
                   _buildDrawerItem(
                     context,
                     icon: Icons.home_outlined,
-                    label: 'Live Rally Dashboard',
+                    label: 'Live Rally Cockpit',
                     isSelected: selectedNavIndex == 0,
                     onTap: () {
                       onSelectNavIndex(0);
@@ -109,8 +109,8 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _buildDrawerItem(
                     context,
-                    icon: Icons.groups_outlined,
-                    label: 'My Sub-Groups (Contingent)',
+                    icon: Icons.map_outlined,
+                    label: 'Live Route Map',
                     isSelected: selectedNavIndex == 1,
                     onTap: () {
                       onSelectNavIndex(1);
@@ -119,17 +119,28 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _buildDrawerItem(
                     context,
-                    icon: Icons.person_outline,
-                    label: 'My Profile',
+                    icon: Icons.groups_outlined,
+                    label: 'My Sub-Groups (Contingent)',
                     isSelected: selectedNavIndex == 2,
                     onTap: () {
                       onSelectNavIndex(2);
                       Navigator.pop(context);
                     },
                   ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.person_outline,
+                    label: 'My Profile & Pass',
+                    isSelected: selectedNavIndex == 3,
+                    onTap: () {
+                      onSelectNavIndex(3);
+                      Navigator.pop(context);
+                    },
+                  ),
                 ],
               ),
             ),
+
 
             // Bottom Fixed Section: Role Perspective Switcher + Switch Event Domain Button
             Container(
