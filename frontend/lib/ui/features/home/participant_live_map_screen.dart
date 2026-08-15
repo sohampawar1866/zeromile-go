@@ -43,7 +43,7 @@ class ParticipantLiveMapScreen extends StatelessWidget {
           children: [
             // Map Visualizer
             ShadCard(
-              title: isLive ? 'Live GPS Route Telemetry' : 'Official Route Geometry',
+              title: isLive ? 'Live GPS Route Map' : 'Official Route Map',
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

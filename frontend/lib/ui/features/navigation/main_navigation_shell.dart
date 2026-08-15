@@ -173,7 +173,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
-              label: 'Cockpit',
+              label: 'Home',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.map_outlined),
@@ -183,7 +183,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             BottomNavigationBarItem(
               icon: Icon(Icons.groups_outlined),
               activeIcon: Icon(Icons.groups),
-              label: 'Contingent',
+              label: 'My Groups',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
@@ -219,7 +219,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             BottomNavigationBarItem(
               icon: Icon(Icons.groups_outlined),
               activeIcon: Icon(Icons.groups),
-              label: 'All Contingents',
+              label: 'All Groups',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
@@ -253,7 +253,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             activeMembership: widget.participantHomeVm.activeMembership,
             authVm: widget.authVm,
             groupsVm: widget.groupsVm,
-            onManageContingents: () => setState(() => _bottomNavIndex = 1),
+            onManageGroups: () => setState(() => _bottomNavIndex = 1),
           );
         }
         final ledGroup = widget.groupsVm.userMemberships.where((m) => m.isLeader).firstOrNull ??
@@ -302,7 +302,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             activeMembership: widget.participantHomeVm.activeMembership,
             authVm: widget.authVm,
             groupsVm: widget.groupsVm,
-            onManageContingents: () => setState(() => _bottomNavIndex = 2),
+            onManageGroups: () => setState(() => _bottomNavIndex = 2),
           );
         }
         return ParticipantHomeScreen(
@@ -316,3 +316,4 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     }
   }
 }
+

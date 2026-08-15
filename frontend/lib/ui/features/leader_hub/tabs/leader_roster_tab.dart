@@ -74,7 +74,7 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
       children: [
         // Roster Summary Card
         ShadCard(
-          title: 'Contingent Headcount & Muster Roll',
+          title: 'Team Attendance & Members',
           trailing: Text(
             '$checkedInCount/$totalCount Present',
             style: AppTypography.captionXs.copyWith(
@@ -86,7 +86,7 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Muster Point: ${widget.viewModel.musterPoint}',
+                'Meeting Point: ${widget.viewModel.musterPoint}',
                 style: AppTypography.bodySm,
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -111,7 +111,7 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
               child: TextField(
                 controller: _searchCtrl,
                 decoration: const InputDecoration(
-                  hintText: 'Search squad members...',
+                  hintText: 'Search team members...',
                   prefixIcon: Icon(Icons.search, size: 18),
                   contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
                 ),
@@ -138,7 +138,7 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
                     if (context.mounted && ok) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Added $name directly to muster roster.'),
+                          content: Text('Added $name to team list.'),
                           backgroundColor: AppColors.success,
                         ),
                       );
@@ -149,6 +149,7 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
             ),
           ],
         ),
+
         const SizedBox(height: AppSpacing.sm),
 
         // Filter Chips
@@ -219,7 +220,7 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
                           children: [
                             Flexible(
                               child: Text(
-                                m.userFullName ?? 'Squad Rider',
+                                m.userFullName ?? 'Team Rider',
                                 style: AppTypography.bodyStrong,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -232,7 +233,7 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${PhoneUtils.formatDisplay(m.userPhoneNumber ?? "")} • ${isChecked ? "Checked-in" : isComplete ? "Finished" : "Awaiting Muster"}',
+                          '${PhoneUtils.formatDisplay(m.userPhoneNumber ?? "")} • ${isChecked ? "Checked-in" : isComplete ? "Finished" : "Awaiting Check-in"}',
                           style: AppTypography.captionXs.copyWith(
                             color: isChecked ? AppColors.success : AppColors.mute,
                           ),
@@ -264,7 +265,7 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('✓ Contingent Muster Roster exported to Downloads (CSV).'),
+                content: Text('✓ Team Attendance list exported to Downloads (CSV).'),
                 backgroundColor: AppColors.ink,
               ),
             );
@@ -282,11 +283,12 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
               children: [
                 Icon(Icons.download, size: 16, color: AppColors.ink),
                 SizedBox(width: AppSpacing.sm),
-                Text('Export Muster Roll CSV', style: AppTypography.buttonSmSecondary),
+                Text('Export Attendance CSV', style: AppTypography.buttonSmSecondary),
               ],
             ),
           ),
         ),
+
         const SizedBox(height: 80),
       ],
     );

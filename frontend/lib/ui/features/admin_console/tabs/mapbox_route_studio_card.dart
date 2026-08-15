@@ -89,9 +89,10 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '🔒 Official Mapbox 3D Route Published (${_calculatedDistanceKm.toStringAsFixed(1)} km)! Broadcasted to all contingent leaders.',
+          '🔒 Official Mapbox 3D Route Published (${_calculatedDistanceKm.toStringAsFixed(1)} km)! Broadcasted to all group leaders.',
         ),
         backgroundColor: AppColors.success,
+
       ),
     );
   }

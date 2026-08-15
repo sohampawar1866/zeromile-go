@@ -41,11 +41,12 @@ void main() {
       // Verify header schedule banner
       expect(find.text('Event Participation'), findsOneWidget);
       expect(find.text('Not Checked In'), findsOneWidget);
-      expect(find.text('Check In at Muster'), findsOneWidget);
+      expect(find.text('Check In Now'), findsOneWidget);
 
       // Tap Check-in
-      await tester.tap(find.text('Check In at Muster'));
+      await tester.tap(find.text('Check In Now'));
       await tester.pump(const Duration(milliseconds: 200));
+
 
       // Verify Emergency SOS FAB is visible during live window
       expect(find.text('SOS DISTRESS'), findsOneWidget);

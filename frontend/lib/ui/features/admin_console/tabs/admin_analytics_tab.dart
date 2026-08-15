@@ -33,11 +33,11 @@ class AdminAnalyticsTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Domain Participation Overview', style: AppTypography.headingMd),
+                const Text('Event Participation Overview', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
-                _buildStatItem('Active GPS Telemetry Online', '${viewModel.activeRiderCount} Participants'),
-                _buildStatItem('Approved Sub-Groups', '${viewModel.subGroups.length} Contingents'),
-                _buildStatItem('Pending Contingent Proposals', '${viewModel.pendingRequests.length} Pending Review'),
+                _buildStatItem('Riders Live on Route', '${viewModel.activeRiderCount} Participants'),
+                _buildStatItem('Registered Groups & Clubs', '${viewModel.subGroups.length} Groups'),
+                _buildStatItem('Pending Group Requests', '${viewModel.pendingRequests.length} Pending Review'),
                 _buildStatItem('Active SOS Emergency Queue', '${viewModel.escalatedSosQueue.length} Active Tickets'),
               ],
             ),
@@ -55,9 +55,9 @@ class AdminAnalyticsTab extends StatelessWidget {
                 const Text('Route Traffic & Safety Incident SLA', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
                 _buildStatItem('Active Emergency Dispatches', '${viewModel.escalatedSosQueue.length} Dispatched'),
-                _buildStatItem('Active Contingents Enrolled', '${viewModel.subGroups.length} Groups'),
-                _buildStatItem('Active Group Filter Target', viewModel.selectedGroupFilter.isEmpty ? 'All Domain Contingents' : 'Filtered Contingent'),
-                _buildStatItem('Telemetry Stream Status', 'Connected (Supabase Realtime)'),
+                _buildStatItem('Active Groups Enrolled', '${viewModel.subGroups.length} Groups'),
+                _buildStatItem('Active Group Filter Target', viewModel.selectedGroupFilter.isEmpty ? 'All Event Groups' : 'Selected Group'),
+                _buildStatItem('Live GPS Connection', 'Connected (Supabase Realtime)'),
               ],
             ),
           ),
@@ -71,12 +71,13 @@ class AdminAnalyticsTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Contingent Breakdown (By Org Type)', style: AppTypography.headingMd),
+                const Text('Group Breakdown (By Category)', style: AppTypography.headingMd),
                 const SizedBox(height: AppSpacing.md),
                 _buildBreakdownBar('Educational / Colleges (VNIT, etc.)', collegeFraction, '$collegeCount Groups (${(collegeFraction * 100).toStringAsFixed(0)}%)', AppColors.ink),
                 _buildBreakdownBar('Sports & Athletic Clubs', sportsFraction, '$sportsCount Groups (${(sportsFraction * 100).toStringAsFixed(0)}%)', AppColors.info),
                 _buildBreakdownBar('General & Civil Society Orgs', generalFraction, '$generalCount Groups (${(generalFraction * 100).toStringAsFixed(0)}%)', AppColors.accentTeal),
                 const SizedBox(height: AppSpacing.md),
+
                 SizedBox(
                   width: double.infinity,
                   child: FluidTapScale(

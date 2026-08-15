@@ -68,8 +68,8 @@ class PresenceTrackerCard extends StatelessWidget {
                   isCompleted
                       ? 'Congratulations! You have completed the rally loop. Finish certificate recorded.'
                       : isCheckedIn
-                          ? 'Present at muster point${membership?.checkinTime != null ? " since ${membership!.checkinTime!.hour.toString().padLeft(2, '0')}:${membership!.checkinTime!.minute.toString().padLeft(2, '0')}" : ""}. Live GPS telemetry active.'
-                          : 'Please tap "Check In" upon arriving at your assigned muster assembly point.',
+                          ? 'Present at assembly point${membership?.checkinTime != null ? " since ${membership!.checkinTime!.hour.toString().padLeft(2, '0')}:${membership!.checkinTime!.minute.toString().padLeft(2, '0')}" : ""}. Live GPS tracking active.'
+                          : 'Please tap "Check In Now" upon arriving at your designated meeting point.',
                   style: AppTypography.bodySm,
                 ),
               ),
@@ -80,13 +80,14 @@ class PresenceTrackerCard extends StatelessWidget {
           // Adaptive, stateful action button (prevents 2-button horizontal collision)
           if (!isCheckedIn && !isCompleted)
             ShadButton(
-              text: 'Check In at Muster',
+              text: 'Check In Now',
               icon: Icons.location_on_outlined,
               size: ShadButtonSize.md,
               isFullWidth: true,
               variant: ShadButtonVariant.primary,
               onPressed: onCheckIn,
             )
+
           else if (isCheckedIn)
             Row(
               children: [

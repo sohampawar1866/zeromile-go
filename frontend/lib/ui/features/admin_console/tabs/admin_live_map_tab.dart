@@ -52,8 +52,8 @@ class _AdminLiveMapTabState extends State<AdminLiveMapTab> with AutomaticKeepAli
             children: [
               DensityClusterMapView(
                 title: viewModel.selectedGroupFilter.isEmpty
-                    ? 'Nagpur Domain Loop (All General Crowd)'
-                    : 'Nagpur Domain Loop (Filtered Contingent)',
+                    ? 'Nagpur Route Loop (All Riders)'
+                    : 'Nagpur Route Loop (Filtered Group)',
               ),
             ],
           ),
@@ -62,14 +62,15 @@ class _AdminLiveMapTabState extends State<AdminLiveMapTab> with AutomaticKeepAli
 
         // Sub-Group Filter Dropdown Card
         ShadCard(
-          title: 'Contingent Map Filter',
+          title: 'Filter Map by Group',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Filter live GPS markers by specific club or view total crowd:',
+                'Filter live GPS map by specific club or view all riders:',
                 style: AppTypography.caption,
               ),
+
               const SizedBox(height: AppSpacing.sm),
               DropdownButtonFormField<String>(
                 isExpanded: true,

@@ -26,7 +26,7 @@ class ActiveGroupCard extends StatelessWidget {
     final isLeader = membership?.isLeader ?? false;
 
     return ShadCard(
-      title: 'Active Sub-Group',
+      title: 'Your Group & Team',
       trailing: StatusBadge(
         label: !isEnrolled ? 'General' : (isLeader ? 'Leader' : 'Member'),
         type: !isEnrolled ? StatusBadgeType.muted : (isLeader ? StatusBadgeType.warning : StatusBadgeType.primary),
@@ -52,8 +52,8 @@ class ActiveGroupCard extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   isEnrolled
-                      ? 'Muster Point: Samvidhan Square • Telemetry Online'
-                      : 'Muster Point: Zero Mile Monument (Start Point) • General Route',
+                      ? 'Meeting Point: Samvidhan Square • Live GPS Active'
+                      : 'Meeting Point: Zero Mile Monument (Start Line)',
                   style: AppTypography.caption,
                 ),
                 const SizedBox(height: AppSpacing.xs + 2),
@@ -64,8 +64,8 @@ class ActiveGroupCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         isEnrolled
-                            ? 'SOS routes to: Contingent Leader'
-                            : 'SOS routes to: SuperAdmin Command Center',
+                            ? 'Emergency alerts route to: Group Leader'
+                            : 'Emergency alerts route to: Event Helpdesk',
                         style: AppTypography.captionXs.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -79,7 +79,7 @@ class ActiveGroupCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           ShadButton(
-            text: 'Browse & Switch Contingent',
+            text: 'Browse & Change Group',
             icon: Icons.groups_outlined,
             isFullWidth: true,
             size: ShadButtonSize.md,
@@ -89,5 +89,6 @@ class ActiveGroupCard extends StatelessWidget {
         ],
       ),
     );
+
   }
 }

@@ -112,12 +112,12 @@ class GovernanceTab extends StatelessWidget {
 
         // Pending Group Creation Applications
         ShadCard(
-          title: 'Contingent Proposals (${viewModel.pendingRequests.length})',
+          title: 'New Group Requests (${viewModel.pendingRequests.length})',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (viewModel.pendingRequests.isEmpty)
-                const Text('No pending group proposals to review.', style: AppTypography.caption)
+                const Text('No pending group requests to review.', style: AppTypography.caption)
               else
                 ...viewModel.pendingRequests.map((req) => Container(
                   margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -133,9 +133,10 @@ class GovernanceTab extends StatelessWidget {
                       Text(req.orgName, style: AppTypography.headingMd),
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
-                        'Category: ${req.orgType} • Expected: ${req.expectedCount} Riders • Muster: ${req.musterPoint}',
+                        'Category: ${req.orgType} • Expected: ${req.expectedCount} Riders • Meeting Point: ${req.musterPoint}',
                         style: AppTypography.caption,
                       ),
+
                       if (req.leaderNotes != null && req.leaderNotes!.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.xs),
                         Text('Remarks: ${req.leaderNotes}', style: AppTypography.bodySm.copyWith(color: AppColors.warningAccent)),

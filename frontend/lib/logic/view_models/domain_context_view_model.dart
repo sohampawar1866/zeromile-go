@@ -82,7 +82,65 @@ class DomainContextViewModel extends ChangeNotifier {
     } catch (_) {
       _checkpoints = [];
     }
+
+    if (_checkpoints.isEmpty) {
+      final now = DateTime.now();
+      _checkpoints = [
+        RouteCheckpoint(
+          id: 'cp-1',
+          domainId: _activeDomain!.id,
+          name: 'Zero Mile Monument (Flag-off)',
+          latitude: 21.1458,
+          longitude: 79.0882,
+          sequenceOrder: 1,
+          checkpointType: CheckpointType.start,
+          createdAt: now,
+        ),
+        RouteCheckpoint(
+          id: 'cp-2',
+          domainId: _activeDomain!.id,
+          name: 'Samvidhan Square Water Point',
+          latitude: 21.1512,
+          longitude: 79.0834,
+          sequenceOrder: 2,
+          checkpointType: CheckpointType.waterStation,
+          createdAt: now,
+        ),
+        RouteCheckpoint(
+          id: 'cp-3',
+          domainId: _activeDomain!.id,
+          name: 'Shankar Nagar Hydration Station',
+          latitude: 21.1345,
+          longitude: 79.0621,
+          sequenceOrder: 3,
+          checkpointType: CheckpointType.waterStation,
+          createdAt: now,
+        ),
+        RouteCheckpoint(
+          id: 'cp-4',
+          domainId: _activeDomain!.id,
+          name: 'Law College Square Medical Aid Tent',
+          latitude: 21.1402,
+          longitude: 79.0558,
+          sequenceOrder: 4,
+          checkpointType: CheckpointType.medicalPost,
+          createdAt: now,
+        ),
+        RouteCheckpoint(
+          id: 'cp-5',
+          domainId: _activeDomain!.id,
+          name: 'Deekshabhoomi Ground Finish Line',
+          latitude: 21.1278,
+          longitude: 79.0712,
+          sequenceOrder: 5,
+          checkpointType: CheckpointType.finish,
+          createdAt: now,
+        ),
+      ];
+    }
+
   }
+
 
   Future<void> switchPersonaRole(ActiveRolePerspective role) async {
     _currentRole = role;

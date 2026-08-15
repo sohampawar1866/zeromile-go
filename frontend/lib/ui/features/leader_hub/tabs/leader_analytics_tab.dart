@@ -28,16 +28,16 @@ class LeaderAnalyticsTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Team Muster Performance Metrics',
+                  'Team Progress & Attendance',
                   style: AppTypography.headingMd,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                _buildMetricRow('Total Enrolled Members', '${viewModel.totalEnrolled}'),
+                _buildMetricRow('Total Team Members', '${viewModel.totalEnrolled}'),
                 _buildMetricRow('Currently Active Today', '${viewModel.activeToday} ($activePercentStr%)'),
-                _buildMetricRow('Checked-In at Muster', '${viewModel.checkedInMuster} (${viewModel.checkinPercent.toStringAsFixed(1)}%)'),
+                _buildMetricRow('Checked-In at Meeting Point', '${viewModel.checkedInMuster} (${viewModel.checkinPercent.toStringAsFixed(1)}%)'),
                 _buildMetricRow('Completed Route Finish', '${viewModel.completedCount} (${viewModel.completionPercent.toStringAsFixed(1)}%)'),
                 const SizedBox(height: AppSpacing.md),
-                const Text('MUSTER ROLL PROGRESS', style: AppTypography.caption),
+                const Text('ATTENDANCE PROGRESS', style: AppTypography.caption),
                 const SizedBox(height: AppSpacing.xs),
                 LinearProgressIndicator(
                   value: viewModel.checkinPercent / 100,
@@ -51,8 +51,8 @@ class LeaderAnalyticsTab extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
                 const Text('INCIDENT & SAFETY LOG', style: AppTypography.caption),
                 const SizedBox(height: AppSpacing.xs),
-                _buildMetricRow('SOS Triggered Today', '${viewModel.teamSosAlerts.length}'),
-                _buildMetricRow('Roster Telemetry Status', viewModel.teamLocations.isNotEmpty ? 'Live Tracking Active' : 'Idle / Standby'),
+                _buildMetricRow('Emergency Alerts Today', '${viewModel.teamSosAlerts.length}'),
+                _buildMetricRow('Live GPS Tracking Status', viewModel.teamLocations.isNotEmpty ? 'Live Tracking Active' : 'Idle / Standby'),
                 const SizedBox(height: AppSpacing.md),
                 SizedBox(
                   width: double.infinity,
@@ -60,7 +60,7 @@ class LeaderAnalyticsTab extends StatelessWidget {
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Team attendance roster CSV exported to downloads.'),
+                          content: Text('Team attendance list exported to downloads.'),
                           backgroundColor: AppColors.ink,
                         ),
                       );
@@ -78,12 +78,13 @@ class LeaderAnalyticsTab extends StatelessWidget {
                         children: [
                           Icon(Icons.download, size: 16, color: AppColors.ink),
                           SizedBox(width: AppSpacing.sm),
-                          Text('Export Team Attendance CSV', style: AppTypography.buttonSmSecondary),
+                          Text('Download Attendance Report (CSV)', style: AppTypography.buttonSmSecondary),
                         ],
                       ),
                     ),
                   ),
                 ),
+
               ],
             ),
           ),

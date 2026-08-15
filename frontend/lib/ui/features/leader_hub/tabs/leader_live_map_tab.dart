@@ -36,30 +36,31 @@ class _LeaderLiveMapTabState extends State<LeaderLiveMapTab> with AutomaticKeepA
               const Icon(Icons.sensors, size: 14, color: AppColors.success),
               const SizedBox(width: 4),
               Text(
-                'Contingent',
+                'Team Live',
                 style: AppTypography.captionXs.copyWith(color: AppColors.success, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           child: DensityClusterMapView(
             title: viewModel.groupName.isNotEmpty
-                ? '${viewModel.groupName} Telemetry'
-                : 'Contingent Telemetry',
+                ? '${viewModel.groupName} Live Map'
+                : 'Team Live Map',
           ),
         ),
         const SizedBox(height: AppSpacing.md),
         ShadCard(
-          title: 'Telemetry & Attendance Stats',
+          title: 'Live GPS & Attendance Stats',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildStatRow('Contingent Size', '${viewModel.totalEnrolled} Enrolled'),
+              _buildStatRow('Team Size', '${viewModel.totalEnrolled} Members'),
               _buildStatRow('Check-in Attendance Rate', '${viewModel.checkinPercent.toStringAsFixed(1)}% Checked-in'),
               _buildStatRow('Route Completion Rate', '${viewModel.completionPercent.toStringAsFixed(1)}% Finished'),
-              _buildStatRow('Active Location Streams', viewModel.teamLocations.isNotEmpty ? '${viewModel.teamLocations.length} Active' : 'Standby / Idle'),
+              _buildStatRow('Active Location Streams', viewModel.teamLocations.isNotEmpty ? '${viewModel.teamLocations.length} Online' : 'Standby / Idle'),
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.xxl),
       ],
     );

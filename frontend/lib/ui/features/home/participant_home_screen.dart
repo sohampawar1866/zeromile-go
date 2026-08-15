@@ -5,6 +5,7 @@ import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
 import '../../../models/event_domain.dart';
+import '../../../models/group_membership.dart';
 import '../../../models/route_checkpoint.dart';
 import '../../../utils/temporal_window_evaluator.dart';
 import '../../../logic/view_models/participant_home_view_model.dart';
@@ -52,6 +53,19 @@ class ParticipantHomeScreen extends StatelessWidget {
 
         final isLive = domain.status == EventDomainStatus.liveActive;
         final bannerText = TemporalWindowEvaluator.getScheduleBanner(domain);
+
+        final membership = viewModel.activeMembership;
+        final isCheckedIn = membership?.checkinTime != null ||
+            membership?.participationStatus == ParticipationStatus.checkedIn ||
+            membership?.participationStatus == ParticipationStatus.completed;
+
+        final now = DateTime.now();
+        final isWithin5MinsOfStart = now.isAfter(domain.startTime.subtract(const Duration(minutes: 5)));
+        final isEventOpenForCheckIn = isLive || isWithin5MinsOfStart;
+
+        // Check in component should only be visible if user has NOT yet checked in AND event has started (or <= 5 mins to start)
+        final showCheckInCard = !isCheckedIn && isEventOpenForCheckIn;
+
 
         return Scaffold(
           backgroundColor: AppColors.canvas,
@@ -108,47 +122,51 @@ class ParticipantHomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                // Presence / Check-In Card
-                PresenceTrackerCard(
-                  membership: viewModel.activeMembership,
-                  isLiveWindow: isLive,
-                  onCheckIn: () async {
-                    final ok = await viewModel.checkInAtMuster(
-                      domainId: domain.id,
-                      userId: currentUserId,
-                    );
-                    if (context.mounted && ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Checked In! Muster roll attendance recorded.'),
-                          backgroundColor: AppColors.success,
-                        ),
+                // Presence / Check-In Card (Conditioned: only when not checked in & event open for check-in)
+                if (showCheckInCard) ...[
+                  PresenceTrackerCard(
+                    membership: viewModel.activeMembership,
+                    isLiveWindow: isLive,
+                    onCheckIn: () async {
+                      final ok = await viewModel.checkInAtMuster(
+                        domainId: domain.id,
+                        userId: currentUserId,
                       );
-                    }
-                  },
-                  onComplete: () async {
-                    final ok = await viewModel.completeRally(
-                      domainId: domain.id,
-                      userId: currentUserId,
-                    );
-                    if (context.mounted && ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Rally finish recorded! Pass registered.'),
-                          backgroundColor: AppColors.ink,
-                        ),
+                      if (context.mounted && ok) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Checked In! Attendance recorded successfully.'),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+                      }
+                    },
+                    onComplete: () async {
+                      final ok = await viewModel.completeRally(
+                        domainId: domain.id,
+                        userId: currentUserId,
                       );
-                    }
-                  },
-                ),
-                const SizedBox(height: AppSpacing.md),
+                      if (context.mounted && ok) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Rally finish recorded! Pass registered.'),
+                            backgroundColor: AppColors.ink,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
 
-                // Live Interactive Route Card
+                // Official Route Checkpoints
                 LiveRouteCard(
                   checkpoints: checkpoints,
                   isLiveWindow: isLive,
+                  onNavigateToMap: onNavigateToMap,
                 ),
                 const SizedBox(height: AppSpacing.md),
+
 
                 // Broadcasts Feed Card
                 ShadCard(

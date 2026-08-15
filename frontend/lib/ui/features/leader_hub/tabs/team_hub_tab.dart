@@ -63,13 +63,13 @@ class TeamHubTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Muster Point: ${viewModel.musterPoint}',
+                'Meeting Point: ${viewModel.musterPoint}',
                 style: AppTypography.bodySm,
               ),
               const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
-                  _buildMiniStat('Enrolled', '${viewModel.totalEnrolled}'),
+                  _buildMiniStat('Members', '${viewModel.totalEnrolled}'),
                   const SizedBox(width: AppSpacing.sm),
                   _buildMiniStat('Checked-In', '${viewModel.checkedInCount} (${viewModel.checkinPercent.toStringAsFixed(0)}%)'),
                   const SizedBox(width: AppSpacing.sm),
@@ -83,7 +83,7 @@ class TeamHubTab extends StatelessWidget {
 
         // Priority SOS Triage Queue
         ShadCard(
-          title: 'Squad SOS Triage Queue',
+          title: 'Team Emergency & Help Alerts',
           trailing: Text(
             activeSosCount > 0 ? '$activeSosCount Active' : '0 Active',
             style: AppTypography.captionXs.copyWith(
@@ -104,7 +104,7 @@ class TeamHubTab extends StatelessWidget {
                     border: Border.all(color: AppColors.hairlineSoft),
                   ),
                   child: Text(
-                    '✓ All squad riders safe. No active distress pings.',
+                    '✓ All team riders safe. No active emergency pings.',
                     style: AppTypography.bodySm.copyWith(
                       color: AppColors.success,
                       fontWeight: FontWeight.w600,
@@ -135,7 +135,7 @@ class TeamHubTab extends StatelessWidget {
                               const Text('Initiating direct emergency line to:', style: AppTypography.bodySm),
                               const SizedBox(height: 8),
                               Text(
-                                '${sos.senderName ?? "Contingent Member"}\n$phone',
+                                '${sos.senderName ?? "Team Member"}\n$phone',
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                               ),
                               const SizedBox(height: 12),
@@ -197,7 +197,7 @@ class TeamHubTab extends StatelessWidget {
                       if (context.mounted && ok) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Alert escalated to Domain SuperAdmins.'),
+                            content: Text('Alert escalated to Event Organizers.'),
                             backgroundColor: AppColors.warning,
                           ),
                         );
@@ -212,13 +212,13 @@ class TeamHubTab extends StatelessWidget {
 
         // Live Squad GPS Telemetry Map HUD
         ShadCard(
-          title: 'Live Squad GPS Telemetry',
+          title: 'Live Team GPS Tracking',
           trailing: Text(
-            '${viewModel.teamLocations.length} Streams',
+            '${viewModel.teamLocations.length} Online',
             style: AppTypography.captionXs.copyWith(color: AppColors.mute),
           ),
           child: DensityClusterMapView(
-            title: '${viewModel.groupName} Telemetry',
+            title: '${viewModel.groupName} Live Map',
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -228,7 +228,7 @@ class TeamHubTab extends StatelessWidget {
           children: [
             Expanded(
               child: ShadButton(
-                text: 'Add Walk-In Rider',
+                text: 'Add Rider to Team',
                 icon: Icons.person_add,
                 variant: ShadButtonVariant.primary,
                 onPressed: () {
@@ -245,7 +245,7 @@ class TeamHubTab extends StatelessWidget {
                       if (context.mounted && ok) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Added $name directly to muster roster.'),
+                            content: Text('Added $name to team attendance.'),
                             backgroundColor: AppColors.success,
                           ),
                         );
@@ -258,7 +258,7 @@ class TeamHubTab extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: ShadButton(
-                text: 'Squad Broadcast',
+                text: 'Send Team Notice',
                 icon: Icons.campaign,
                 variant: ShadButtonVariant.secondary,
                 onPressed: () {
@@ -275,7 +275,7 @@ class TeamHubTab extends StatelessWidget {
                       if (context.mounted && ok) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Squad broadcast alert dispatched.'),
+                            content: Text('Team notice dispatched.'),
                             backgroundColor: AppColors.ink,
                           ),
                         );
@@ -287,6 +287,7 @@ class TeamHubTab extends StatelessWidget {
             ),
           ],
         ),
+
         const SizedBox(height: 80),
       ],
     );

@@ -27,10 +27,11 @@ void main() {
 
       expect(find.text('Event Participation'), findsOneWidget);
       expect(find.text('Not Checked In'), findsOneWidget);
-      expect(find.text('Check In at Muster'), findsOneWidget);
+      expect(find.text('Check In Now'), findsOneWidget);
 
-      await tester.tap(find.text('Check In at Muster'));
+      await tester.tap(find.text('Check In Now'));
       await tester.pumpAndSettle();
+
 
       expect(checkedInTapped, isTrue);
       expect(completedTapped, isFalse);

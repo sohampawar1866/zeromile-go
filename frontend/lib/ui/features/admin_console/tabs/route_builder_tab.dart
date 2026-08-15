@@ -71,9 +71,10 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 const Text(
-                  'Live GPS tracking, muster check-in, and floating SOS buttons are active strictly during these hours:',
+                  'Live GPS tracking, check-in attendance, and floating SOS buttons are active strictly during these hours:',
                   style: AppTypography.bodySm,
                 ),
+
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [

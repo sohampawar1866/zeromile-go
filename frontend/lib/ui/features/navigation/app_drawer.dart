@@ -100,7 +100,7 @@ class AppDrawer extends StatelessWidget {
                   _buildDrawerItem(
                     context,
                     icon: Icons.home_outlined,
-                    label: 'Live Rally Cockpit',
+                    label: 'Live Rally Dashboard',
                     isSelected: selectedNavIndex == 0,
                     onTap: () {
                       onSelectNavIndex(0);
@@ -120,7 +120,7 @@ class AppDrawer extends StatelessWidget {
                   _buildDrawerItem(
                     context,
                     icon: Icons.groups_outlined,
-                    label: 'My Sub-Groups (Contingent)',
+                    label: 'My Groups & Clubs',
                     isSelected: selectedNavIndex == 2,
                     onTap: () {
                       onSelectNavIndex(2);
@@ -141,8 +141,7 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
 
-
-            // Bottom Fixed Section: Role Perspective Switcher + Switch Event Domain Button
+            // Bottom Fixed Section: Role Switcher + Switch Event Button
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: const BoxDecoration(
@@ -151,31 +150,31 @@ class AppDrawer extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Role Perspective Switcher (Positioned right above Switch Event Domain)
+                  // Role Switcher
                   Container(
                     margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                     child: PopupMenuButton<ActiveRolePerspective>(
-                      tooltip: 'Switch Role Perspective',
+                      tooltip: 'Switch Role',
                       onSelected: (role) {
                         Navigator.pop(context);
                         onSelectRole(role);
                       },
                       itemBuilder: (ctx) => const [
                         PopupMenuItem(
-                          value: ActiveRolePerspective.developer,
-                          child: Text('Developer Perspective (Master Console)'),
-                        ),
-                        PopupMenuItem(
-                          value: ActiveRolePerspective.superAdmin,
-                          child: Text('SuperAdmin Perspective (Domain Command)'),
+                          value: ActiveRolePerspective.participant,
+                          child: Text('Participant (Rider)'),
                         ),
                         PopupMenuItem(
                           value: ActiveRolePerspective.leader,
-                          child: Text('Group Leader Perspective (Team Hub)'),
+                          child: Text('Group Leader'),
                         ),
                         PopupMenuItem(
-                          value: ActiveRolePerspective.participant,
-                          child: Text('Participant Perspective (Rider Cockpit)'),
+                          value: ActiveRolePerspective.superAdmin,
+                          child: Text('SuperAdmin (Organizer)'),
+                        ),
+                        PopupMenuItem(
+                          value: ActiveRolePerspective.developer,
+                          child: Text('Developer (Debug)'),
                         ),
                       ],
                       child: Container(
@@ -202,7 +201,7 @@ class AppDrawer extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Text(
-                                    'ROLE PERSPECTIVE',
+                                    'ACTIVE ROLE',
                                     style: TextStyle(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w700,
@@ -231,6 +230,7 @@ class AppDrawer extends StatelessWidget {
                       ),
                     ),
                   ),
+
 
                   // Fixed Bottom Action: Distinct "Switch Event Domain" Button
                   FluidTapScale(

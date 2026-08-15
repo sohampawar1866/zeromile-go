@@ -73,7 +73,7 @@ class _LeaderHubScreenState extends State<LeaderHubScreen> with SingleTickerProv
                   children: [
                     Icon(Icons.shield_outlined, size: 16),
                     SizedBox(width: 6),
-                    Text('Triage & Telemetry'),
+                    Text('Safety & Live GPS'),
                   ],
                 ),
               ),
@@ -83,7 +83,7 @@ class _LeaderHubScreenState extends State<LeaderHubScreen> with SingleTickerProv
                   children: [
                     Icon(Icons.how_to_reg_outlined, size: 16),
                     SizedBox(width: 6),
-                    Text('Muster Roster'),
+                    Text('Team Members'),
                   ],
                 ),
               ),
@@ -93,11 +93,12 @@ class _LeaderHubScreenState extends State<LeaderHubScreen> with SingleTickerProv
                   children: [
                     Icon(Icons.bar_chart_outlined, size: 16),
                     SizedBox(width: 6),
-                    Text('Comms & Stats'),
+                    Text('Notices & Stats'),
                   ],
                 ),
               ),
             ],
+
           ),
         ),
       ),

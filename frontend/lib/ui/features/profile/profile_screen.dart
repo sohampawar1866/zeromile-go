@@ -21,7 +21,7 @@ class ProfileScreen extends StatefulWidget {
   final GroupMembership? activeMembership;
   final AuthViewModel authVm;
   final GroupsViewModel groupsVm;
-  final VoidCallback? onManageContingents;
+  final VoidCallback? onManageGroups;
 
   const ProfileScreen({
     super.key,
@@ -30,8 +30,9 @@ class ProfileScreen extends StatefulWidget {
     required this.activeMembership,
     required this.authVm,
     required this.groupsVm,
-    this.onManageContingents,
+    this.onManageGroups,
   });
+
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -238,15 +239,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // Active Event & Contingent Affiliation
+        // Active Event & Group Affiliation
         ShadCard(
-          title: 'Active Event & Contingent',
+          title: 'Active Event & Group',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildInfoRow('Active Domain', domain?.name ?? 'Nagpur Cycling Rally 2026'),
               _buildInfoRow('Domain Slug', domain?.slug ?? 'cycling-2026'),
-              _buildInfoRow('Enrolled Contingent', groupName),
+              _buildInfoRow('Enrolled Group', groupName),
               _buildInfoRow(
                 'Participation Status',
                 isEnrolled ? membership.participationStatus.name.toUpperCase() : 'GENERAL ROSTER',
@@ -256,13 +257,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
                   icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.ink),
-                  label: const Text('Manage Contingents', style: AppTypography.buttonSmSecondary),
-                  onPressed: widget.onManageContingents,
+                  label: const Text('Manage Groups', style: AppTypography.buttonSmSecondary),
+                  onPressed: widget.onManageGroups,
                 ),
               ),
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
         // Emergency SOS & Next-of-Kin Contact
