@@ -10,9 +10,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
-    hide Size;
 import 'package:provider/provider.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
@@ -22,10 +21,7 @@ import '../../../models/sos_event.dart';
 import '../../../logic/view_models/map_test_mode_notifier.dart';
 import '../../core/dialogs/emergency_sos_modal.dart';
 import '../../core/widgets/route_tracking_bottom_sheet.dart';
-
-// ─── Mapbox Public Token ─────────────────────────────────────────────────────
-const _kMapboxToken =
-    'pk.eyJ1IjoicmFrc2hpdGxhZGRhIiwiYSI6ImNtc3RrN2cweTBsbDEyeHIwZnA5aXY5dHkifQ.0J-JnWi4wBW3T-8Nbtmgjg';
+import '../widgets/map_view_platform/map_view_platform.dart';
 
 // ─── Nagpur Centre ───────────────────────────────────────────────────────────
 const _kNagpurLng = 79.0882;
@@ -104,14 +100,19 @@ class LiveMapFullscreenScreen extends StatefulWidget {
       _LiveMapFullscreenScreenState();
 }
 
+class _GeoCoord {
+  final double lat;
+  final double lng;
+  const _GeoCoord(this.lat, this.lng);
+}
+
 class _LiveMapFullscreenScreenState extends State<LiveMapFullscreenScreen>
     with TickerProviderStateMixin {
-  MapboxMap? _mapboxMap;
-  bool _mapReady = false;
+  dynamic _mapInstance;
 
   // Simulated rider state
   List<UserLiveLocation> _simRiders = [];
-  List<Position> _routePositions = [];
+  List<_GeoCoord> _routePositions = [];
   int _simIndex = 0;
   Timer? _simTimer;
 
@@ -126,7 +127,9 @@ class _LiveMapFullscreenScreenState extends State<LiveMapFullscreenScreen>
   @override
   void initState() {
     super.initState();
-    MapboxOptions.setAccessToken(_kMapboxToken);
+    if (!kIsWeb) {
+      initPlatformMapbox();
+    }
 
     _statsAnim = AnimationController(
       vsync: this,
@@ -149,88 +152,37 @@ class _LiveMapFullscreenScreenState extends State<LiveMapFullscreenScreen>
   }
 
   // ── Map init ──────────────────────────────────────────────────────────────
-  void _onMapCreated(MapboxMap map) {
-    _mapboxMap = map;
-    _mapboxMap!.setCamera(
-      CameraOptions(
-        center: Point(coordinates: Position(_kNagpurLng, _kNagpurLat)),
-        zoom: 14.8,
-        pitch: 55,
-        bearing: 15,
-      ),
-    );
-    _mapboxMap!.style.setStyleURI(MapboxStyles.STANDARD);
+  void _onMapCreated(dynamic map) {
+    if (kIsWeb) return;
+    _mapInstance = map;
   }
 
-  void _onStyleLoaded(StyleLoadedEventData _) async {
-    setState(() => _mapReady = true);
+  void _onStyleLoaded(dynamic _) async {
+    if (kIsWeb) return;
     await _addRouteLayer();
-    await _updateRiderAnnotations();
-  }
-
-  // ── Route layer (3-layer glowing line from map-ui-idea) ───────────────────
-  Future<void> _addRouteLayer() async {
-    if (_mapboxMap == null || widget.checkpoints.length < 2) return;
-
-    final coords = widget.checkpoints
-        .map((cp) => Position(cp.longitude, cp.latitude))
-        .toList();
-    setState(() => _routePositions = coords);
-
-    final geojson = '''{
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "LineString",
-        "coordinates": ${coords.map((p) => '[${p.lng},${p.lat}]').toList()}
-      }
-    }''';
-
-    try {
-      await _mapboxMap!.style.addSource(
-        GeoJsonSource(id: 'route-source', data: geojson),
-      );
-
-      // Layer 1 — outer radium green glow
-      await _mapboxMap!.style.addLayer(LineLayer(
-        id: 'route-glow',
-        sourceId: 'route-source',
-        lineColor: 0xE600FF66,
-        lineWidth: 22.0,
-        lineBlur: 7.0,
-        lineCap: LineCap.ROUND,
-        lineJoin: LineJoin.ROUND,
-      ));
-
-      // Layer 2 — cyan mid glow
-      await _mapboxMap!.style.addLayer(LineLayer(
-        id: 'route-mid',
-        sourceId: 'route-source',
-        lineColor: 0xFF00F2FE,
-        lineWidth: 10.0,
-        lineBlur: 2.0,
-        lineCap: LineCap.ROUND,
-        lineJoin: LineJoin.ROUND,
-      ));
-
-      // Layer 3 — solid white core
-      await _mapboxMap!.style.addLayer(LineLayer(
-        id: 'route-core',
-        sourceId: 'route-source',
-        lineColor: 0xFFFFFFFF,
-        lineWidth: 3.5,
-        lineCap: LineCap.ROUND,
-        lineJoin: LineJoin.ROUND,
-      ));
-    } catch (_) {}
-  }
-
-  // ── Rider annotations ─────────────────────────────────────────────────────
-  Future<void> _updateRiderAnnotations() async {
-    if (_mapboxMap == null || !_mapReady) return;
-    // Annotations are drawn via CustomPaint overlay for maximum control
-    // (avoids Mapbox annotation manager complexity for hackathon speed)
     setState(() {});
+  }
+
+  // ── Route layer ───────────────────────────────────────────────────────────
+  Future<void> _addRouteLayer() async {
+    if (widget.checkpoints.length >= 2) {
+      _routePositions = widget.checkpoints
+          .map((cp) => _GeoCoord(cp.latitude, cp.longitude))
+          .toList();
+    } else {
+      // Default sample Nagpur route coordinates for simulation
+      _routePositions = const [
+        _GeoCoord(21.1458, 79.0882),
+        _GeoCoord(21.1410, 79.0750),
+        _GeoCoord(21.1310, 79.0600),
+        _GeoCoord(21.1290, 79.0670),
+        _GeoCoord(21.1280, 79.0520),
+      ];
+    }
+
+    if (!kIsWeb && _mapInstance != null) {
+      await updatePlatformRouteLayer(_mapInstance, widget.checkpoints);
+    }
   }
 
   // ── Simulation engine ─────────────────────────────────────────────────────
@@ -369,10 +321,9 @@ class _LiveMapFullscreenScreenState extends State<LiveMapFullscreenScreen>
         children: [
           // ── 1. Full-bleed Mapbox 3D map ────────────────────────────────
           Positioned.fill(
-            child: MapWidget(
-              key: const ValueKey('live-map'),
+            child: buildMapboxView(
               onMapCreated: _onMapCreated,
-              onStyleLoadedListener: _onStyleLoaded,
+              onStyleLoaded: _onStyleLoaded,
             ),
           ),
 
