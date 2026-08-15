@@ -101,9 +101,10 @@ void main() {
       );
 
       expect(find.byType(DensityClusterMapView), findsOneWidget);
-      expect(find.text('TOTAL OFFICIAL MAPBOX 3D CYCLING DISTANCE'), findsOneWidget);
+      expect(find.text('TOTAL OFFICIAL ROUTE DISTANCE'), findsOneWidget);
       expect(find.text('🚴 Multi-Rider 3D Live GPS Tracking'), findsOneWidget);
       expect(find.text('👑 Rajesh Sharma (Leader)'), findsOneWidget);
+
 
       // Verify Time-of-day lighting buttons
       expect(find.text('🌅'), findsOneWidget);

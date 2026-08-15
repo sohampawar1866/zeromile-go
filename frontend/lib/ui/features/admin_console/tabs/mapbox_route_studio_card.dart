@@ -8,13 +8,14 @@ import '../../../../models/event_domain.dart';
 import '../../../../models/route_checkpoint.dart';
 import '../../../../services/mapbox_service.dart';
 import '../../../core/widgets/density_cluster_map_view.dart';
+
 import '../../../core/components/shad_button.dart';
 import '../../../core/components/shad_card.dart';
 
 class MapboxRouteStudioCard extends StatefulWidget {
   final EventDomain? activeDomain;
   final List<RouteCheckpoint> existingCheckpoints;
-  final Function(List<MapPoint> waypoints, double distanceKm)? onRouteSaved;
+  final void Function(List<MapPoint> waypoints, double distanceKm)? onRouteSaved;
 
   const MapboxRouteStudioCard({
     super.key,
@@ -49,25 +50,20 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
       setState(() {
         _currentWaypoints.removeAt(index);
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Waypoint removed from route draft.'),
+          backgroundColor: AppColors.mute,
+        ),
+      );
     }
   }
 
   void _saveDraft() {
-    if (_currentWaypoints.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please configure at least Start and End points before saving.'),
-          backgroundColor: AppColors.warning,
-        ),
-      );
-      return;
-    }
-
-    widget.onRouteSaved?.call(_currentWaypoints, _calculatedDistanceKm);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '💾 Route Draft Saved: ${_calculatedDistanceKm.toStringAsFixed(1)} km with ${_currentWaypoints.length} checkpoints.',
+          '💾 Draft Route saved with ${_currentWaypoints.length} waypoints (${_calculatedDistanceKm.toStringAsFixed(1)} km).',
         ),
         backgroundColor: AppColors.ink,
       ),
@@ -92,7 +88,6 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
           '🔒 Official Mapbox 3D Route Published (${_calculatedDistanceKm.toStringAsFixed(1)} km)! Broadcasted to all group leaders.',
         ),
         backgroundColor: AppColors.success,
-
       ),
     );
   }
@@ -112,40 +107,33 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // Glowing Radium Route Distance Telemetry Tile (JetBrains Mono style)
+        // Route Distance Metric Card (Theme Clean Light Style)
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           decoration: BoxDecoration(
-            color: const Color(0xFF131B2E),
+            color: AppColors.softCloud,
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: const Color(0x6600FF66)),
-            boxShadow: const [
-              BoxShadow(color: Color(0x2200FF66), blurRadius: 16, spreadRadius: 1),
-            ],
+            border: Border.all(color: AppColors.hairline),
           ),
           child: Column(
             children: [
               Text(
                 '${_calculatedDistanceKm.toStringAsFixed(1)} km',
                 style: const TextStyle(
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.w900,
-                  fontFamily: 'Courier',
-                  color: Color(0xFF00FF66),
+                  color: AppColors.ink,
                   letterSpacing: -0.5,
-                  shadows: [
-                    Shadow(color: Color(0xAA00FF66), blurRadius: 12),
-                  ],
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               const Text(
-                'TOTAL OFFICIAL MAPBOX 3D CYCLING DISTANCE',
+                'TOTAL OFFICIAL ROUTE DISTANCE',
                 style: TextStyle(
                   fontSize: 10,
-                  color: Color(0xFF94A3B8),
-                  fontWeight: FontWeight.bold,
+                  color: AppColors.mute,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                 ),
               ),
@@ -160,10 +148,10 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
           description: 'Simulates 4 team riders moving live through Mapbox 3D Nagpur buildings.',
           child: Column(
             children: [
-              _buildRiderTelemetryRow('👑 Rajesh Sharma (Leader)', '${(_calculatedDistanceKm * 0.85).toStringAsFixed(1)} km', const Color(0xFFFF9100)),
-              _buildRiderTelemetryRow('🚴 Aniket Deshmukh', '${(_calculatedDistanceKm * 0.72).toStringAsFixed(1)} km', const Color(0xFF00F2FE)),
-              _buildRiderTelemetryRow('🚴 Priya Verma', '${(_calculatedDistanceKm * 0.60).toStringAsFixed(1)} km', const Color(0xFF00FF66)),
-              _buildRiderTelemetryRow('🚴 Saurabh Joshi', '${(_calculatedDistanceKm * 0.45).toStringAsFixed(1)} km', const Color(0xFF2979FF)),
+              _buildRiderTelemetryRow('👑 Rajesh Sharma (Leader)', '${(_calculatedDistanceKm * 0.85).toStringAsFixed(1)} km', AppColors.ink),
+              _buildRiderTelemetryRow('🚴 Aniket Deshmukh', '${(_calculatedDistanceKm * 0.72).toStringAsFixed(1)} km', AppColors.accentTeal),
+              _buildRiderTelemetryRow('🚴 Priya Verma', '${(_calculatedDistanceKm * 0.60).toStringAsFixed(1)} km', AppColors.success),
+              _buildRiderTelemetryRow('🚴 Saurabh Joshi', '${(_calculatedDistanceKm * 0.45).toStringAsFixed(1)} km', AppColors.info),
             ],
           ),
         ),
@@ -208,11 +196,11 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0B0F19),
+                      color: AppColors.canvas,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(color: const Color(0xFF27272A)),
+                      border: Border.all(color: AppColors.hairlineSoft),
                     ),
                     child: Row(
                       children: [
@@ -220,10 +208,10 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: isStart
-                                ? const Color(0x2200FF66)
+                                ? AppColors.successBorder
                                 : isEnd
-                                    ? const Color(0x22FF1744)
-                                    : const Color(0x2200F2FE),
+                                    ? const Color(0xFFFFE4E6)
+                                    : AppColors.softCloud,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -235,7 +223,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                                   ? AppColors.success
                                   : isEnd
                                       ? AppColors.sale
-                                      : AppColors.info,
+                                      : AppColors.ink,
                             ),
                           ),
                         ),
@@ -243,7 +231,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
                         Expanded(
                           child: Text(
                             wp.name,
-                            style: AppTypography.bodySm.copyWith(color: Colors.white),
+                            style: AppTypography.bodySm,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -266,24 +254,40 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
 
   Widget _buildRiderTelemetryRow(String name, String distance, Color color) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B0F19),
+        color: AppColors.canvas,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: const Color(0xFF27272A)),
+        border: Border.all(color: AppColors.hairlineSoft),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle, boxShadow: [BoxShadow(color: color, blurRadius: 4)])),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
               const SizedBox(width: 8),
-              Text(name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+              Text(
+                name,
+                style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
+              ),
             ],
           ),
-          Text(distance, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Courier', color: Color(0xFF00FF66))),
+          Text(
+            distance,
+            style: AppTypography.bodySm.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.ink,
+            ),
+          ),
         ],
       ),
     );
