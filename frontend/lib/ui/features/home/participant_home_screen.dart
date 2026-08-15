@@ -169,7 +169,7 @@ class _ParticipantHomeScreenState extends State<ParticipantHomeScreen> {
                           final ok = await widget.viewModel.triggerEmergencySos(
                             domainId: domain.id,
                             userId: widget.currentUserId,
-                            emergencyType: type,
+                            type: type.name,
                           );
                           if (context.mounted && ok) {
                             ScaffoldMessenger.of(context).showSnackBar(

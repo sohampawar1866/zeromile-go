@@ -3,22 +3,26 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../models/group_membership.dart';
+import '../../models/route_checkpoint.dart';
 import '../../models/sos_event.dart';
 import '../../models/user_live_location.dart';
 import '../../services/group_service.dart';
 import '../../services/sos_service.dart';
 import '../../services/location_telemetry_service.dart';
 import '../../services/broadcast_service.dart';
+import '../../services/domain_service.dart';
 
 class LeaderHubViewModel extends ChangeNotifier {
   final GroupService _groupService;
   final SosService _sosService;
   final LocationTelemetryService _telemetryService;
   final BroadcastService _broadcastService;
+  final DomainService _domainService;
 
   List<GroupMembership> _roster = [];
   List<SosEvent> _teamSosAlerts = [];
   List<UserLiveLocation> _teamLocations = [];
+  List<RouteCheckpoint> _routeCheckpoints = [];
   Map<String, dynamic> _squadSummary = {};
   bool _isLoading = false;
   String? _errorMessage;
@@ -30,14 +34,17 @@ class LeaderHubViewModel extends ChangeNotifier {
     SosService? sosService,
     LocationTelemetryService? telemetryService,
     BroadcastService? broadcastService,
+    DomainService? domainService,
   })  : _groupService = groupService ?? GroupService(),
         _sosService = sosService ?? SosService(),
         _telemetryService = telemetryService ?? LocationTelemetryService(),
-        _broadcastService = broadcastService ?? BroadcastService();
+        _broadcastService = broadcastService ?? BroadcastService(),
+        _domainService = domainService ?? DomainService();
 
   List<GroupMembership> get roster => _roster;
   List<SosEvent> get teamSosAlerts => _teamSosAlerts;
   List<UserLiveLocation> get teamLocations => _teamLocations;
+  List<RouteCheckpoint> get routeCheckpoints => _routeCheckpoints;
   Map<String, dynamic> get squadSummary => _squadSummary;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -69,6 +76,7 @@ class LeaderHubViewModel extends ChangeNotifier {
       _squadSummary = await _groupService.getLeaderSquadSummary(domainId: domainId, groupId: groupId);
       _roster = await _groupService.getGroupRoster(domainId: domainId, groupId: groupId);
       _teamSosAlerts = await _sosService.getGroupLeaderSosAlerts(domainId: domainId, groupId: groupId);
+      _routeCheckpoints = await _domainService.getRouteCheckpoints(domainId);
 
       _telemetrySub?.cancel();
       _telemetrySub = _telemetryService.streamGroupTelemetry(domainId, groupId).listen(

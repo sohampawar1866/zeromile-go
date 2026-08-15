@@ -6,6 +6,7 @@ import '../../models/broadcast_message.dart';
 import '../../models/group_membership.dart';
 import '../../models/route_checkpoint.dart';
 import '../../models/sos_event.dart';
+import '../../models/user_live_location.dart';
 import '../../services/broadcast_service.dart';
 import '../../services/domain_service.dart';
 import '../../services/group_service.dart';
@@ -22,12 +23,14 @@ class ParticipantHomeViewModel extends ChangeNotifier {
   List<BroadcastMessage> _broadcasts = [];
   List<GroupMembership> _userMemberships = [];
   List<RouteCheckpoint> _checkpoints = [];
+  List<UserLiveLocation> _groupMemberLocations = [];
   GroupMembership? _activeMembership;
   bool _isLoading = false;
   bool _isGpsSimulating = false;
   String? _errorMessage;
 
   StreamSubscription<BroadcastMessage>? _broadcastSubscription;
+  StreamSubscription<List<UserLiveLocation>>? _groupTelemetrySub;
 
   ParticipantHomeViewModel({
     BroadcastService? broadcastService,
@@ -44,6 +47,8 @@ class ParticipantHomeViewModel extends ChangeNotifier {
   List<BroadcastMessage> get broadcasts => _broadcasts;
   List<GroupMembership> get userMemberships => _userMemberships;
   List<RouteCheckpoint> get checkpoints => _checkpoints;
+  /// Live locations of this participant's group members (empty if solo).
+  List<UserLiveLocation> get groupMemberLocations => _groupMemberLocations;
   GroupMembership? get activeMembership => _activeMembership;
   bool get isLoading => _isLoading;
   bool get isGpsSimulating => _isGpsSimulating;
@@ -79,6 +84,23 @@ class ParticipantHomeViewModel extends ChangeNotifier {
       );
 
       _checkpoints = await _domainService.getRouteCheckpoints(domainId);
+
+      // Subscribe to group member live locations (if in a group)
+      if (_activeMembership != null) {
+        _groupTelemetrySub?.cancel();
+        _groupTelemetrySub = _telemetryService
+            .streamGroupTelemetry(domainId, _activeMembership!.groupId)
+            .listen(
+          (locations) {
+            // Exclude own location (userId matches userId arg)
+            _groupMemberLocations = locations
+                .where((l) => l.userId != userId)
+                .toList();
+            notifyListeners();
+          },
+          onError: (_) {},
+        );
+      }
 
       _setupRealtimeBroadcasts(domainId);
     } catch (e) {
@@ -145,10 +167,11 @@ class ParticipantHomeViewModel extends ChangeNotifier {
     required String userId,
   }) => completeRally(domainId: domainId, userId: userId);
 
+  /// Trigger emergency SOS. [type] is a string label like 'medical', 'crash', etc.
   Future<bool> triggerEmergencySos({
     required String domainId,
     required String userId,
-    EmergencyType emergencyType = EmergencyType.medical,
+    String type = 'medical',
     double latitude = 21.1466,
     double longitude = 79.0888,
   }) async {
@@ -160,13 +183,25 @@ class ParticipantHomeViewModel extends ChangeNotifier {
           _activeMembership!.groupName != null &&
           !_activeMembership!.groupName!.toLowerCase().contains('general');
 
-      final activeSubGroupId = isSubGroupActive ? _activeMembership!.groupId : null;
+      final activeSubGroupId =
+          isSubGroupActive ? _activeMembership!.groupId : null;
+
+      // Map string type to enum
+      final eType = type == 'crash'
+          ? EmergencyType.breakdown
+          : type == 'mechanical'
+              ? EmergencyType.breakdown
+              : type == 'threat'
+                  ? EmergencyType.threat
+                  : type == 'lost'
+                      ? EmergencyType.lost
+                      : EmergencyType.medical;
 
       await _sosService.triggerSos(
         domainId: domainId,
         senderUserId: userId,
         activeSubGroupId: activeSubGroupId,
-        emergencyType: emergencyType,
+        emergencyType: eType,
         latitude: latitude,
         longitude: longitude,
       );
@@ -210,6 +245,7 @@ class ParticipantHomeViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _broadcastSubscription?.cancel();
+    _groupTelemetrySub?.cancel();
     _telemetryService.stopHardwareTelemetryDaemon();
     super.dispose();
   }

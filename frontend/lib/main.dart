@@ -1,6 +1,8 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'flutter_core.dart';
+import 'logic/view_models/map_test_mode_notifier.dart';
 import 'ui/features/navigation/main_navigation_shell.dart';
 import 'ui/features/onboarding/phone_auth_screen.dart';
 import 'ui/features/onboarding/otp_verification_screen.dart';
@@ -21,7 +23,12 @@ void main() async {
     await PushNotificationService.initialize();
   } catch (_) {}
 
-  runApp(const ZeroMileGoApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => MapTestModeNotifier(),
+      child: const ZeroMileGoApp(),
+    ),
+  );
 }
 
 class ZeroMileGoApp extends StatelessWidget {

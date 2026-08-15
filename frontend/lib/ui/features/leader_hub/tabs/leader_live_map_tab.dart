@@ -1,12 +1,10 @@
 // lib/ui/features/leader_hub/tabs/leader_live_map_tab.dart
 
 import 'package:flutter/material.dart';
-import '../../../../config/app_colors.dart';
-import '../../../../config/app_spacing.dart';
-import '../../../../config/app_typography.dart';
 import '../../../../logic/view_models/leader_hub_view_model.dart';
-import '../../../core/widgets/density_cluster_map_view.dart';
-import '../../../core/components/shad_card.dart';
+import '../../../../config/app_typography.dart';
+import '../../../../config/app_spacing.dart';
+import '../../../core/screens/live_map_fullscreen_screen.dart';
 
 class LeaderLiveMapTab extends StatefulWidget {
   final LeaderHubViewModel viewModel;
@@ -17,64 +15,61 @@ class LeaderLiveMapTab extends StatefulWidget {
   State<LeaderLiveMapTab> createState() => _LeaderLiveMapTabState();
 }
 
-class _LeaderLiveMapTabState extends State<LeaderLiveMapTab> with AutomaticKeepAliveClientMixin {
+class _LeaderLiveMapTabState extends State<LeaderLiveMapTab>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final viewModel = widget.viewModel;
-    return ListView(
-      padding: AppSpacing.edgeInsetsScreen,
+    final vm = widget.viewModel;
+
+    return LiveMapFullscreenScreen(
+      role: LiveMapRole.leader,
+      liveLocations: vm.teamLocations,
+      checkpoints: vm.routeCheckpoints,
+      statsSheetContent: _buildStatsContent(vm),
+    );
+  }
+
+  Widget _buildStatsContent(LeaderHubViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ShadCard(
-          title: 'Live Team GPS Tracking',
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.sensors, size: 14, color: AppColors.success),
-              const SizedBox(width: 4),
-              Text(
-                'Team Live',
-                style: AppTypography.captionXs.copyWith(color: AppColors.success, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          child: DensityClusterMapView(
-            title: viewModel.groupName.isNotEmpty
-                ? '${viewModel.groupName} Live Map'
-                : 'Team Live Map',
-          ),
+        Text(
+          vm.groupName.isNotEmpty ? vm.groupName : 'Team',
+          style: AppTypography.headingMd.copyWith(color: Colors.white),
         ),
         const SizedBox(height: AppSpacing.md),
-        ShadCard(
-          title: 'Live GPS & Attendance Stats',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStatRow('Team Size', '${viewModel.totalEnrolled} Members'),
-              _buildStatRow('Check-in Attendance Rate', '${viewModel.checkinPercent.toStringAsFixed(1)}% Checked-in'),
-              _buildStatRow('Route Completion Rate', '${viewModel.completionPercent.toStringAsFixed(1)}% Finished'),
-              _buildStatRow('Active Location Streams', viewModel.teamLocations.isNotEmpty ? '${viewModel.teamLocations.length} Online' : 'Standby / Idle'),
-            ],
-          ),
+        _statRow('Team Size', '${vm.totalEnrolled} Members'),
+        _statRow('Check-in Rate',
+            '${vm.checkinPercent.toStringAsFixed(1)}% Checked-in'),
+        _statRow('Route Completion',
+            '${vm.completionPercent.toStringAsFixed(1)}% Finished'),
+        _statRow(
+          'Live Location Streams',
+          vm.teamLocations.isNotEmpty
+              ? '${vm.teamLocations.length} Online'
+              : 'Standby / Idle',
         ),
-
-        const SizedBox(height: AppSpacing.xxl),
+        const SizedBox(height: AppSpacing.md),
       ],
     );
   }
 
-  Widget _buildStatRow(String label, String val) {
+  Widget _statRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.bodySm),
-          const SizedBox(height: 3),
-          Text(val, style: AppTypography.bodyStrong),
+          Text(label,
+              style: AppTypography.bodySm
+                  .copyWith(color: Colors.white60)),
+          Text(value,
+              style: AppTypography.bodyStrong
+                  .copyWith(color: Colors.white)),
         ],
       ),
     );

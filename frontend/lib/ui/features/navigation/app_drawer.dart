@@ -1,12 +1,14 @@
 // lib/ui/features/navigation/app_drawer.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
 import '../../../models/event_domain.dart';
 import '../../../models/user_profile.dart';
 import '../../../logic/view_models/domain_context_view_model.dart';
+import '../../../logic/view_models/map_test_mode_notifier.dart';
 import '../../core/dialogs/switch_domain_modal.dart';
 import '../../core/widgets/fluid_tap_scale.dart';
 import '../../../utils/phone_utils.dart';
@@ -137,6 +139,108 @@ class AppDrawer extends StatelessWidget {
                       Navigator.pop(context);
                     },
                   ),
+
+                  // ── Test Mode Toggle ──────────────────────────────────
+                  const SizedBox(height: AppSpacing.sm),
+                  const Divider(color: AppColors.hairlineSoft, height: 1),
+                  const SizedBox(height: AppSpacing.sm),
+                  Consumer<MapTestModeNotifier?>(
+                    builder: (ctx, notifier, _) {
+                      final isActive = notifier?.isTestMode ?? false;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? AppColors.warningBg
+                              : AppColors.softCloud,
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: isActive
+                                ? AppColors.warning
+                                : AppColors.hairline,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.science_outlined,
+                              size: 18,
+                              color: isActive
+                                  ? AppColors.warningAccent
+                                  : AppColors.mute,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Test Mode',
+                                        style: AppTypography.bodyStrong
+                                            .copyWith(
+                                          color: isActive
+                                              ? AppColors.warningAccent
+                                              : AppColors.charcoal,
+                                        ),
+                                      ),
+                                      if (isActive) ...
+                                      [
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.warning,
+                                            borderRadius: BorderRadius.circular(
+                                                AppRadius.pill),
+                                          ),
+                                          child: const Text(
+                                            'ACTIVE',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 8,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  Text(
+                                    isActive
+                                        ? 'Simulated riders visible on map'
+                                        : 'Simulated riders inactive',
+                                    style: AppTypography.captionXs
+                                        .copyWith(color: AppColors.mute),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: isActive,
+                              activeColor: AppColors.warningAccent,
+                              onChanged: (val) {
+                                ctx
+                                    .read<MapTestModeNotifier?>()
+                                    ?.setValue(val);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                 ],
               ),
             ),
