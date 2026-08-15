@@ -29,6 +29,7 @@ export 'services/sos_service.dart';
 export 'services/location_telemetry_service.dart';
 export 'services/broadcast_service.dart';
 export 'services/push_notification_service.dart';
+export 'services/mapbox_service.dart';
 
 // ViewModels
 export 'logic/view_models/auth_view_model.dart';
@@ -39,6 +40,15 @@ export 'logic/view_models/leader_hub_view_model.dart';
 export 'logic/view_models/superadmin_view_model.dart';
 export 'logic/view_models/dev_panel_view_model.dart';
 
+// Logic & Scope
+export 'logic/app_state_scope.dart';
+
+// UI Components
+export 'ui/core/components/shad_button.dart';
+export 'ui/core/components/shad_card.dart';
+
 // Utils
 export 'utils/density_cluster_evaluator.dart';
 export 'utils/temporal_window_evaluator.dart';
+export 'utils/nagpur_poi_registry.dart';
+export 'utils/phone_utils.dart';

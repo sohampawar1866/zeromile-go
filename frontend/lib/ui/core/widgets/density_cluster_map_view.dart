@@ -1,19 +1,40 @@
 // lib/ui/core/widgets/density_cluster_map_view.dart
 
+import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
-import '../../../utils/density_cluster_evaluator.dart';
+import '../../../models/route_checkpoint.dart';
+import '../../../models/user_live_location.dart';
+import '../../../services/mapbox_service.dart';
+
+enum MapLightingMode { dawn, day, dusk, night }
+enum RoutePointMode { start, end, waypoint }
 
 class DensityClusterMapView extends StatefulWidget {
   final String title;
   final bool showHeader;
+  final bool showControls;
+  final bool isInteractiveRouteBuilder;
+  final List<RouteCheckpoint>? checkpoints;
+  final List<UserLiveLocation>? liveLocations;
+  final Map<String, dynamic>? routeGeojson;
+  final ValueChanged<List<MapPoint>>? onWaypointsChanged;
+  final ValueChanged<double>? onDistanceCalculated;
 
   const DensityClusterMapView({
     super.key,
     required this.title,
     this.showHeader = true,
+    this.showControls = true,
+    this.isInteractiveRouteBuilder = false,
+    this.checkpoints,
+    this.liveLocations,
+    this.routeGeojson,
+    this.onWaypointsChanged,
+    this.onDistanceCalculated,
   });
 
   @override
@@ -22,35 +43,324 @@ class DensityClusterMapView extends StatefulWidget {
 
 class _DensityClusterMapViewState extends State<DensityClusterMapView>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animCtrl;
+  late final MapboxService _mapboxService;
+  late final AnimationController _pulseCtrl;
+
+  // Map Navigation & Transformation State
   double _zoomScale = 1.0;
   Offset _panOffset = Offset.zero;
-  String _selectedSector = 'ALL';
+  double _pitchAngle = 0.0; // 0.0 for 2D, 0.45 for 3D tilt
+  double _bearingRadians = 0.0; // Camera rotation in radians
+  MapLightingMode _lightingMode = MapLightingMode.day;
+  RoutePointMode _selectionMode = RoutePointMode.start;
+
+  // Real Dynamic Route Geometry & Waypoints
+  List<MapPoint> _waypoints = [];
+  final List<MapPoint> _customViaPoints = [];
+  List<MapPoint> _routeCoordinates = [];
+  double _totalDistanceKm = 0.0;
+
+  // Undo / Redo History Stacks
+  final List<String> _historyStack = [];
+  final List<String> _redoStack = [];
+
+  // Search Engine State
+  final TextEditingController _searchCtrl = TextEditingController();
+  List<MapboxSearchResult> _searchResults = [];
+  bool _isSearching = false;
+  Timer? _searchDebounce;
+
+  // Multi-Rider Simulation State
+  bool _isSimulating = false;
+  Timer? _simTimer;
+  int _simIndex = 0;
+  final List<UserLiveLocation> _simulatedRiders = [];
 
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(
+    _mapboxService = MapboxService();
+    _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
+
+    _initInitialRoute();
+  }
+
+  void _initInitialRoute() {
+    if (widget.checkpoints != null && widget.checkpoints!.isNotEmpty) {
+      _waypoints = widget.checkpoints!
+          .map((cp) => MapPoint(
+                latitude: cp.latitude,
+                longitude: cp.longitude,
+                name: cp.name,
+                tag: cp.checkpointType.name.toUpperCase(),
+              ))
+          .toList();
+    } else {
+      _waypoints = const [
+        MapPoint(
+          latitude: 21.1458,
+          longitude: 79.0882,
+          name: 'Zero Mile Freedom Park (Start)',
+          tag: 'START',
+        ),
+        MapPoint(
+          latitude: 21.1465,
+          longitude: 79.0800,
+          name: 'Samvidhan Square (Water Point)',
+          tag: 'CHECKPOINT',
+        ),
+        MapPoint(
+          latitude: 21.1378,
+          longitude: 79.0682,
+          name: 'Shankar Nagar Sq (Hydration)',
+          tag: 'CHECKPOINT',
+        ),
+        MapPoint(
+          latitude: 21.1290,
+          longitude: 79.0670,
+          name: 'Deekshabhoomi Stupa (Finish Line)',
+          tag: 'FINISH',
+        ),
+      ];
+    }
+
+    _fetchRouteGeometry();
+  }
+
+  @override
+  void didUpdateWidget(covariant DensityClusterMapView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.checkpoints != oldWidget.checkpoints &&
+        widget.checkpoints != null &&
+        widget.checkpoints!.isNotEmpty) {
+      _waypoints = widget.checkpoints!
+          .map((cp) => MapPoint(
+                latitude: cp.latitude,
+                longitude: cp.longitude,
+                name: cp.name,
+                tag: cp.checkpointType.name.toUpperCase(),
+              ))
+          .toList();
+      _fetchRouteGeometry();
+    }
+  }
+
+  Future<void> _fetchRouteGeometry() async {
+    if (_waypoints.length < 2) {
+      setState(() {
+        _routeCoordinates = [];
+        _totalDistanceKm = 0.0;
+      });
+      return;
+    }
+
+    final result = await _mapboxService.fetchCyclingRoute(
+      _waypoints,
+      customViaPoints: _customViaPoints,
+    );
+
+    if (mounted) {
+      setState(() {
+        _routeCoordinates = result.coordinates;
+        _totalDistanceKm = result.distanceKm;
+      });
+      widget.onDistanceCalculated?.call(_totalDistanceKm);
+      widget.onWaypointsChanged?.call(_waypoints);
+    }
+  }
+
+  void _pushHistory() {
+    _historyStack.add(
+      '${_waypoints.length}:${_customViaPoints.length}:${DateTime.now().millisecondsSinceEpoch}',
+    );
+    _redoStack.clear();
+  }
+
+  void _undoAction() {
+    if (_historyStack.isEmpty) return;
+    _redoStack.add('${_waypoints.length}:${_customViaPoints.length}');
+    _historyStack.removeLast();
+    if (_waypoints.length > 2) {
+      _waypoints.removeLast();
+      _fetchRouteGeometry();
+    }
+  }
+
+  void _redoAction() {
+    if (_redoStack.isEmpty) return;
+    _redoStack.removeLast();
+    _fetchRouteGeometry();
+  }
+
+  void _handleSearch(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+      });
+      return;
+    }
+
+    setState(() => _isSearching = true);
+    _searchDebounce = Timer(const Duration(milliseconds: 250), () async {
+      final results = await _mapboxService.searchNagpurLocation(query);
+      if (mounted) {
+        setState(() {
+          _searchResults = results;
+          _isSearching = false;
+        });
+      }
+    });
+  }
+
+  void _selectSearchResult(MapboxSearchResult result) {
+    _searchCtrl.clear();
+    setState(() => _searchResults = []);
+
+    _pushHistory();
+    final newPoint = MapPoint(
+      latitude: result.latitude,
+      longitude: result.longitude,
+      name: result.name,
+      tag: _selectionMode == RoutePointMode.start
+          ? 'START'
+          : _selectionMode == RoutePointMode.end
+              ? 'FINISH'
+              : 'CHECKPOINT',
+    );
+
+    setState(() {
+      if (_selectionMode == RoutePointMode.start) {
+        if (_waypoints.isEmpty) {
+          _waypoints.add(newPoint);
+        } else {
+          _waypoints[0] = newPoint;
+        }
+        _selectionMode = RoutePointMode.end;
+      } else if (_selectionMode == RoutePointMode.end) {
+        if (_waypoints.length < 2) {
+          _waypoints.add(newPoint);
+        } else {
+          _waypoints[_waypoints.length - 1] = newPoint;
+        }
+        _selectionMode = RoutePointMode.waypoint;
+      } else {
+        _waypoints.insert(max(1, _waypoints.length - 1), newPoint);
+      }
+    });
+
+    _fetchRouteGeometry();
+  }
+
+  void _toggleSimulation() {
+    if (_isSimulating) {
+      _stopSimulation();
+    } else {
+      _startSimulation();
+    }
+  }
+
+  void _startSimulation() {
+    if (_routeCoordinates.isEmpty) return;
+    setState(() {
+      _isSimulating = true;
+      _simIndex = 0;
+    });
+
+    _simTimer?.cancel();
+    _simTimer = Timer.periodic(const Duration(milliseconds: 350), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_simIndex >= _routeCoordinates.length + 15) {
+        _stopSimulation();
+        return;
+      }
+
+      final riders = <UserLiveLocation>[];
+      final names = [
+        'Rajesh Sharma (Leader)',
+        'Aniket Deshmukh',
+        'Priya Verma',
+        'Saurabh Joshi',
+      ];
+      final offsets = [0, -4, -8, -12];
+
+      for (int i = 0; i < 4; i++) {
+        int curIdx = _simIndex + offsets[i];
+        if (curIdx < 0) curIdx = 0;
+        if (curIdx >= _routeCoordinates.length) curIdx = _routeCoordinates.length - 1;
+
+        final coord = _routeCoordinates[curIdx];
+        riders.add(
+          UserLiveLocation(
+            id: 'sim-rider-$i',
+            domainId: 'cycling-2026',
+            userId: 'sim-user-$i',
+            latitude: coord.latitude,
+            longitude: coord.longitude,
+            speedKmh: 18.5 + (i * 2.0),
+            heading: 215.0,
+            userName: names[i],
+            updatedAt: DateTime.now(),
+          ),
+        );
+      }
+
+      setState(() {
+        _simulatedRiders.clear();
+        _simulatedRiders.addAll(riders);
+        _simIndex += 2;
+      });
+    });
+  }
+
+  void _stopSimulation() {
+    _simTimer?.cancel();
+    _simTimer = null;
+    if (mounted) {
+      setState(() {
+        _isSimulating = false;
+        _simulatedRiders.clear();
+      });
+    }
   }
 
   @override
   void dispose() {
-    _animCtrl.dispose();
+    _pulseCtrl.dispose();
+    _searchCtrl.dispose();
+    _searchDebounce?.cancel();
+    _simTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final activeRiders = _isSimulating
+        ? _simulatedRiders
+        : (widget.liveLocations ?? []);
+
     return Container(
-      height: 250,
+      height: widget.isInteractiveRouteBuilder ? 340 : 260,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.mapBackground,
+        color: _getMapBgColor(),
         borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
         border: Border.all(color: AppColors.hairlineSoft, width: 1.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Stack(
         children: [
@@ -58,27 +368,32 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
           GestureDetector(
             onScaleUpdate: (details) {
               setState(() {
-                _zoomScale = (_zoomScale * details.scale).clamp(0.8, 3.5);
+                _zoomScale = (_zoomScale * details.scale).clamp(0.7, 4.0);
                 _panOffset += details.focalPointDelta;
               });
             },
             child: AnimatedBuilder(
-              animation: _animCtrl,
-              builder: (ctx, child) {
+              animation: _pulseCtrl,
+              builder: (ctx, _) {
                 return CustomPaint(
                   size: Size.infinite,
-                  painter: _NagpurVectorMapPainter(
-                    pulseFraction: _animCtrl.value,
+                  painter: _MapboxVector3DPainter(
+                    pulseFraction: _pulseCtrl.value,
                     zoomScale: _zoomScale,
                     panOffset: _panOffset,
-                    selectedSector: _selectedSector,
+                    pitchAngle: _pitchAngle,
+                    bearingRadians: _bearingRadians,
+                    lightingMode: _lightingMode,
+                    routeCoordinates: _routeCoordinates,
+                    waypoints: _waypoints,
+                    riders: activeRiders,
                   ),
                 );
               },
             ),
           ),
 
-          // Header Overlay
+          // Top Header Overlay
           if (widget.showHeader)
             Positioned(
               top: AppSpacing.sm,
@@ -108,17 +423,23 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
                     Row(
                       children: [
                         Container(
-                          width: 6,
-                          height: 6,
+                          width: 7,
+                          height: 7,
                           decoration: const BoxDecoration(
                             color: AppColors.success,
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Text(
-                          'Nagpur Live Telemetry',
-                          style: TextStyle(fontSize: 9, color: AppColors.success, fontWeight: FontWeight.bold),
+                        Text(
+                          _totalDistanceKm > 0
+                              ? '${_totalDistanceKm.toStringAsFixed(1)} km • Mapbox 3D'
+                              : 'Mapbox Standard 3D',
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            color: AppColors.success,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -127,44 +448,170 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
               ),
             ),
 
-          // Sector Filter Chips
+          // Search Bar (Interactive Route Builder Mode)
+          if (widget.isInteractiveRouteBuilder)
+            Positioned(
+              top: 40,
+              left: AppSpacing.sm,
+              right: AppSpacing.sm,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: AppColors.canvas,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(color: AppColors.hairline),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, size: 15, color: AppColors.mute),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchCtrl,
+                            onChanged: _handleSearch,
+                            style: const TextStyle(fontSize: 11, color: AppColors.ink),
+                            decoration: const InputDecoration(
+                              hintText: 'Search VNIT, YCCE, RCOEM, Sitabuldi...',
+                              hintStyle: TextStyle(fontSize: 10.5, color: AppColors.mute),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                        if (_isSearching)
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.ink),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (_searchResults.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      constraints: const BoxConstraints(maxHeight: 140),
+                      decoration: BoxDecoration(
+                        color: AppColors.canvas,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: AppColors.hairlineSoft),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x33000000), blurRadius: 10),
+                        ],
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.all(4),
+                        itemCount: _searchResults.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.hairlineSoft),
+                        itemBuilder: (ctx, idx) {
+                          final res = _searchResults[idx];
+                          return InkWell(
+                            onTap: () => _selectSearchResult(res),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.location_on, size: 13, color: AppColors.ink),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      res.name,
+                                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+          // Lighting Mode Widget (Top-Left under header)
           Positioned(
-            top: 42,
+            top: widget.isInteractiveRouteBuilder ? 80 : 42,
             left: AppSpacing.sm,
-            right: AppSpacing.sm,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: AppColors.canvas,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: AppColors.hairlineSoft),
+              ),
               child: Row(
                 children: [
-                  _buildSectorChip('ALL', 'All Sectors'),
-                  _buildSectorChip('S1', 'Sector 1 (Samvidhan)'),
-                  _buildSectorChip('S2', 'Sector 2 (Shankar Nagar)'),
-                  _buildSectorChip('S3', 'Sector 3 (Law College)'),
-                  _buildSectorChip('S4', 'Sector 4 (Deekshabhoomi)'),
+                  _buildLightingButton('🌅', MapLightingMode.dawn),
+                  _buildLightingButton('☀️', MapLightingMode.day),
+                  _buildLightingButton('🌇', MapLightingMode.dusk),
+                  _buildLightingButton('🌙', MapLightingMode.night),
                 ],
               ),
             ),
           ),
 
-          // Zoom & Pan Map Controls
-          Positioned(
-            right: AppSpacing.sm,
-            bottom: AppSpacing.sm,
-            child: Column(
-              children: [
-                _buildMapButton(Icons.add, () => setState(() => _zoomScale = (_zoomScale + 0.3).clamp(0.8, 3.5))),
-                const SizedBox(height: AppSpacing.xs),
-                _buildMapButton(Icons.remove, () => setState(() => _zoomScale = (_zoomScale - 0.3).clamp(0.8, 3.5))),
-                const SizedBox(height: AppSpacing.xs),
-                _buildMapButton(Icons.center_focus_strong, () => setState(() {
-                  _zoomScale = 1.0;
-                  _panOffset = Offset.zero;
-                })),
-              ],
+          // 3D Controls (Right Bottom)
+          if (widget.showControls)
+            Positioned(
+              right: AppSpacing.sm,
+              bottom: AppSpacing.sm,
+              child: Column(
+                children: [
+                  _buildMapButton(
+                    Icons.undo,
+                    _undoAction,
+                    tooltip: 'Undo Checkpoint',
+                  ),
+                  const SizedBox(height: 4),
+                  _buildMapButton(
+                    Icons.redo,
+                    _redoAction,
+                    tooltip: 'Redo Checkpoint',
+                  ),
+                  const SizedBox(height: 4),
+                  _buildMapButton(
+                    _pitchAngle > 0 ? Icons.layers_clear : Icons.layers,
+                    () => setState(() => _pitchAngle = _pitchAngle > 0 ? 0.0 : 0.45),
+                    tooltip: 'Toggle 3D Perspective Tilt',
+                  ),
+                  const SizedBox(height: 4),
+                  _buildMapButton(
+                    Icons.rotate_right,
+                    () => setState(() => _bearingRadians += pi / 4),
+                    tooltip: 'Rotate Camera 45°',
+                  ),
+                  const SizedBox(height: 4),
+                  _buildMapButton(
+                    Icons.explore,
+                    () => setState(() {
+                      _bearingRadians = 0.0;
+                      _pitchAngle = 0.0;
+                      _panOffset = Offset.zero;
+                      _zoomScale = 1.0;
+                    }),
+                    tooltip: 'Reset North Alignment',
+                  ),
+                  const SizedBox(height: 4),
+                  _buildMapButton(
+                    _isSimulating ? Icons.pause : Icons.play_arrow,
+                    _toggleSimulation,
+                    tooltip: 'Multi-Rider 3D Live Simulation',
+                    color: _isSimulating ? AppColors.sale : AppColors.ink,
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Density Heatmap Tier Legend
+          // Density Heatmap Legend (Bottom-Left)
           Positioned(
             left: AppSpacing.sm,
             bottom: AppSpacing.sm,
@@ -183,9 +630,7 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
                   SizedBox(width: AppSpacing.xs),
                   _LegendDot(color: AppColors.clusterAmber, label: '100-299'),
                   SizedBox(width: AppSpacing.xs),
-                  _LegendDot(color: AppColors.clusterCoralRed, label: '300-599'),
-                  SizedBox(width: AppSpacing.xs),
-                  _LegendDot(color: AppColors.clusterDeepPurple, label: '600+'),
+                  _LegendDot(color: AppColors.clusterCoralRed, label: '300+'),
                 ],
               ),
             ),
@@ -195,33 +640,22 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
     );
   }
 
-  Widget _buildSectorChip(String sectorId, String label) {
-    final isSelected = _selectedSector == sectorId;
+  Widget _buildLightingButton(String emoji, MapLightingMode mode) {
+    final isSelected = _lightingMode == mode;
     return GestureDetector(
-      onTap: () => setState(() => _selectedSector = sectorId),
+      onTap: () => setState(() => _lightingMode = mode),
       child: Container(
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.ink : AppColors.canvas,
-          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
-          border: Border.all(
-            color: isSelected ? AppColors.ink : AppColors.hairline,
-          ),
+          color: isSelected ? AppColors.softCloud : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 9.5,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? AppColors.onPrimary : AppColors.ink,
-          ),
-        ),
+        child: Text(emoji, style: const TextStyle(fontSize: 12)),
       ),
     );
   }
 
-  Widget _buildMapButton(IconData icon, VoidCallback onTap) {
+  Widget _buildMapButton(IconData icon, VoidCallback onTap, {String? tooltip, Color? color}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -231,10 +665,24 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
           color: AppColors.canvas,
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.hairlineSoft),
+          boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)],
         ),
-        child: Icon(icon, size: 14, color: AppColors.ink),
+        child: Icon(icon, size: 14, color: color ?? AppColors.ink),
       ),
     );
+  }
+
+  Color _getMapBgColor() {
+    switch (_lightingMode) {
+      case MapLightingMode.dawn:
+        return const Color(0xFF1E212B);
+      case MapLightingMode.dusk:
+        return const Color(0xFF1A1A2E);
+      case MapLightingMode.night:
+        return const Color(0xFF0D111A);
+      case MapLightingMode.day:
+        return AppColors.mapBackground;
+    }
   }
 }
 
@@ -256,170 +704,271 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-class _NagpurVectorMapPainter extends CustomPainter {
+/// High-Performance 3D Vector Map Painter with Multi-Layer Radium Glowing Polyline
+class _MapboxVector3DPainter extends CustomPainter {
   final double pulseFraction;
   final double zoomScale;
   final Offset panOffset;
-  final String selectedSector;
+  final double pitchAngle;
+  final double bearingRadians;
+  final MapLightingMode lightingMode;
+  final List<MapPoint> routeCoordinates;
+  final List<MapPoint> waypoints;
+  final List<UserLiveLocation> riders;
 
-  _NagpurVectorMapPainter({
+  _MapboxVector3DPainter({
     required this.pulseFraction,
     required this.zoomScale,
     required this.panOffset,
-    required this.selectedSector,
+    required this.pitchAngle,
+    required this.bearingRadians,
+    required this.lightingMode,
+    required this.routeCoordinates,
+    required this.waypoints,
+    required this.riders,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.translate(size.width / 2 + panOffset.dx, size.height / 2 + panOffset.dy);
-    canvas.scale(zoomScale);
-    canvas.translate(-size.width / 2, -size.height / 2);
 
-    _drawNagpurStreetGrid(canvas, size);
-    _drawOfficialRallyRoute(canvas, size);
-    _drawDensityHeatmapClusters(canvas, size);
-    _drawLandmarkPins(canvas, size);
+    // 3D Perspective & Camera Transforms
+    final center = Offset(size.width / 2, size.height / 2);
+    canvas.translate(center.dx + panOffset.dx, center.dy + panOffset.dy);
+    canvas.scale(zoomScale);
+    if (bearingRadians != 0.0) canvas.rotate(bearingRadians);
+    if (pitchAngle > 0) {
+      final matrix = Matrix4.identity()
+        ..setEntry(3, 2, 0.0018)
+        ..rotateX(pitchAngle);
+      canvas.transform(matrix.storage);
+    }
+    canvas.translate(-center.dx, -center.dy);
+
+    _drawRoadGrid3D(canvas, size);
+    _drawMultiLayerGlowingRoute(canvas, size);
+    _drawCheckpointsAndLandmarks(canvas, size);
+    _drawLiveRiderMarkers(canvas, size);
 
     canvas.restore();
   }
 
-  void _drawNagpurStreetGrid(Canvas canvas, Size size) {
+  Offset _latLngToScreen(double lat, double lng, Size size) {
+    const double centerLat = 21.1458;
+    const double centerLng = 79.0882;
+    const double scaleFactor = 3800.0;
+
+    final dx = (lng - centerLng) * scaleFactor;
+    final dy = -(lat - centerLat) * scaleFactor;
+
+    return Offset(size.width / 2 + dx, size.height / 2 + dy);
+  }
+
+  void _drawRoadGrid3D(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = AppColors.streetGrid
-      ..strokeWidth = 1.0
+      ..color = lightingMode == MapLightingMode.night
+          ? const Color(0x15FFFFFF)
+          : AppColors.streetGrid
+      ..strokeWidth = 0.8
       ..style = PaintingStyle.stroke;
 
     final arterialPaint = Paint()
-      ..color = AppColors.streetArterial
-      ..strokeWidth = 1.8
+      ..color = lightingMode == MapLightingMode.night
+          ? const Color(0x2A00F2FE)
+          : AppColors.streetArterial
+      ..strokeWidth = 1.4
       ..style = PaintingStyle.stroke;
 
-    for (double x = 0; x < size.width; x += 36) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    for (double x = -size.width; x < size.width * 2; x += 40) {
+      canvas.drawLine(Offset(x, -size.height), Offset(x, size.height * 2), gridPaint);
     }
-    for (double y = 0; y < size.height; y += 36) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    for (double y = -size.height; y < size.height * 2; y += 40) {
+      canvas.drawLine(Offset(-size.width, y), Offset(size.width * 2, y), gridPaint);
     }
 
-    canvas.drawLine(Offset(0, size.height * 0.45), Offset(size.width, size.height * 0.45), arterialPaint);
-    canvas.drawLine(Offset(0, size.height * 0.72), Offset(size.width, size.height * 0.72), arterialPaint);
-    canvas.drawLine(Offset(size.width * 0.32, 0), Offset(size.width * 0.32, size.height), arterialPaint);
-    canvas.drawLine(Offset(size.width * 0.68, 0), Offset(size.width * 0.68, size.height), arterialPaint);
+    // Main Arterials: Wardha Rd & Amravati Rd
+    canvas.drawLine(
+      Offset(-size.width, size.height * 0.45),
+      Offset(size.width * 2, size.height * 0.45),
+      arterialPaint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.52, -size.height),
+      Offset(size.width * 0.52, size.height * 2),
+      arterialPaint,
+    );
   }
 
-  void _drawOfficialRallyRoute(Canvas canvas, Size size) {
-    final routeGlowPaint = Paint()
-      ..color = AppColors.routeGlow
-      ..strokeWidth = 6.0
+  void _drawMultiLayerGlowingRoute(Canvas canvas, Size size) {
+    if (routeCoordinates.isEmpty) return;
+
+    final path = Path();
+    final firstPoint = _latLngToScreen(routeCoordinates.first.latitude, routeCoordinates.first.longitude, size);
+    path.moveTo(firstPoint.dx, firstPoint.dy);
+
+    for (int i = 1; i < routeCoordinates.length; i++) {
+      final p = _latLngToScreen(routeCoordinates[i].latitude, routeCoordinates[i].longitude, size);
+      path.lineTo(p.dx, p.dy);
+    }
+
+    // Layer 1: Ultra-Bright Outer Radium Green Glow (#00FF66)
+    final radiumGlowPaint = Paint()
+      ..color = const Color(0xE600FF66)
+      ..strokeWidth = 22.0 + (pulseFraction * 4.0)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7.0);
+
+    // Layer 2: Vibrant Cyan Mid Glow (#00F2FE)
+    final cyanMidPaint = Paint()
+      ..color = const Color(0xFF00F2FE)
+      ..strokeWidth = 10.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
+
+    // Layer 3: Solid Ultra-White Core Polyline (#FFFFFF)
+    final whiteCorePaint = Paint()
+      ..color = const Color(0xFFFFFFFF)
+      ..strokeWidth = 3.5
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
 
-    final routeLinePaint = Paint()
-      ..color = AppColors.routeLine
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    final p0 = Offset(size.width * 0.20, size.height * 0.30);
-    final p1 = Offset(size.width * 0.45, size.height * 0.25);
-    final p2 = Offset(size.width * 0.80, size.height * 0.45);
-    final p3 = Offset(size.width * 0.75, size.height * 0.75);
-    final p4 = Offset(size.width * 0.38, size.height * 0.80);
-    final p5 = Offset(size.width * 0.20, size.height * 0.58);
-
-    final path = Path()
-      ..moveTo(p0.dx, p0.dy)
-      ..lineTo(p1.dx, p1.dy)
-      ..lineTo(p2.dx, p2.dy)
-      ..lineTo(p3.dx, p3.dy)
-      ..lineTo(p4.dx, p4.dy)
-      ..lineTo(p5.dx, p5.dy)
-      ..close();
-
-    canvas.drawPath(path, routeGlowPaint);
-    canvas.drawPath(path, routeLinePaint);
+    canvas.drawPath(path, radiumGlowPaint);
+    canvas.drawPath(path, cyanMidPaint);
+    canvas.drawPath(path, whiteCorePaint);
   }
 
-  void _drawDensityHeatmapClusters(Canvas canvas, Size size) {
-    final mockClusters = [
-      {'x': size.width * 0.20, 'y': size.height * 0.30, 'count': 450, 'sector': 'S1'},
-      {'x': size.width * 0.45, 'y': size.height * 0.25, 'count': 220, 'sector': 'S2'},
-      {'x': size.width * 0.80, 'y': size.height * 0.45, 'count': 650, 'sector': 'S3'},
-      {'x': size.width * 0.75, 'y': size.height * 0.75, 'count': 85, 'sector': 'S4'},
-      {'x': size.width * 0.38, 'y': size.height * 0.80, 'count': 18, 'sector': 'S1'},
+  void _drawCheckpointsAndLandmarks(Canvas canvas, Size size) {
+    for (int i = 0; i < waypoints.length; i++) {
+      final wp = waypoints[i];
+      final pos = _latLngToScreen(wp.latitude, wp.longitude, size);
+
+      final isStart = i == 0;
+      final isEnd = i == waypoints.length - 1 && waypoints.length > 1;
+      final color = isStart
+          ? const Color(0xFF00FF66)
+          : isEnd
+              ? const Color(0xFFFF1744)
+              : const Color(0xFF00F2FE);
+
+      // Outer Radium Halo
+      final haloPaint = Paint()
+        ..color = color.withValues(alpha: 0.45 + pulseFraction * 0.35)
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+      canvas.drawCircle(pos, 14.0 + pulseFraction * 4.0, haloPaint);
+
+      // Core Marker
+      final markerPaint = Paint()..color = color..style = PaintingStyle.fill;
+      final borderPaint = Paint()
+        ..color = const Color(0xFFFFFFFF)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke;
+
+      canvas.drawCircle(pos, 7.0, markerPaint);
+      canvas.drawCircle(pos, 7.0, borderPaint);
+
+      // Label with Dark Card Backdrop
+      final tp = TextPainter(
+        text: TextSpan(
+          text: isStart ? '🚩 START' : isEnd ? '🏁 FINISH' : '📍 ${wp.name.split('(').first.trim()}',
+          style: TextStyle(
+            color: color,
+            fontSize: 9.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.3,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final textRect = Rect.fromCenter(
+        center: Offset(pos.dx, pos.dy - 16),
+        width: tp.width + 12,
+        height: tp.height + 6,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(textRect, const Radius.circular(AppRadius.pill)),
+        Paint()..color = const Color(0xEE0B0F19),
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(textRect, const Radius.circular(AppRadius.pill)),
+        Paint()..color = color.withValues(alpha: 0.6)..style = PaintingStyle.stroke..strokeWidth = 1.0,
+      );
+      tp.paint(canvas, Offset(textRect.left + 6, textRect.top + 3));
+    }
+  }
+
+  void _drawLiveRiderMarkers(Canvas canvas, Size size) {
+    final riderColors = [
+      const Color(0xFFFF9100), // Leader (Amber/Gold)
+      const Color(0xFF00F2FE), // Rider 2 (Cyan)
+      const Color(0xFF00FF66), // Rider 3 (Radium Green)
+      const Color(0xFF2979FF), // Rider 4 (Electric Blue)
     ];
 
-    for (final c in mockClusters) {
-      final sector = c['sector'] as String;
-      if (selectedSector != 'ALL' && selectedSector != sector) continue;
+    for (int idx = 0; idx < riders.length; idx++) {
+      final rider = riders[idx];
+      final color = riderColors[idx % riderColors.length];
+      final isLeader = idx == 0;
+      final pos = _latLngToScreen(rider.latitude, rider.longitude, size);
 
-      final count = c['count'] as int;
-      final x = c['x'] as double;
-      final y = c['y'] as double;
-
-      final clusterColor = DensityClusterEvaluator.getClusterColorValue(count);
-      final radius = DensityClusterEvaluator.getClusterRadius(count);
-
-      final haloAlpha = (0.20 + (pulseFraction * 0.15)).clamp(0.0, 1.0);
+      // Rider animated glowing halo
       final haloPaint = Paint()
-        ..color = clusterColor.withValues(alpha: haloAlpha)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(x, y), radius * (1.2 + pulseFraction * 0.35), haloPaint);
+        ..color = color.withValues(alpha: 0.50 + pulseFraction * 0.3)
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
+      canvas.drawCircle(pos, (isLeader ? 14.0 : 10.0) + pulseFraction * 3.0, haloPaint);
 
-      final clusterPaint = Paint()
-        ..color = clusterColor.withValues(alpha: 0.90)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(x, y), radius, clusterPaint);
+      // Rider Core Dot
+      final riderPaint = Paint()..color = color..style = PaintingStyle.fill;
+      final borderPaint = Paint()..color = Colors.white..strokeWidth = 1.5..style = PaintingStyle.stroke;
+      canvas.drawCircle(pos, isLeader ? 7.0 : 5.0, riderPaint);
+      canvas.drawCircle(pos, isLeader ? 7.0 : 5.0, borderPaint);
 
-      final textSpan = TextSpan(
-        text: '$count',
-        style: const TextStyle(color: AppColors.white, fontSize: 9.5, fontWeight: FontWeight.w800),
+      // Rider Callout Banner
+      final tp = TextPainter(
+        text: TextSpan(
+          text: isLeader ? '👑 ${rider.userName ?? "Rajesh (Leader)"}' : '🚴 ${rider.userName ?? "Rider"}',
+          style: TextStyle(
+            color: color,
+            fontSize: 9.0,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final bgRect = Rect.fromCenter(
+        center: Offset(pos.dx, pos.dy + 14),
+        width: tp.width + 10,
+        height: tp.height + 4,
       );
-      final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(x - textPainter.width / 2, y - textPainter.height / 2));
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(bgRect, const Radius.circular(AppRadius.sm)),
+        Paint()..color = const Color(0xEE0B0F19),
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(bgRect, const Radius.circular(AppRadius.sm)),
+        Paint()..color = color.withValues(alpha: 0.6)..style = PaintingStyle.stroke..strokeWidth = 0.8,
+      );
+      tp.paint(canvas, Offset(bgRect.left + 5, bgRect.top + 2));
     }
-  }
-
-  void _drawLandmarkPins(Canvas canvas, Size size) {
-    _drawPin(canvas, Offset(size.width * 0.20, size.height * 0.30), '🚩 Start: Zero Mile', AppColors.ink);
-    _drawPin(canvas, Offset(size.width * 0.45, size.height * 0.25), '💧 Samvidhan Sq', AppColors.info);
-    _drawPin(canvas, Offset(size.width * 0.75, size.height * 0.75), '🏁 Deekshabhoomi', AppColors.success);
-  }
-
-  void _drawPin(Canvas canvas, Offset offset, String label, Color dotColor) {
-    final pinPaint = Paint()..color = dotColor..style = PaintingStyle.fill;
-    canvas.drawCircle(offset, 4.0, pinPaint);
-
-    final bgPaint = Paint()..color = AppColors.landmarkTextBg..style = PaintingStyle.fill;
-    final borderPaint = Paint()..color = AppColors.hairlineSoft..strokeWidth = 0.5..style = PaintingStyle.stroke;
-
-    final span = TextSpan(
-      text: label,
-      style: const TextStyle(color: AppColors.ink, fontSize: 8.5, fontWeight: FontWeight.w700),
-    );
-    final tp = TextPainter(text: span, textDirection: TextDirection.ltr);
-    tp.layout();
-
-    final textRect = Rect.fromCenter(
-      center: Offset(offset.dx, offset.dy - 11),
-      width: tp.width + 8,
-      height: tp.height + 4,
-    );
-    final rrect = RRect.fromRectAndRadius(textRect, const Radius.circular(AppRadius.sm));
-    canvas.drawRRect(rrect, bgPaint);
-    canvas.drawRRect(rrect, borderPaint);
-    tp.paint(canvas, Offset(textRect.left + 4, textRect.top + 2));
   }
 
   @override
-  bool shouldRepaint(covariant _NagpurVectorMapPainter oldDelegate) {
-    return oldDelegate.pulseFraction != pulseFraction ||
-        oldDelegate.zoomScale != zoomScale ||
-        oldDelegate.panOffset != panOffset ||
-        oldDelegate.selectedSector != selectedSector;
+  bool shouldRepaint(covariant _MapboxVector3DPainter old) {
+    return old.pulseFraction != pulseFraction ||
+        old.zoomScale != zoomScale ||
+        old.panOffset != panOffset ||
+        old.pitchAngle != pitchAngle ||
+        old.bearingRadians != bearingRadians ||
+        old.lightingMode != lightingMode ||
+        old.routeCoordinates != routeCoordinates ||
+        old.riders != riders;
   }
 }

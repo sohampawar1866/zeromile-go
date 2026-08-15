@@ -109,9 +109,16 @@ DECLARE
     v_new_group_id UUID;
 BEGIN
     IF (OLD.status IS DISTINCT FROM NEW.status) AND NEW.status = 'APPROVED' THEN
-        INSERT INTO public.sub_groups (domain_id, name, is_general, org_type, leader_id, muster_point, approval_status)
-        VALUES (NEW.domain_id, NEW.org_name, FALSE, NEW.org_type, NEW.applicant_user_id, NEW.muster_point, 'APPROVED')
-        RETURNING id INTO v_new_group_id;
+        -- Check if sub_group was already created for this applicant & domain
+        SELECT id INTO v_new_group_id
+        FROM public.sub_groups
+        WHERE domain_id = NEW.domain_id AND name = NEW.org_name AND leader_id = NEW.applicant_user_id;
+
+        IF v_new_group_id IS NULL THEN
+            INSERT INTO public.sub_groups (domain_id, name, is_general, org_type, leader_id, muster_point, approval_status)
+            VALUES (NEW.domain_id, NEW.org_name, FALSE, NEW.org_type, NEW.applicant_user_id, NEW.muster_point, 'APPROVED')
+            RETURNING id INTO v_new_group_id;
+        END IF;
 
         -- Reset previous active group for applicant in this domain
         UPDATE public.group_memberships

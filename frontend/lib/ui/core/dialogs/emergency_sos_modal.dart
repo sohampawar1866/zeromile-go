@@ -37,7 +37,8 @@ class _EmergencySosModalState extends State<EmergencySosModal> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
         padding: EdgeInsets.only(
           left: AppSpacing.lg,
           right: AppSpacing.lg,

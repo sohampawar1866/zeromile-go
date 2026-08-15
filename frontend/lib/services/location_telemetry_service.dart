@@ -179,12 +179,34 @@ class LocationTelemetryService {
           }
         }
       } catch (_) {
+        // Enqueue to persistent offline cache (up to 200 items FIFO)
         _offlineQueue.add(payload);
-        if (_offlineQueue.length > 50) _offlineQueue.removeAt(0);
+        if (_offlineQueue.length > 200) _offlineQueue.removeAt(0);
       }
     }
 
     return true;
+  }
+
+  /// Returns current offline backlog count for diagnostics
+  int get offlineQueueCount => _offlineQueue.length;
+
+  /// Manually triggers an offline queue flush
+  Future<int> flushOfflineQueue() async {
+    if (_offlineQueue.isEmpty) return 0;
+    final toFlush = List<Map<String, dynamic>>.from(_offlineQueue);
+    _offlineQueue.clear();
+    int synced = 0;
+
+    for (final item in toFlush) {
+      try {
+        await _client.from('user_live_locations').upsert(item, onConflict: 'domain_id,user_id');
+        synced++;
+      } catch (_) {
+        _offlineQueue.add(item);
+      }
+    }
+    return synced;
   }
 
   /// SuperAdmin Console: Stream all domain participant pings with instant WebSocket Realtime Broadcast + DB snapshot seed

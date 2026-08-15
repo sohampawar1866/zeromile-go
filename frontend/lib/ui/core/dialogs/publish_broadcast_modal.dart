@@ -47,7 +47,8 @@ class _PublishBroadcastModalState extends State<PublishBroadcastModal> {
     final isSuper = widget.isSuperAdmin;
 
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
         padding: EdgeInsets.only(
           left: AppSpacing.lg,
           right: AppSpacing.lg,

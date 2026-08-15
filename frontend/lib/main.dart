@@ -191,14 +191,23 @@ class _ZeroMileRootControllerState extends State<ZeroMileRootController> {
         );
       case 3:
       default:
-        return MainNavigationShell(
-          domainContextVm: _domainContextVm,
+        return AppStateScope(
           authVm: _authVm,
-          participantHomeVm: _participantHomeVm,
+          domainVm: _domainContextVm,
+          homeVm: _participantHomeVm,
           groupsVm: _groupsVm,
-          leaderHubVm: _leaderHubVm,
-          superAdminVm: _superAdminVm,
-          devPanelVm: _devPanelVm,
+          leaderVm: _leaderHubVm,
+          adminVm: _superAdminVm,
+          devVm: _devPanelVm,
+          child: MainNavigationShell(
+            domainContextVm: _domainContextVm,
+            authVm: _authVm,
+            participantHomeVm: _participantHomeVm,
+            groupsVm: _groupsVm,
+            leaderHubVm: _leaderHubVm,
+            superAdminVm: _superAdminVm,
+            devPanelVm: _devPanelVm,
+          ),
         );
     }
   }

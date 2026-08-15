@@ -132,6 +132,99 @@ class AppTheme {
     );
   }
 
-  // Universal Clean Canvas Theme
-  static ThemeData get darkTheme => lightTheme;
+  // Genuine Dark Mode Palette (Zinc / Carbon Canvas)
+  static ThemeData get darkTheme {
+    final emojiFont = GoogleFonts.notoColorEmoji().fontFamily;
+    final emojiFallback = emojiFont != null ? [emojiFont] : const <String>[];
+    const darkCanvas = Color(0xFF09090B);
+    const darkSurface = Color(0xFF18181B);
+    const darkBorder = Color(0xFF27272A);
+    const darkInk = Color(0xFFF4F4F5);
+    const darkMute = Color(0xFFA1A1AA);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: darkCanvas,
+      fontFamily: GoogleFonts.inter().fontFamily,
+      fontFamilyFallback: emojiFallback,
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(
+        bodyColor: darkInk,
+        displayColor: darkInk,
+        fontFamilyFallback: emojiFallback,
+      ),
+      colorScheme: const ColorScheme.dark(
+        primary: darkInk,
+        onPrimary: darkCanvas,
+        primaryContainer: darkSurface,
+        onPrimaryContainer: darkInk,
+        surface: darkSurface,
+        onSurface: darkInk,
+        error: AppColors.sale,
+        onError: AppColors.white,
+        outline: darkBorder,
+      ),
+      cardTheme: const CardThemeData(
+        color: darkSurface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+          side: BorderSide(color: darkBorder, width: 1.0),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: darkCanvas,
+        foregroundColor: darkInk,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        iconTheme: IconThemeData(color: darkInk),
+        titleTextStyle: AppTypography.headingMd,
+      ),
+      dividerTheme: const DividerThemeData(
+        color: darkBorder,
+        thickness: 1.0,
+        space: AppSpacing.lg,
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        filled: true,
+        fillColor: darkSurface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderSide: BorderSide(color: darkBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderSide: BorderSide(color: darkBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderSide: BorderSide(color: darkInk, width: 1.5),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+        labelStyle: AppTypography.bodySm,
+        hintStyle: AppTypography.caption,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: darkInk,
+          foregroundColor: darkCanvas,
+          elevation: 0,
+          textStyle: AppTypography.buttonMd,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: darkCanvas,
+        selectedItemColor: darkInk,
+        unselectedItemColor: darkMute,
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+      ),
+    );
+  }
 }

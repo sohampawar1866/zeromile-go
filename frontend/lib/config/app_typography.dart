@@ -5,11 +5,11 @@ import 'app_colors.dart';
 
 /// Central Typography Hierarchy
 /// Uses const definitions for widget const-correctness;
-/// Project-wide Inter font and Noto Color Emoji fallbacks are applied via AppTheme.
+/// Compliant with WCAG 2.1 mobile outdoor readability guidelines.
 abstract class AppTypography {
   // Display Campaign Tier
   static const TextStyle displayCampaign = TextStyle(
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: FontWeight.w900,
     letterSpacing: -0.5,
     color: AppColors.ink,
@@ -18,7 +18,7 @@ abstract class AppTypography {
 
   // Headings
   static const TextStyle headingXl = TextStyle(
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.3,
     color: AppColors.ink,
@@ -26,7 +26,7 @@ abstract class AppTypography {
   );
 
   static const TextStyle headingLg = TextStyle(
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.2,
     color: AppColors.ink,
@@ -34,7 +34,7 @@ abstract class AppTypography {
   );
 
   static const TextStyle headingMd = TextStyle(
-    fontSize: 14.5,
+    fontSize: 15,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.1,
     color: AppColors.ink,
@@ -43,29 +43,29 @@ abstract class AppTypography {
 
   // Body
   static const TextStyle bodyStrong = TextStyle(
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.ink,
     height: 1.4,
   );
 
   static const TextStyle bodyMd = TextStyle(
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: FontWeight.w400,
     color: AppColors.charcoal,
     height: 1.4,
   );
 
   static const TextStyle bodySm = TextStyle(
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: FontWeight.w400,
-    color: AppColors.mute,
+    color: AppColors.charcoal,
     height: 1.35,
   );
 
   // Primary Buttons (Dark / Ink background -> White text)
   static const TextStyle buttonLg = TextStyle(
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.2,
     color: AppColors.onPrimary,
@@ -73,7 +73,7 @@ abstract class AppTypography {
   );
 
   static const TextStyle buttonMd = TextStyle(
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.1,
     color: AppColors.onPrimary,
@@ -81,7 +81,7 @@ abstract class AppTypography {
   );
 
   static const TextStyle buttonSm = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.1,
     color: AppColors.onPrimary,
@@ -90,7 +90,7 @@ abstract class AppTypography {
 
   // Secondary Buttons (White / Light background -> Ink text)
   static const TextStyle buttonLgSecondary = TextStyle(
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.2,
     color: AppColors.ink,
@@ -98,7 +98,7 @@ abstract class AppTypography {
   );
 
   static const TextStyle buttonMdSecondary = TextStyle(
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.1,
     color: AppColors.ink,
@@ -106,7 +106,7 @@ abstract class AppTypography {
   );
 
   static const TextStyle buttonSmSecondary = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.1,
     color: AppColors.ink,
@@ -115,23 +115,23 @@ abstract class AppTypography {
 
   // Badges & Captions
   static const TextStyle badge = TextStyle(
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.2,
     height: 1.1,
   );
 
   static const TextStyle caption = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.mute,
     height: 1.3,
   );
 
   static const TextStyle captionXs = TextStyle(
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: FontWeight.w600,
-    color: AppColors.stone,
+    color: AppColors.charcoal,
     height: 1.2,
   );
 }

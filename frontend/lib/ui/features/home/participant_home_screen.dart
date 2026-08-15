@@ -140,29 +140,19 @@ class ParticipantHomeScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
 
             // Broadcasts Feed Card
-            Card(
-              child: Padding(
-                padding: AppSpacing.edgeInsetsCard,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.campaign, color: AppColors.warning, size: 20),
-                        SizedBox(width: AppSpacing.sm),
-                        Text('Latest Safety Broadcasts', style: AppTypography.headingMd),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    if (viewModel.broadcasts.isEmpty)
-                      const Text(
-                        'No broadcasts posted yet for this domain.',
-                        style: AppTypography.caption,
-                      )
-                    else
-                      ...viewModel.broadcasts.take(3).map((b) => BroadcastCard(message: b)),
-                  ],
-                ),
+            ShadCard(
+              title: 'Latest Safety Broadcasts',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (viewModel.broadcasts.isEmpty)
+                    const Text(
+                      'No broadcasts posted yet for this domain.',
+                      style: AppTypography.caption,
+                    )
+                  else
+                    ...viewModel.broadcasts.take(3).map((b) => BroadcastCard(message: b)),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.md),

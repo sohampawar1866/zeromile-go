@@ -73,8 +73,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
     final role = widget.domainContextVm.currentRole;
     final domain = widget.domainContextVm.activeDomain;
     final user = widget.authVm.currentUser;
-    final domainId = domain?.id ?? 'cycling-domain';
-    final userId = user?.id ?? 'u0000000-0000-0000-0000-000000000008';
+    final domainId = domain?.id ?? '00000000-0000-0000-0000-000000000001';
+    final userId = user?.id ?? '00000000-0000-0000-0000-000000000001';
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -191,11 +191,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> with SingleTi
 
     switch (role) {
       case ActiveRolePerspective.leader:
+        final ledGroup = widget.groupsVm.userMemberships.where((m) => m.isLeader).firstOrNull ??
+            widget.groupsVm.userMemberships.firstOrNull;
+        final targetGroupId = ledGroup?.groupId ?? 'd755b533-e975-41c0-8a88-ed0b30e60a7c';
         return LeaderHubScreen(
           activeDomain: widget.domainContextVm.activeDomain,
           viewModel: widget.leaderHubVm,
           leaderUserId: userId,
-          groupId: 'g0000000-0000-0000-0000-000000000002',
+          groupId: targetGroupId,
         );
       case ActiveRolePerspective.superAdmin:
         return SuperAdminConsoleScreen(

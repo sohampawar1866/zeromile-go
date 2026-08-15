@@ -81,10 +81,59 @@ class AdminAnalyticsTab extends StatelessWidget {
                   width: double.infinity,
                   child: FluidTapScale(
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Complete domain telemetry and incident audit log downloaded.'),
-                          backgroundColor: AppColors.ink,
+                      final auditCsv = StringBuffer();
+                      auditCsv.writeln('ZeroMile Go Domain Audit Log Report');
+                      auditCsv.writeln('Generated At,${DateTime.now().toIso8601String()}');
+                      auditCsv.writeln('Active GPS Telemetry Online,${viewModel.activeRiderCount}');
+                      auditCsv.writeln('Approved Sub-Groups,${viewModel.subGroups.length}');
+                      auditCsv.writeln('Active SOS Emergency Queue,${viewModel.escalatedSosQueue.length}');
+                      auditCsv.writeln('\n--- SUB-GROUP BREAKDOWN ---');
+                      auditCsv.writeln('Group Name,Org Type,Muster Point,Approval Status');
+                      for (final g in viewModel.subGroups) {
+                        auditCsv.writeln('"${g.name}","${g.orgType}","${g.musterPoint ?? "Standard Flag-off"}","${g.approvalStatus.name.toUpperCase()}"');
+                      }
+
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Row(
+                            children: [
+                              Icon(Icons.file_download_done, color: AppColors.success, size: 20),
+                              SizedBox(width: 8),
+                              Text('Domain Audit Log Export', style: AppTypography.headingMd),
+                            ],
+                          ),
+                          content: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Domain audit log CSV generated successfully. Ready for dissemination to municipal authorities and emergency response team:',
+                                  style: AppTypography.bodySm,
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.softCloud,
+                                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                                    border: Border.all(color: AppColors.hairlineSoft),
+                                  ),
+                                  child: SelectableText(
+                                    auditCsv.toString(),
+                                    style: const TextStyle(fontFamily: 'Courier', fontSize: 10),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Done', style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
                         ),
                       );
                     },

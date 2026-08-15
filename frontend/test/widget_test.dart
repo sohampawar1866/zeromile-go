@@ -7,6 +7,7 @@ import 'package:flutter_core/ui/core/widgets/status_badge.dart';
 import 'package:flutter_core/ui/core/widgets/route_checkpoint_stepper.dart';
 import 'package:flutter_core/ui/core/widgets/broadcast_card.dart';
 import 'package:flutter_core/ui/core/widgets/sos_triage_card.dart';
+import 'package:flutter_core/ui/core/widgets/density_cluster_map_view.dart';
 
 void main() {
   group('UI Design System & Core Widgets Tests', () {
@@ -25,6 +26,22 @@ void main() {
 
       expect(find.text('LIVE ACTIVE'), findsOneWidget);
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    });
+
+    testWidgets('DensityClusterMapView renders Mapbox 3D vector header and legend', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: DensityClusterMapView(
+              title: 'Nagpur Domain Loop',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Nagpur Domain Loop'), findsOneWidget);
+      expect(find.text('1-24'), findsOneWidget);
+      expect(find.text('300+'), findsOneWidget);
     });
 
     testWidgets('RouteCheckpointStepper renders milestones with icons', (WidgetTester tester) async {

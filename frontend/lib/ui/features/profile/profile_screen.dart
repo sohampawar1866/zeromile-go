@@ -145,223 +145,154 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: AppSpacing.edgeInsetsScreen,
       children: [
         // User Identity Card
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              children: [
-                Row(
+        ShadCard(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: const BoxDecoration(
+                  color: AppColors.ink,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  (user?.fullName.isNotEmpty == true)
+                      ? user!.fullName.substring(0, 1).toUpperCase()
+                      : 'U',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.onPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        color: AppColors.ink,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        (user?.fullName.isNotEmpty == true)
-                            ? user!.fullName.substring(0, 1).toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.onPrimary,
-                        ),
-                      ),
+                    Text(
+                      user?.fullName ?? 'Soham Pawar',
+                      style: AppTypography.headingLg,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user?.fullName ?? 'Soham Pawar',
-                            style: AppTypography.headingLg,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            PhoneUtils.formatDisplay(user?.phoneNumber ?? '8087167841'),
-                            style: AppTypography.bodySm.copyWith(color: AppColors.mute),
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          StatusBadge(
-                            label: isLeader ? 'GROUP LEADER' : 'PARTICIPANT',
-                            type: isLeader ? StatusBadgeType.warning : StatusBadgeType.primary,
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      PhoneUtils.formatDisplay(user?.phoneNumber ?? '8087167841'),
+                      style: AppTypography.bodySm.copyWith(color: AppColors.mute),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: AppColors.ink, size: 20),
-                      tooltip: 'Edit Profile Details',
-                      onPressed: _showEditProfileDialog,
+                    const SizedBox(height: AppSpacing.xs),
+                    StatusBadge(
+                      label: isLeader ? 'GROUP LEADER' : 'PARTICIPANT',
+                      type: isLeader ? StatusBadgeType.warning : StatusBadgeType.primary,
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, color: AppColors.ink, size: 20),
+                tooltip: 'Edit Profile Details',
+                onPressed: _showEditProfileDialog,
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.md),
 
         // Active Event & Contingent Affiliation
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.hub_outlined, color: AppColors.ink, size: 20),
-                    SizedBox(width: AppSpacing.sm),
-                    Text('Active Event & Contingent', style: AppTypography.headingMd),
-                  ],
+        ShadCard(
+          title: 'Active Event & Contingent',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow('Active Domain', domain?.name ?? 'Nagpur Cycling Rally 2026'),
+              _buildInfoRow('Domain Slug', domain?.slug ?? 'cycling-2026'),
+              _buildInfoRow('Enrolled Contingent', groupName),
+              _buildInfoRow(
+                'Participation Status',
+                isEnrolled ? membership.participationStatus.name.toUpperCase() : 'GENERAL ROSTER',
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.ink),
+                  label: const Text('Manage Contingents', style: AppTypography.buttonSmSecondary),
+                  onPressed: widget.onManageContingents,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _buildInfoRow('Active Domain', domain?.name ?? 'Nagpur Cycling Rally 2026'),
-                _buildInfoRow('Domain Slug', domain?.slug ?? 'cycling-2026'),
-                _buildInfoRow('Enrolled Contingent', groupName),
-                _buildInfoRow(
-                  'Participation Status',
-                  isEnrolled ? membership.participationStatus.name.toUpperCase() : 'GENERAL ROSTER',
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.ink),
-                    label: const Text('Manage Contingents', style: AppTypography.buttonSmSecondary),
-                    onPressed: widget.onManageContingents,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.md),
 
         // Emergency SOS & Next-of-Kin Contact
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.emergency_outlined, color: AppColors.sale, size: 20),
-                        SizedBox(width: AppSpacing.sm),
-                        Text('Emergency Distress Contact', style: AppTypography.headingMd),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.ink),
-                      tooltip: 'Update Emergency Contact',
-                      onPressed: _showEditProfileDialog,
-                    ),
-                  ],
+        ShadCard(
+          title: 'Emergency Distress Contact',
+          trailing: IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.ink),
+            tooltip: 'Update Emergency Contact',
+            onPressed: _showEditProfileDialog,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                    ? 'Next-of-Kin: ${PhoneUtils.formatDisplay(user.emergencyContact!)}'
+                    : 'No emergency next-of-kin contact registered. Tap edit to configure.',
+                style: AppTypography.bodySm.copyWith(
+                  color: (user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty)
+                      ? AppColors.ink
+                      : AppColors.sale,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
-                      ? 'Next-of-Kin: ${PhoneUtils.formatDisplay(user.emergencyContact!)}'
-                      : 'No emergency next-of-kin contact registered. Tap edit to configure.',
-                  style: AppTypography.bodySm.copyWith(
-                    color: (user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty)
-                        ? AppColors.ink
-                        : AppColors.sale,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                const Text(
-                  'This contact number receives instant SMS alerts during critical distress signals.',
-                  style: AppTypography.caption,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              const Text(
+                'This contact number receives instant SMS alerts during critical distress signals.',
+                style: AppTypography.caption,
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.md),
 
         // Telemetry & Device Sensors Card
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.sensors, color: AppColors.success, size: 20),
-                    SizedBox(width: AppSpacing.sm),
-                    Text('Telemetry & Device Sensors', style: AppTypography.headingMd),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _buildInfoRow('GPS Telemetry Stream', 'Online (1Hz High-Precision Stream)'),
-                _buildInfoRow('Density Heatmap Sync', 'Synchronized (WebSocket Channels)'),
-                _buildInfoRow('Device Identifier', user?.id.substring(0, 13) ?? 'u0000000-0000'),
-              ],
-            ),
+        ShadCard(
+          title: 'Telemetry & Device Sensors',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow('GPS Telemetry Stream', 'Online (1Hz High-Precision Stream)'),
+              _buildInfoRow('Density Heatmap Sync', 'Synchronized (WebSocket Channels)'),
+              _buildInfoRow('Device Identifier', user?.id.substring(0, 13) ?? 'u0000000-0000'),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        // Bottom Action Button: Propose New Sub-Group (Requested by User)
-        FluidTapScale(
-          onTap: widget.onOpenProposeModal,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-            decoration: const BoxDecoration(
-              color: AppColors.ink,
-              borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
-            ),
-            alignment: Alignment.center,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_business_outlined, size: 18, color: AppColors.onPrimary),
-                SizedBox(width: AppSpacing.sm),
-                Text('Propose New Sub-Group', style: AppTypography.buttonMd),
-              ],
-            ),
-          ),
+        // Bottom Action Button: Propose New Sub-Group
+        ShadButton(
+          text: 'Propose New Sub-Group',
+          icon: Icons.add_business_outlined,
+          isFullWidth: true,
+          variant: ShadButtonVariant.primary,
+          onPressed: widget.onOpenProposeModal,
         ),
         const SizedBox(height: AppSpacing.sm),
 
         // Sign Out Button
-        FluidTapScale(
-          onTap: () async {
+        ShadButton(
+          text: 'Sign Out of Session',
+          icon: Icons.logout,
+          isFullWidth: true,
+          variant: ShadButtonVariant.outline,
+          onPressed: () async {
             await widget.authVm.signOut();
           },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm + 2),
-            decoration: BoxDecoration(
-              color: AppColors.softCloud,
-              borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
-              border: Border.all(color: AppColors.hairlineSoft),
-            ),
-            alignment: Alignment.center,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.logout, size: 16, color: AppColors.sale),
-                SizedBox(width: AppSpacing.xs),
-                Text('Sign Out of Session', style: AppTypography.buttonSmSecondary),
-              ],
-            ),
-          ),
         ),
         const SizedBox(height: AppSpacing.xxl),
       ],

@@ -7,13 +7,23 @@ import '../../../../config/app_typography.dart';
 import '../../../../logic/view_models/leader_hub_view_model.dart';
 import '../../../core/widgets/density_cluster_map_view.dart';
 
-class LeaderLiveMapTab extends StatelessWidget {
+class LeaderLiveMapTab extends StatefulWidget {
   final LeaderHubViewModel viewModel;
 
   const LeaderLiveMapTab({super.key, required this.viewModel});
 
   @override
+  State<LeaderLiveMapTab> createState() => _LeaderLiveMapTabState();
+}
+
+class _LeaderLiveMapTabState extends State<LeaderLiveMapTab> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+    final viewModel = widget.viewModel;
     return ListView(
       padding: AppSpacing.edgeInsetsScreen,
       children: [

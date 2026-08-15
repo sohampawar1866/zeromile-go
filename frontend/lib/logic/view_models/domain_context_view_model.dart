@@ -89,10 +89,26 @@ class DomainContextViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    const phone = '+91 8087167841'; // Soham Pawar (Developer Master Console)
+    // Map each role perspective to its dedicated seeded persona
+    final String targetPhone;
+    switch (role) {
+      case ActiveRolePerspective.superAdmin:
+        targetPhone = '+91 98220 11111'; // Rajesh Sharma (SuperAdmin)
+        break;
+      case ActiveRolePerspective.leader:
+        targetPhone = '+91 98230 11111'; // Aniket Deshmukh (VNIT Leader)
+        break;
+      case ActiveRolePerspective.participant:
+        targetPhone = '+91 98240 11111'; // Priya Verma (Participant)
+        break;
+      case ActiveRolePerspective.developer:
+        targetPhone = '+91 98250 11111'; // Developer Master Console
+        break;
+    }
 
     try {
-      await _authService.loginAsDemoPersona(phone);
+      await _authService.loginAsDemoPersona(targetPhone);
+      await _loadCheckpoints();
     } catch (e) {
       _errorMessage = e.toString();
     } finally {

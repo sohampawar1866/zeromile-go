@@ -5,9 +5,9 @@ import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
 import '../../../../models/event_domain.dart';
-import '../../../../models/route_checkpoint.dart';
 import '../../../../logic/view_models/superadmin_view_model.dart';
 import '../../../core/widgets/fluid_tap_scale.dart';
+import 'mapbox_route_studio_card.dart';
 
 class RouteBuilderTab extends StatefulWidget {
   final EventDomain? activeDomain;
@@ -41,6 +41,23 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
     return ListView(
       padding: AppSpacing.edgeInsetsScreen,
       children: [
+        // Mapbox Standard 3D Route Studio
+        MapboxRouteStudioCard(
+          activeDomain: widget.activeDomain,
+          existingCheckpoints: widget.viewModel.routeCheckpoints,
+          onRouteSaved: (waypoints, distanceKm) {
+            if (widget.activeDomain != null) {
+              widget.viewModel.updateRouteAndSchedule(
+                domainId: widget.activeDomain!.id,
+                startTime: _startDate,
+                endTime: _endDate,
+                status: _selectedStatus,
+              );
+            }
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+
         // Event Schedule & Timing Config
         Card(
           child: Padding(
@@ -49,7 +66,7 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '1. Event Schedule & Timings',
+                  'Event Schedule & Timings',
                   style: AppTypography.headingMd,
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -129,45 +146,6 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // Route Geometry & Checkpoints
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '2. Official Route & Checkpoints',
-                  style: AppTypography.headingMd,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  '${widget.activeDomain?.name ?? "Event Route"} • ${widget.viewModel.routeCheckpoints.length} Checkpoints Configured',
-                  style: AppTypography.caption,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                if (widget.viewModel.routeCheckpoints.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.canvas,
-                      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-                      border: Border.all(color: AppColors.hairlineSoft),
-                    ),
-                    child: const Text(
-                      'No official checkpoints registered for this domain route yet.',
-                      style: AppTypography.bodySm,
-                    ),
-                  )
-                else
-                  ...widget.viewModel.routeCheckpoints.map((cp) => _buildCheckpointPill(cp)),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-
         // Save & Publish Route Action (Black Pill Button)
         FluidTapScale(
           onTap: () async {
@@ -206,50 +184,6 @@ class _RouteBuilderTabState extends State<RouteBuilderTab> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCheckpointPill(RouteCheckpoint cp) {
-    Color tagColor;
-    String tagLabel;
-    switch (cp.checkpointType) {
-      case CheckpointType.start:
-        tagColor = AppColors.ink;
-        tagLabel = '🚩 [Start]';
-        break;
-      case CheckpointType.finish:
-        tagColor = AppColors.success;
-        tagLabel = '🏁 [Finish]';
-        break;
-      case CheckpointType.waterStation:
-        tagColor = AppColors.info;
-        tagLabel = '💧 [Water]';
-        break;
-      case CheckpointType.medicalPost:
-        tagColor = AppColors.sale;
-        tagLabel = '🚑 [Medical]';
-        break;
-      case CheckpointType.diversion:
-        tagColor = AppColors.warningAccent;
-        tagLabel = '⚠️ [Diversion]';
-        break;
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.canvas,
-        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-        border: Border.all(color: AppColors.hairlineSoft),
-      ),
-      child: Row(
-        children: [
-          Text(tagLabel, style: AppTypography.captionXs.copyWith(color: tagColor, fontWeight: FontWeight.bold)),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Text(cp.name, style: AppTypography.bodySm, overflow: TextOverflow.ellipsis)),
-        ],
-      ),
     );
   }
 }

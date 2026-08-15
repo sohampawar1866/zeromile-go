@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vikasit Nagpur - Mapbox Standard 3D Route Studio & Multi-User Tracker</title>
+  
+  <!-- Mapbox GL JS 3D CSS & JS -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+
+  <!-- Google Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="logo-icon">🗺️</div>
+      <div>
+        <h1>OFFICIAL MAPBOX STANDARD 3D ROUTE STUDIO</h1>
+        <p class="subtitle">Clean Path Rerouting (No Extra Dots) • Colleges & Areas POI Search • Radium Glowing Route</p>
+      </div>
+    </div>
+    
+    <div class="3d-controls">
+      <button class="control-btn history-btn" id="btnUndo" onclick="undoRouteAction()" title="Undo last action">↩️ Undo</button>
+      <button class="control-btn history-btn" id="btnRedo" onclick="redoRouteAction()" title="Redo action">↪️ Redo</button>
+      <button class="control-btn" id="btn3DTilt" onclick="toggle3DPitch()">📐 3D Tilt View</button>
+      <button class="control-btn" onclick="rotate3DView()">🔄 Rotate Camera 45°</button>
+      <button class="control-btn" onclick="reset3DBearing()">🧭 North Align</button>
+      <span class="badge badge-cyan">MAPBOX STANDARD 3D ACTIVE</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    
+    <!-- Sidebar Control Panel -->
+    <aside class="sidebar">
+      
+      <!-- Point Selection Mode Controls -->
+      <div class="glass-card">
+        <h3>📍 Point Selection Mode</h3>
+        <div class="btn-group">
+          <button class="action-btn mode-btn active" id="btnModeStart" onclick="setSelectMode('start')">🚩 Set Start Point</button>
+          <button class="action-btn mode-btn" id="btnModeEnd" onclick="setSelectMode('end')">🏁 Set End Point</button>
+          <button class="action-btn mode-btn" id="btnModeWay" onclick="setSelectMode('way')">📍 Add Waypoint</button>
+        </div>
+        <p class="card-text" id="modeHintText">Click any location on the Mapbox 3D Nagpur map or search using the top-right search bar to set your <b>Start Point</b>.</p>
+      </div>
+
+      <!-- Distance Telemetry -->
+      <div class="glass-card telemetry-card">
+        <h3>📏 Route Distance Telemetry</h3>
+        <div class="telemetry-grid-single">
+          <div class="telemetry-tile highlight">
+            <span class="tile-val" id="routeDist">0.0 km</span>
+            <span class="tile-lbl">Total Official Route Distance</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Event Draft & Publishing Controls -->
+      <div class="glass-card">
+        <h3>💾 Pre-Event Draft Management</h3>
+        <div class="btn-group vertical">
+          <button class="action-btn secondary" onclick="saveRouteDraft()">💾 Save Pre-Event Route Draft</button>
+          <button class="action-btn success" onclick="publishAndLockRoute()">🔒 Lock & Publish Official Route</button>
+          <button class="action-btn danger-outline" onclick="clearMap()">🗑️ Clear & Reset Canvas</button>
+        </div>
+      </div>
+
+      <!-- Multi-User Real-Time Simulation -->
+      <div class="glass-card">
+        <h3>🚴 Multi-Rider 3D Live GPS Tracking</h3>
+        <p class="card-text">Simulates 4 team riders moving live through Mapbox 3D Nagpur buildings.</p>
+        <div class="btn-group vertical">
+          <button class="action-btn primary" id="simBtn" onclick="toggleMultiUserSimulation()">▶️ Start 3D Multi-Rider Simulation</button>
+        </div>
+
+        <div class="multi-user-list" id="multiUserList">
+          <div class="user-row leader">
+            <span class="user-dot leader"></span>
+            <span class="user-name">Rajesh Sharma (Leader)</span>
+            <span class="user-dist" id="u0Dist">0.0 km</span>
+          </div>
+          <div class="user-row">
+            <span class="user-dot"></span>
+            <span class="user-name">Aniket Deshmukh</span>
+            <span class="user-dist" id="u1Dist">0.0 km</span>
+          </div>
+          <div class="user-row">
+            <span class="user-dot"></span>
+            <span class="user-name">Priya Verma</span>
+            <span class="user-dist" id="u2Dist">0.0 km</span>
+          </div>
+          <div class="user-row">
+            <span class="user-dot"></span>
+            <span class="user-name">Saurabh Joshi</span>
+            <span class="user-dist" id="u3Dist">0.0 km</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Waypoints Roster -->
+      <div class="glass-card">
+        <h3>🏁 Active Checkpoints & Landmarks</h3>
+        <div class="checkpoint-list" id="checkpointList">
+          <p style="font-size:11px; color:#64748B;">No points selected. Select Start & End points to begin.</p>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 3D Map Viewport -->
+    <section class="map-viewport">
+      <div id="map"></div>
+
+      <!-- Top-Left Time-of-Day Lighting Widget -->
+      <div class="map-lighting-widget">
+        <button class="time-btn" onclick="setTimeOfDay('dawn')" title="Dawn / Sunrise">🌅</button>
+        <button class="time-btn active" id="btnTimeDay" onclick="setTimeOfDay('day')" title="Day / Noon">☀️</button>
+        <button class="time-btn" onclick="setTimeOfDay('dusk')" title="Dusk / Sunset">🌇</button>
+        <button class="time-btn" onclick="setTimeOfDay('night')" title="Night / Dark">🌙</button>
+      </div>
+
+      <!-- Top-Right Enhanced Floating Search Bar -->
+      <div class="map-search-bar">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search Colleges (VNIT, YCCE, RCOEM), Areas, Landmarks..." oninput="handleSearchInput(event)" onkeypress="handleSearchKeyPress(event)" />
+          <button class="search-go-btn" onclick="searchNagpurLocation()">Search</button>
+        </div>
+        <div class="search-results-overlay" id="searchResults"></div>
+      </div>
+      
+      <!-- Bottom-Right Overlay Badge -->
+      <div class="map-overlay-badge">
+        <span id="lightingBadgeText">☀️ Drag Route Line to Reroute Path (Clean View, No Extra Dots)</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
