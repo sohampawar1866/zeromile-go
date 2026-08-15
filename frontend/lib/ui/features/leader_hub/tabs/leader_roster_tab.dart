@@ -8,8 +8,6 @@ import '../../../../models/group_membership.dart';
 import '../../../../logic/view_models/leader_hub_view_model.dart';
 import '../../../../utils/phone_utils.dart';
 import '../../../core/dialogs/direct_add_member_modal.dart';
-import '../../../core/widgets/fluid_tap_scale.dart';
-import '../../../core/widgets/status_badge.dart';
 import '../../../core/components/shad_button.dart';
 import '../../../core/components/shad_card.dart';
 
@@ -66,273 +64,306 @@ class _LeaderRosterTabState extends State<LeaderRosterTab> {
 
     final checkedInCount = widget.viewModel.checkedInCount;
     final totalCount = roster.length;
-    final missingCount = roster.where((m) => m.participationStatus == ParticipationStatus.notCheckedIn).length;
-    final completedCount = widget.viewModel.completedCount;
 
-    return ListView(
-      padding: AppSpacing.edgeInsetsScreen,
-      children: [
-        // Roster Summary Card
-        ShadCard(
-          title: 'Team Attendance & Members',
-          trailing: Text(
-            '$checkedInCount/$totalCount Present',
-            style: AppTypography.captionXs.copyWith(
-              color: AppColors.success,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Meeting Point: ${widget.viewModel.musterPoint}',
-                style: AppTypography.bodySm,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              ClipRRect(
-                borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
-                child: LinearProgressIndicator(
-                  value: widget.viewModel.checkinPercent / 100.0,
-                  minHeight: 6,
-                  backgroundColor: AppColors.hairlineSoft,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-
-        // Search and Add Action
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _searchCtrl,
-                decoration: const InputDecoration(
-                  hintText: 'Search team members...',
-                  prefixIcon: Icon(Icons.search, size: 18),
-                  contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
-                ),
-                onChanged: (val) => setState(() => _searchQuery = val.trim()),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            ShadButton(
-              text: 'Add Rider',
-              icon: Icons.person_add,
-              variant: ShadButtonVariant.primary,
-              size: ShadButtonSize.md,
-              onPressed: () {
-                DirectAddMemberModal.show(
-                  context,
-                  onAdd: (name, phone) async {
-                    final ok = await widget.viewModel.directAddMember(
-                      domainId: widget.domainId,
-                      groupId: widget.groupId,
-                      leaderUserId: widget.leaderUserId,
-                      memberPhone: phone,
-                      memberName: name,
-                    );
-                    if (context.mounted && ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Added $name to team list.'),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
-                    }
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-
-        const SizedBox(height: AppSpacing.sm),
-
-        // Filter Chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildFilterChip('ALL', 'All ($totalCount)'),
-              _buildFilterChip('CHECKED_IN', 'Checked In ($checkedInCount)'),
-              _buildFilterChip('NOT_CHECKED_IN', 'Missing ($missingCount)'),
-              _buildFilterChip('COMPLETED', 'Finished ($completedCount)'),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-
-        // Roster Members List
-        if (filteredRoster.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.softCloud,
-              borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-              border: Border.all(color: AppColors.hairlineSoft),
-            ),
-            child: const Text(
-              'No squad members match this filter.',
-              style: AppTypography.caption,
-            ),
-          )
-        else
-          ...filteredRoster.map((m) {
-            final isChecked = m.participationStatus == ParticipationStatus.checkedIn;
-            final isComplete = m.participationStatus == ParticipationStatus.completed;
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-              padding: AppSpacing.edgeInsetsCard,
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        children: [
+          // 1. Attendance Progress Summary Card
+          ShadCard(
+            title: 'Attendance Roster',
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-                border: Border.all(
-                  color: isChecked ? AppColors.successBorder : AppColors.hairlineSoft,
+                color: AppColors.liveIndicatorBg,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: AppColors.successBorder),
+              ),
+              child: Text(
+                '$checkedInCount/$totalCount PRESENT',
+                style: AppTypography.captionXs.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      isComplete
-                          ? Icons.military_tech
-                          : isChecked
-                              ? Icons.check_circle
-                              : Icons.radio_button_unchecked,
-                      color: isComplete
-                          ? AppColors.ink
-                          : isChecked
-                              ? AppColors.success
-                              : AppColors.mute,
-                      size: 24,
-                    ),
-                    tooltip: isChecked ? 'Mark Not Checked In' : 'Mark Checked In',
-                    onPressed: () async {
-                      if (!isChecked) {
-                        final ok = await widget.viewModel.checkInRider(
-                          domainId: widget.domainId,
-                          groupId: widget.groupId,
-                          userId: m.userId,
-                        );
-                        if (context.mounted && ok) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Marked ${m.userFullName ?? "Rider"} as Checked In.'),
-                              backgroundColor: AppColors.success,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                m.userFullName ?? 'Team Rider',
-                                style: AppTypography.bodyStrong,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (m.isLeader) ...[
-                              const SizedBox(width: 4),
-                              const StatusBadge(label: 'Leader', type: StatusBadgeType.warning),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${PhoneUtils.formatDisplay(m.userPhoneNumber ?? "")} • ${isChecked ? "Checked-in" : isComplete ? "Finished" : "Awaiting Check-in"}',
-                          style: AppTypography.captionXs.copyWith(
-                            color: isChecked ? AppColors.success : AppColors.mute,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.phone_outlined, size: 18, color: AppColors.ink),
-                    tooltip: 'Call Member',
-                    onPressed: () {
-                      final phone = m.userPhoneNumber ?? '+91 98220 00000';
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Calling ${m.userFullName ?? "Rider"} ($phone)...'),
-                          backgroundColor: AppColors.ink,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            );
-          }),
-        const SizedBox(height: AppSpacing.md),
-
-        // Export CSV Button
-        FluidTapScale(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('✓ Team Attendance list exported to Downloads (CSV).'),
-                backgroundColor: AppColors.ink,
-              ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.canvas,
-              borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
-              border: Border.all(color: AppColors.ink, width: 1.2),
             ),
-            alignment: Alignment.center,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.download, size: 16, color: AppColors.ink),
-                SizedBox(width: AppSpacing.sm),
-                Text('Export Attendance CSV', style: AppTypography.buttonSmSecondary),
+                ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
+                  child: LinearProgressIndicator(
+                    value: totalCount > 0 ? (checkedInCount / totalCount) : 0.0,
+                    minHeight: 6,
+                    backgroundColor: AppColors.hairlineSoft,
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Meeting Point: ${widget.viewModel.musterPoint}',
+                        style: AppTypography.caption,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      '${widget.viewModel.checkinPercent.toStringAsFixed(0)}% Ready',
+                      style: AppTypography.captionXs.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-        ),
 
-        const SizedBox(height: 80),
-      ],
+          const SizedBox(height: AppSpacing.md),
+
+          // 2. Search & Minimal Filter Bar
+          TextField(
+            controller: _searchCtrl,
+            onChanged: (val) => setState(() => _searchQuery = val.trim()),
+            decoration: InputDecoration(
+              hintText: 'Search members by name or phone...',
+              prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.mute),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 16),
+                      onPressed: () {
+                        _searchCtrl.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.sm),
+
+          // 3. Filter Pills
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip('ALL', 'All (${roster.length})'),
+                const SizedBox(width: AppSpacing.xs),
+                _buildFilterChip('CHECKED_IN', 'Checked-In ($checkedInCount)'),
+                const SizedBox(width: AppSpacing.xs),
+                _buildFilterChip('NOT_CHECKED_IN', 'Missing (${roster.where((m) => m.participationStatus == ParticipationStatus.notCheckedIn).length})'),
+                const SizedBox(width: AppSpacing.xs),
+                _buildFilterChip('COMPLETED', 'Finished (${widget.viewModel.completedCount})'),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // 4. Roster List Items
+          if (filteredRoster.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.person_search, size: 36, color: AppColors.mute),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    _searchQuery.isEmpty ? 'No members found in this filter.' : 'No members matching "$_searchQuery"',
+                    style: AppTypography.caption,
+                  ),
+                ],
+              ),
+            )
+          else
+            ...filteredRoster.map((member) => _buildRosterCard(member)),
+
+          const SizedBox(height: 88),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          DirectAddMemberModal.show(
+            context,
+            onAdd: (name, phone) async {
+              final ok = await widget.viewModel.directAddMember(
+                domainId: widget.domainId,
+                groupId: widget.groupId,
+                leaderUserId: widget.leaderUserId,
+                memberPhone: phone,
+                memberName: name,
+              );
+              if (context.mounted && ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Added $name to team attendance.'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            },
+          );
+        },
+        backgroundColor: AppColors.ink,
+        foregroundColor: AppColors.onPrimary,
+        elevation: 0,
+        highlightElevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+        ),
+        icon: const Icon(Icons.person_add, size: 16),
+        label: const Text(
+          'ADD MEMBER',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+        ),
+      ),
     );
   }
 
-  Widget _buildFilterChip(String filterKey, String label) {
-    final isSelected = _selectedFilter == filterKey;
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.xs),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => setState(() => _selectedFilter = filterKey),
-        labelStyle: TextStyle(
-          fontSize: 11.5,
-          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected ? AppColors.onPrimary : AppColors.ink,
+  Widget _buildFilterChip(String key, String label) {
+    final isSelected = _selectedFilter == key;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilter = key),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.ink : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: isSelected ? AppColors.ink : AppColors.hairline,
+          ),
         ),
-        selectedColor: AppColors.ink,
-        backgroundColor: AppColors.softCloud,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
-          side: BorderSide(color: AppColors.hairlineSoft),
+        child: Text(
+          label,
+          style: AppTypography.captionXs.copyWith(
+            color: isSelected ? AppColors.onPrimary : AppColors.charcoal,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRosterCard(GroupMembership member) {
+    final status = member.participationStatus;
+    final isCheckedIn = status == ParticipationStatus.checkedIn;
+    final isCompleted = status == ParticipationStatus.completed;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: isCheckedIn
+                ? AppColors.successBg
+                : isCompleted
+                    ? AppColors.infoBg
+                    : AppColors.softCloud,
+            child: Icon(
+              isCheckedIn
+                  ? Icons.check
+                  : isCompleted
+                      ? Icons.flag
+                      : Icons.person_outline,
+              size: 20,
+              color: isCheckedIn
+                  ? AppColors.success
+                  : isCompleted
+                      ? AppColors.info
+                      : AppColors.mute,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        member.userFullName ?? 'Participant',
+                        style: AppTypography.bodyStrong,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (member.isLeader)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.ink,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Text(
+                          'LEADER',
+                          style: AppTypography.captionXs.copyWith(
+                            color: AppColors.onPrimary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  PhoneUtils.formatWithPrefix(
+                    PhoneUtils.extract10Digits(member.userPhoneNumber ?? ''),
+                    space: true,
+                  ),
+                  style: AppTypography.caption,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          ShadButton(
+            text: isCheckedIn ? 'Checked-In' : (isCompleted ? 'Finished' : 'Check-In'),
+            size: ShadButtonSize.sm,
+            variant: isCheckedIn
+                ? ShadButtonVariant.success
+                : (isCompleted ? ShadButtonVariant.secondary : ShadButtonVariant.outline),
+            onPressed: () async {
+              final ok = await widget.viewModel.checkInRider(
+                domainId: widget.domainId,
+                groupId: widget.groupId,
+                userId: member.userId,
+              );
+
+              if (mounted && ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${member.userFullName ?? "Member"} attendance updated.'),
+                    backgroundColor: AppColors.ink,
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }

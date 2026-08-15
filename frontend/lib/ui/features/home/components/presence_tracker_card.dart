@@ -114,8 +114,8 @@ class PresenceTrackerCard extends StatelessWidget {
             )
           else
             const ShadButton(
-              text: 'Rally Completed ✓',
-              icon: Icons.emoji_events_outlined,
+              text: 'Rally Completed',
+              icon: Icons.check_circle_outline,
               size: ShadButtonSize.md,
               isFullWidth: true,
               variant: ShadButtonVariant.secondary,

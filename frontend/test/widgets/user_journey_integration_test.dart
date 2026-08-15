@@ -40,16 +40,12 @@ void main() {
       await tester.pumpAndSettle();
 
 
-      // Verify mandatory check-in modal appears
-      expect(find.text('Event Check-In'), findsOneWidget);
-      expect(find.text('Check In Now'), findsOneWidget);
-
-      // Tap Check-in
-      await tester.tap(find.text('Check In Now'));
-      await tester.pumpAndSettle();
+      // Verify Participant Home Screen renders hero event and action buttons
+      expect(find.text('Vikasit Nagpur 2026 Mega Cycling Rally'), findsWidgets);
+      expect(find.text('Official Announcements'), findsOneWidget);
 
       // Verify Emergency SOS FAB is visible during live window
-      expect(find.text('SOS DISTRESS'), findsOneWidget);
+      expect(find.text('EMERGENCY SOS'), findsOneWidget);
     });
 
 
@@ -102,23 +98,22 @@ void main() {
 
       expect(find.byType(DensityClusterMapView), findsOneWidget);
       expect(find.text('TOTAL OFFICIAL ROUTE DISTANCE'), findsOneWidget);
-      expect(find.text('🚴 Multi-Rider 3D Live GPS Tracking'), findsOneWidget);
-      expect(find.text('👑 Rajesh Sharma (Leader)'), findsOneWidget);
+      expect(find.text('Multi-Rider 3D Live GPS Tracking'), findsOneWidget);
+      expect(find.text('Rajesh Sharma'), findsOneWidget);
 
+      // Verify Time-of-day lighting icon buttons
+      expect(find.byIcon(Icons.wb_twilight), findsOneWidget);
+      expect(find.byIcon(Icons.wb_sunny_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.wb_cloudy_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
 
-      // Verify Time-of-day lighting buttons
-      expect(find.text('🌅'), findsOneWidget);
-      expect(find.text('☀️'), findsOneWidget);
-      expect(find.text('🌇'), findsOneWidget);
-      expect(find.text('🌙'), findsOneWidget);
-
-      // Switch to Cyberpunk Night Mode
-      await tester.tap(find.text('🌙'));
+      // Switch to Night Mode
+      await tester.tap(find.byIcon(Icons.nightlight_round));
       await tester.pump(const Duration(milliseconds: 200));
 
       // Scroll and Tap Save Draft
-      await tester.ensureVisible(find.text('💾 Save Draft'));
-      await tester.tap(find.text('💾 Save Draft'), warnIfMissed: false);
+      await tester.ensureVisible(find.text('Save Draft'));
+      await tester.tap(find.text('Save Draft'), warnIfMissed: false);
       await tester.pump(const Duration(milliseconds: 200));
     });
 

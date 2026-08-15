@@ -5,6 +5,7 @@ import '../models/sub_group.dart';
 import '../models/group_membership.dart';
 import '../models/group_creation_request.dart';
 import '../utils/phone_utils.dart';
+import '../config/app_config.dart';
 import 'supabase_client_service.dart';
 
 class GroupService {
@@ -208,6 +209,9 @@ class GroupService {
     required String domainId,
     required String groupId,
   }) async {
+    if (AppConfig.isDemoMode || AppConfig.supabaseUrl.isEmpty) {
+      return {};
+    }
     try {
       final res = await _client.rpc('get_leader_squad_summary', params: {
         'p_domain_id': domainId,

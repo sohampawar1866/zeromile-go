@@ -13,7 +13,6 @@ import '../../../logic/view_models/groups_view_model.dart';
 import '../../../logic/view_models/domain_context_view_model.dart';
 import '../../../utils/phone_utils.dart';
 import '../../core/dialogs/switch_domain_modal.dart';
-import '../../core/widgets/status_badge.dart';
 import '../../core/components/shad_button.dart';
 import '../../core/components/shad_card.dart';
 
@@ -70,10 +69,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Edit Identity & Distress Contact', style: AppTypography.headingMd),
+            const Text('Edit Identity & Distress Contact', style: AppTypography.headingMd),
             const SizedBox(height: AppSpacing.xs),
             const Text(
-              'Keep your identity and distress contact updated for rally safety.',
+              'Keep your identity and next-of-kin contact updated for rally safety.',
               style: AppTypography.caption,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -81,7 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               controller: nameCtrl,
               decoration: const InputDecoration(
                 labelText: 'Full Name',
-                hintText: 'Your name',
+                hintText: 'Your full name',
                 prefixIcon: Icon(Icons.person_outline, size: 20),
               ),
             ),
@@ -142,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Profile details updated successfully.'),
+                              content: Text('Profile details updated.'),
                               backgroundColor: AppColors.ink,
                             ),
                           );
@@ -169,28 +168,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isLeader = membership?.isLeader ?? false;
 
     return ListView(
-      padding: AppSpacing.edgeInsetsScreen,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       children: [
-        // User Identity Card
-        ShadCard(
-          title: 'Participant Identity',
-          trailing: IconButton(
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            onPressed: _showEditProfileDialog,
-            tooltip: 'Edit Profile',
+        // 1. Centered Identity Hero Card (Minimalist Style)
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.hairline),
           ),
-          child: Row(
+          child: Column(
             children: [
               CircleAvatar(
-                radius: 28,
+                radius: 36,
                 backgroundColor: AppColors.ink,
                 child: Text(
                   (user?.fullName.isNotEmpty == true ? user!.fullName[0] : 'U').toUpperCase(),
                   style: const TextStyle(
                     color: AppColors.onPrimary,
-                    fontSize: 22,
+                    fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                user?.fullName ?? 'Verified Participant',
+                style: AppTypography.headingLg,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                PhoneUtils.formatDisplay(user?.phoneNumber ?? ''),
+                style: AppTypography.caption,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.liveIndicatorBg,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(color: AppColors.successBorder),
+                    ),
+                    child: Text(
+                      'PASS ACTIVE',
+                      style: AppTypography.captionXs.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  if (isLeader) ...[
+                    const SizedBox(width: AppSpacing.xs),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.ink,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        'GROUP LEADER',
+                        style: AppTypography.captionXs.copyWith(
+                          color: AppColors.onPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: AppSpacing.md),
+
+        // 2. Emergency Distress Contact Card
+        ShadCard(
+          title: 'Distress Safety Contact',
+          trailing: TextButton(
+            onPressed: _showEditProfileDialog,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              minimumSize: Size.zero,
+            ),
+            child: const Text('Edit', style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.bold)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                      ? AppColors.successBg
+                      : AppColors.softCloud,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.phone_in_talk_outlined,
+                  size: 18,
+                  color: user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                      ? AppColors.success
+                      : AppColors.mute,
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -199,30 +283,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user?.fullName ?? 'Verified Participant',
-                      style: AppTypography.headingMd,
+                      user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
+                          ? 'Next-of-Kin: ${PhoneUtils.formatDisplay(user.emergencyContact!)}'
+                          : 'No emergency contact set',
+                      style: AppTypography.bodyStrong,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      PhoneUtils.formatDisplay(user?.phoneNumber ?? ''),
-                      style: AppTypography.caption,
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const StatusBadge(
-                          label: 'Pass Active',
-                          type: StatusBadgeType.success,
-                        ),
-                        if (isLeader) ...[
-                          const SizedBox(width: 6),
-                          const StatusBadge(
-                            label: 'Group Leader',
-                            type: StatusBadgeType.warning,
-                          ),
-                        ],
-                      ],
+                      'Dispatched with highest priority on SOS broadcast.',
+                      style: AppTypography.captionXs.copyWith(color: AppColors.mute),
                     ),
                   ],
                 ),
@@ -230,28 +300,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
-        // Active Domain / Rally Event Membership Card
+        // 3. Active Event Pass Card
         ShadCard(
           title: 'Active Event Pass',
-          trailing: isEnrolled
-              ? const StatusBadge(label: 'ENROLLED', type: StatusBadgeType.success)
-              : const StatusBadge(label: 'UNASSIGNED', type: StatusBadgeType.muted),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: isEnrolled ? AppColors.successBg : AppColors.softCloud,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(color: isEnrolled ? AppColors.successBorder : AppColors.hairline),
+            ),
+            child: Text(
+              isEnrolled ? 'ENROLLED' : 'UNASSIGNED',
+              style: AppTypography.captionXs.copyWith(
+                color: isEnrolled ? AppColors.success : AppColors.mute,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfoRow('Event Name', domain?.name ?? 'Nagpur Cycling Rally 2026'),
-              _buildInfoRow('Assigned Contingent', groupName),
-              _buildInfoRow(
-                'Muster Point',
-                membership?.groupName != null
-                    ? 'Samvidhan Square (Assembly Point)'
-                    : 'Zero Mile Monument (Start Line)',
-              ),
+              _buildDetailRow('Event Name', domain?.name ?? 'Nagpur Cycling Rally 2026'),
+              _buildDetailRow('Active Squad', groupName),
+              _buildDetailRow('Muster Point', 'Samvidhan Square (Assembly Point)'),
               const SizedBox(height: AppSpacing.sm),
               ShadButton(
-                text: 'Manage Club & Groups',
+                text: 'Manage Squads & Groups',
                 icon: Icons.groups_outlined,
                 variant: ShadButtonVariant.outline,
                 size: ShadButtonSize.sm,
@@ -261,88 +339,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
-        // Emergency Distress Contact Card
-        ShadCard(
-          title: 'Distress Safety Contact',
-          trailing: TextButton(
-            onPressed: _showEditProfileDialog,
-            child: const Text('Update', style: AppTypography.caption),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
-                          ? AppColors.success.withOpacity(0.12)
-                          : AppColors.softCloud,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.contact_phone_outlined,
-                      size: 18,
-                      color: user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
-                          ? AppColors.success
-                          : AppColors.mute,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
-                              ? 'Next-of-Kin: ${PhoneUtils.formatDisplay(user.emergencyContact!)}'
-                              : 'No contact registered',
-                          style: AppTypography.bodyStrong,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          user?.emergencyContact != null && user!.emergencyContact!.isNotEmpty
-                              ? 'Receives instant emergency SMS alerts.'
-                              : 'Tap edit to configure emergency contact.',
-                          style: AppTypography.captionXs.copyWith(color: AppColors.mute),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-
-        // Telemetry & Device Sensors Card
-        ShadCard(
-          title: 'Device & Telemetry',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildInfoRow('GPS Telemetry Stream', 'Online (High-Precision 1Hz)'),
-              _buildInfoRow('Density Heatmap Sync', 'Synchronized (WebSocket)'),
-              _buildInfoRow('Device Identifier', user?.id.substring(0, 13) ?? 'u0000000-0000'),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-
-        // Switch Active Event Module Card (Placed specifically above Sign Out)
+        // 4. Switch Domain Module Card
         ShadCard(
           title: 'Event Domain Module',
-          trailing: Text(
-            domain?.type.name.toUpperCase() ?? 'CYCLING',
-            style: AppTypography.captionXs.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary,
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.softCloud,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Text(
+              domain?.type.name.toUpperCase() ?? 'CYCLING',
+              style: AppTypography.captionXs.copyWith(
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+              ),
             ),
           ),
           child: Column(
@@ -353,13 +367,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: AppTypography.bodyStrong,
               ),
               const SizedBox(height: 4),
-              Text(
-                'Switching domains moves you to a completely separate event module (Marathon, Walkathon, Cycling, or Civic).',
-                style: AppTypography.captionXs.copyWith(color: AppColors.mute),
+              const Text(
+                'Switching domains moves your app context to a separate rally event.',
+                style: AppTypography.caption,
               ),
               const SizedBox(height: AppSpacing.md),
               ShadButton(
-                text: 'Switch Event Domain Module',
+                text: 'Switch Event Domain',
                 icon: Icons.swap_horiz_rounded,
                 variant: ShadButtonVariant.outline,
                 isFullWidth: true,
@@ -385,32 +399,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.lg),
 
-        // Sign Out Button
+        // 5. Sign Out Action
         ShadButton(
-          text: 'Sign Out',
+          text: 'Sign Out of ZeroMile Go',
           icon: Icons.logout,
           isFullWidth: true,
-          variant: ShadButtonVariant.outline,
+          variant: ShadButtonVariant.destructive,
           onPressed: () async {
             await widget.authVm.signOut();
           },
         ),
-        const SizedBox(height: AppSpacing.xxl),
+
+        const SizedBox(height: 88),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: AppTypography.caption),
-          const SizedBox(height: 2),
-          Text(value, style: AppTypography.bodyStrong, overflow: TextOverflow.ellipsis),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTypography.bodyStrong,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
+          ),
         ],
       ),
     );

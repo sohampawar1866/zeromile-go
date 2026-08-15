@@ -119,6 +119,10 @@ class MapboxService {
       orderedPoints.add(waypoints[i]);
     }
 
+    if (_accessToken.isEmpty) {
+      return _generateInterpolatedRoute(orderedPoints);
+    }
+
     final locString = orderedPoints.map((w) => '${w.longitude},${w.latitude}').join(';');
     final url = Uri.parse(
       'https://api.mapbox.com/directions/v5/mapbox/cycling/$locString?geometries=geojson&overview=full&access_token=$_accessToken',
@@ -193,7 +197,11 @@ class MapboxService {
       );
     }
 
-    // 2. Fetch live Mapbox Geocoding API
+    // 2. Fetch live Mapbox Geocoding API if token is provided
+    if (_accessToken.isEmpty) {
+      return results;
+    }
+
     try {
       final searchQuery = clean.contains('nagpur') ? clean : '$clean, Nagpur';
       final url = Uri.parse(

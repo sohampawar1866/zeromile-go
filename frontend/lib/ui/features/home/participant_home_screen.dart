@@ -5,7 +5,6 @@ import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
 import '../../../models/event_domain.dart';
-import '../../../models/group_membership.dart';
 import '../../../models/route_checkpoint.dart';
 import '../../../utils/temporal_window_evaluator.dart';
 import '../../../logic/view_models/participant_home_view_model.dart';
@@ -54,7 +53,6 @@ class _ParticipantHomeScreenState extends State<ParticipantHomeScreen> {
 
         final isLive = domain.status == EventDomainStatus.liveActive;
         final bannerText = TemporalWindowEvaluator.getScheduleBanner(domain);
-        final membership = widget.viewModel.activeMembership;
 
         return Scaffold(
           backgroundColor: AppColors.canvas,

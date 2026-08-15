@@ -26,26 +26,72 @@ class _AdminLiveMapTabState extends State<AdminLiveMapTab> with AutomaticKeepAli
     super.build(context);
     final viewModel = widget.viewModel;
     final densities = viewModel.sectorDensities;
+    final activeRiders = viewModel.activeRiderCount;
+    final activeGroups = viewModel.subGroups.length;
 
     return ListView(
-      padding: AppSpacing.edgeInsetsScreen,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       children: [
-        // Live Domain Density Visualizer Card
-        ShadCard(
-          title: 'Domain Live Density Visualizer',
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
+        // 1. Hero Command Banner (Matching Participant Style)
+        _buildHeroCommandBanner(activeRiders, activeGroups),
+
+        const SizedBox(height: AppSpacing.md),
+
+        // 2. City Telemetry Status Strip
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.liveIndicatorBg,
+            borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
+            border: Border.all(color: AppColors.successBorder),
+          ),
+          child: Row(
             children: [
-              const Icon(Icons.sensors, size: 14, color: AppColors.success),
-              const SizedBox(width: AppSpacing.xs),
-              Text(
-                '60 FPS Telemetry',
-                style: AppTypography.captionXs.copyWith(
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
                   color: AppColors.success,
-                  fontWeight: FontWeight.bold,
+                  shape: BoxShape.circle,
                 ),
               ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Telemetry Stream: 60 FPS • $activeRiders Riders Live • ${viewModel.escalatedSosQueue.length} Critical SOS',
+                  style: AppTypography.captionXs.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.liveIndicatorText,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              const Icon(Icons.sensors, color: AppColors.success, size: 16),
             ],
+          ),
+        ),
+
+        const SizedBox(height: AppSpacing.md),
+
+        // 3. Live Density Visualizer
+        ShadCard(
+          title: 'Domain Real-time Density Visualizer',
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.liveIndicatorBg,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(color: AppColors.successBorder),
+            ),
+            child: Text(
+              'LIVE RADAR',
+              style: AppTypography.captionXs.copyWith(
+                color: AppColors.success,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,20 +104,15 @@ class _AdminLiveMapTabState extends State<AdminLiveMapTab> with AutomaticKeepAli
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
-        // Sub-Group Filter Dropdown Card
+        // 4. Group Filter
         ShadCard(
-          title: 'Filter Map by Group',
+          title: 'Contingent Map Filter',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Filter live GPS map by specific club or view all riders:',
-                style: AppTypography.caption,
-              ),
-
-              const SizedBox(height: AppSpacing.sm),
               DropdownButtonFormField<String>(
                 isExpanded: true,
                 initialValue: viewModel.selectedGroupFilter,
@@ -106,11 +147,12 @@ class _AdminLiveMapTabState extends State<AdminLiveMapTab> with AutomaticKeepAli
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
-        // Sector Density Stats Card
+        // 5. Sector Density & Flow Diagnostics
         ShadCard(
-          title: 'Sector Congestion & Flow Diagnostics',
+          title: 'Sector Flow & Diagnostics',
           trailing: Text(
             '${densities.isNotEmpty ? densities.length : 4} Sectors',
             style: AppTypography.captionXs.copyWith(color: AppColors.mute),
@@ -147,8 +189,63 @@ class _AdminLiveMapTabState extends State<AdminLiveMapTab> with AutomaticKeepAli
             ],
           ),
         ),
-        const SizedBox(height: 80),
+
+        const SizedBox(height: 88),
       ],
+    );
+  }
+
+  Widget _buildHeroCommandBanner(int activeRiders, int activeGroups) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -8,
+            bottom: -8,
+            child: Icon(
+              Icons.admin_panel_settings_outlined,
+              size: 80,
+              color: Colors.white.withOpacity(0.08),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'COMMAND CENTER',
+                style: AppTypography.headingLg.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Nagpur Municipal Operations • $activeRiders Active Telemetry Streams • $activeGroups Squads',
+                style: AppTypography.caption.copyWith(
+                  color: Colors.white.withOpacity(0.8),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

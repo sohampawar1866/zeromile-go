@@ -5,7 +5,7 @@ import '../../../config/app_colors.dart';
 import '../../../config/app_spacing.dart';
 import '../../../config/app_typography.dart';
 import '../../../logic/view_models/groups_view_model.dart';
-import '../../core/widgets/status_badge.dart';
+import '../../core/dialogs/group_creation_modal.dart';
 import '../../core/components/shad_button.dart';
 import '../../core/components/shad_card.dart';
 
@@ -53,8 +53,8 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
         final joinedGroupIds = memberships.map((m) => m.groupId).toSet();
         final joinedCount = memberships.length;
         final isMaxReached = joinedCount >= 3;
+        final activeGroup = memberships.where((m) => m.isActive).firstOrNull;
 
-        // Filter available domain clubs/sub-groups by search query
         final availableGroups = widget.viewModel.domainGroups.where((g) {
           if (_searchQuery.isEmpty) return true;
           final q = _searchQuery.toLowerCase();
@@ -74,118 +74,176 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
               userId: widget.userId,
             ),
             child: ListView(
-              padding: AppSpacing.edgeInsetsScreen,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
               children: [
-                // Quota & Rules Card
-                ShadCard(
-                  title: 'Contingent Quota',
-                  trailing: StatusBadge(
-                    label: '$joinedCount/3 Joined',
-                    type: isMaxReached ? StatusBadgeType.warning : StatusBadgeType.success,
+                // 1. Quota & Active Contingent Strip
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: activeGroup != null ? AppColors.liveIndicatorBg : AppColors.surface,
+                    borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
+                    border: Border.all(
+                      color: activeGroup != null ? AppColors.successBorder : AppColors.hairline,
+                    ),
                   ),
-                  child: const Text(
-                    'You may join up to 3 sub-groups per event, but you can only designate ONE active contingent for live telemetry and SOS triage routing.',
-                    style: AppTypography.bodySm,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: activeGroup != null ? AppColors.success : AppColors.mute,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          activeGroup != null
+                              ? 'Active: ${activeGroup.groupName} ($joinedCount/3 Joined)'
+                              : 'No Active Contingent Selected ($joinedCount/3 Joined)',
+                          style: AppTypography.captionXs.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: activeGroup != null ? AppColors.liveIndicatorText : AppColors.ink,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Icon(
+                        activeGroup != null ? Icons.check_circle : Icons.info_outline,
+                        color: activeGroup != null ? AppColors.success : AppColors.mute,
+                        size: 16,
+                      ),
+                    ],
                   ),
                 ),
+
                 const SizedBox(height: AppSpacing.md),
 
-                // Enrolled Groups List
+                // 2. Enrolled Sub-Groups
                 ShadCard(
-                  title: 'Enrolled Sub-Groups',
+                  title: 'Enrolled Contingents',
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.softCloud,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(color: AppColors.hairline),
+                    ),
+                    child: Text(
+                      '$joinedCount/3 JOINED',
+                      style: AppTypography.captionXs.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (memberships.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                          child: Center(
-                            child: Text(
-                              'You have not joined any sub-groups yet.\nBrowse available clubs below to join.',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.caption,
-                            ),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.canvas,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(color: AppColors.hairlineSoft),
+                          ),
+                          child: const Text(
+                            'You have not joined any squads yet. Browse available clubs below to join.',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.caption,
                           ),
                         )
                       else
                         ...memberships.map((m) {
                           final isActive = m.isActive;
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                            decoration: BoxDecoration(
-                              color: isActive ? AppColors.liveIndicatorBg : AppColors.softCloud,
-                              borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-                              border: Border.all(
-                                color: isActive ? AppColors.successBorder : AppColors.hairline,
-                                width: isActive ? 1.5 : 1.0,
+                          return GestureDetector(
+                            onTap: () async {
+                              final ok = await widget.viewModel.switchActiveGroup(
+                                domainId: widget.domainId,
+                                groupId: m.groupId,
+                                userId: widget.userId,
+                              );
+                              if (context.mounted && ok) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Active contingent set to ${m.groupName}.'),
+                                    backgroundColor: AppColors.ink,
+                                  ),
+                                );
+                              }
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              decoration: BoxDecoration(
+                                color: isActive ? AppColors.liveIndicatorBg : AppColors.surface,
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                border: Border.all(
+                                  color: isActive ? AppColors.successBorder : AppColors.hairline,
+                                  width: isActive ? 1.5 : 1.0,
+                                ),
                               ),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-                                onTap: () async {
-                                  final ok = await widget.viewModel.switchActiveGroup(
-                                    domainId: widget.domainId,
-                                    groupId: m.groupId,
-                                    userId: widget.userId,
-                                  );
-                                  if (context.mounted && ok) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Active contingent updated.'),
-                                        backgroundColor: AppColors.ink,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isActive ? AppColors.success : Colors.transparent,
+                                      border: Border.all(
+                                        color: isActive ? AppColors.success : AppColors.stone,
+                                        width: 2,
                                       ),
-                                    );
-                                  }
-                                },
-                                child: Padding(
-                                  padding: AppSpacing.edgeInsetsCard,
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 22,
-                                        height: 22,
-                                        margin: const EdgeInsets.only(right: AppSpacing.sm),
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: isActive ? AppColors.success : Colors.transparent,
-                                          border: Border.all(
-                                            color: isActive ? AppColors.success : AppColors.hairlineLight,
-                                            width: 2,
+                                    ),
+                                    child: isActive
+                                        ? const Icon(Icons.check, size: 12, color: AppColors.onPrimary)
+                                        : null,
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          m.groupName ?? 'Contingent Group',
+                                          style: AppTypography.bodyStrong,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          isActive ? 'Designated for Live SOS & Telemetry' : 'Tap to set as active contingent',
+                                          style: AppTypography.captionXs.copyWith(
+                                            color: isActive ? AppColors.liveIndicatorText : AppColors.mute,
                                           ),
                                         ),
-                                        child: isActive
-                                            ? const Icon(Icons.check, size: 14, color: AppColors.onPrimary)
-                                            : null,
-                                      ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              m.groupName ?? 'Contingent Group',
-                                              style: AppTypography.bodyStrong,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Status: ${m.participationStatus.name.toUpperCase()}',
-                                              style: AppTypography.caption,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (m.isLeader)
-                                        const Padding(
-                                          padding: EdgeInsets.only(left: AppSpacing.xs),
-                                          child: StatusBadge(label: 'Leader', type: StatusBadgeType.warning),
-                                        ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
+                                  if (m.isLeader)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.ink,
+                                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                                      ),
+                                      child: Text(
+                                        'LEADER',
+                                        style: AppTypography.captionXs.copyWith(
+                                          color: AppColors.onPrimary,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           );
@@ -193,12 +251,12 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: AppSpacing.md),
 
-                // Discover & Join Clubs Section
+                // 3. Discover & Join Clubs Section
                 ShadCard(
                   title: 'Discover & Join Clubs',
-                  description: 'Search official clubs and contingents participating in this event domain.',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -207,11 +265,12 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
                         controller: _searchCtrl,
                         onChanged: (val) => setState(() => _searchQuery = val.trim()),
                         decoration: InputDecoration(
-                          hintText: 'Search club or contingent by name...',
-                          prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.mute),
+                          hintText: 'Search clubs, colleges, squads...',
+                          prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.mute),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18, color: AppColors.mute),
+                                  icon: const Icon(Icons.clear, size: 16, color: AppColors.mute),
                                   onPressed: () {
                                     _searchCtrl.clear();
                                     setState(() => _searchQuery = '');
@@ -225,7 +284,7 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
                       // Club Cards List
                       if (availableGroups.isEmpty)
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                           child: Center(
                             child: Text(
                               _searchQuery.isEmpty
@@ -241,97 +300,104 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                            padding: AppSpacing.edgeInsetsCard,
+                            padding: const EdgeInsets.all(AppSpacing.md),
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-                              border: Border.all(color: AppColors.hairline),
+                              color: AppColors.canvas,
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              border: Border.all(color: AppColors.hairlineSoft),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
                               children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      width: 38,
-                                      height: 38,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.softCloud,
-                                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                                        border: Border.all(color: AppColors.hairline),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Icon(
-                                        _getOrgTypeIcon(group.orgType),
-                                        color: AppColors.ink,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: AppSpacing.sm),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            group.name,
-                                            style: AppTypography.bodyStrong,
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            _formatOrgType(group.orgType),
-                                            style: AppTypography.captionXs.copyWith(color: AppColors.mute),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (isAlreadyJoined)
-                                      const StatusBadge(label: 'Enrolled', type: StatusBadgeType.success)
-                                    else if (isMaxReached)
-                                      const StatusBadge(label: 'Quota Full', type: StatusBadgeType.muted)
-                                    else
-                                      ShadButton(
-                                        text: 'Join',
-                                        icon: Icons.add,
-                                        size: ShadButtonSize.sm,
-                                        variant: ShadButtonVariant.primary,
-                                        onPressed: () async {
-                                          final ok = await widget.viewModel.joinGroup(
-                                            domainId: widget.domainId,
-                                            groupId: group.id,
-                                            userId: widget.userId,
-                                            setActive: joinedCount == 0,
-                                          );
-                                          if (context.mounted && ok) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Text('Joined ${group.name}!'),
-                                                backgroundColor: AppColors.success,
-                                              ),
-                                            );
-                                          }
-                                        },
-                                      ),
-                                  ],
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(AppRadius.md),
+                                    border: Border.all(color: AppColors.hairline),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    _getOrgTypeIcon(group.orgType),
+                                    color: AppColors.ink,
+                                    size: 18,
+                                  ),
                                 ),
-                                if (group.musterPoint != null && group.musterPoint!.isNotEmpty) ...[
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Row(
+                                const SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(Icons.location_on_outlined, size: 14, color: AppColors.mute),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          'Muster: ${group.musterPoint}',
-                                          style: AppTypography.captionXs,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                      Text(
+                                        group.name,
+                                        style: AppTypography.bodyStrong,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Muster: ${group.musterPoint ?? "Start Point"}',
+                                        style: AppTypography.caption,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                if (isAlreadyJoined)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.successBg,
+                                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                                      border: Border.all(color: AppColors.successBorder),
+                                    ),
+                                    child: Text(
+                                      'JOINED',
+                                      style: AppTypography.captionXs.copyWith(
+                                        color: AppColors.success,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  )
+                                else if (isMaxReached)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.softCloud,
+                                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                                    ),
+                                    child: Text(
+                                      'MAX (3)',
+                                      style: AppTypography.captionXs.copyWith(
+                                        color: AppColors.mute,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  ShadButton(
+                                    text: 'Join',
+                                    icon: Icons.add,
+                                    size: ShadButtonSize.sm,
+                                    variant: ShadButtonVariant.primary,
+                                    onPressed: () async {
+                                      final ok = await widget.viewModel.joinGroup(
+                                        domainId: widget.domainId,
+                                        groupId: group.id,
+                                        userId: widget.userId,
+                                        setActive: joinedCount == 0,
+                                      );
+                                      if (context.mounted && ok) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Joined ${group.name}!'),
+                                            backgroundColor: AppColors.success,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
                               ],
                             ),
                           );
@@ -339,8 +405,53 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xxl),
+
+                const SizedBox(height: 88),
               ],
+            ),
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () {
+              GroupCreationModal.show(
+                context,
+                onSubmit: ({
+                  required String orgName,
+                  required String orgType,
+                  required int expectedCount,
+                  required String musterPoint,
+                  String? leaderNotes,
+                }) async {
+                  final ok = await widget.viewModel.submitGroupProposal(
+                    domainId: widget.domainId,
+                    applicantUserId: widget.userId,
+                    orgName: orgName,
+                    orgType: orgType,
+                    expectedCount: expectedCount,
+                    musterPoint: musterPoint,
+                    leaderNotes: leaderNotes,
+                  );
+                  if (context.mounted && ok) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Proposal for $orgName submitted for admin review!'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                },
+              );
+            },
+            backgroundColor: AppColors.ink,
+            foregroundColor: AppColors.onPrimary,
+            elevation: 0,
+            highlightElevation: 0,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+            ),
+            icon: const Icon(Icons.group_add, size: 16),
+            label: const Text(
+              'CREATE CONTINGENT',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5),
             ),
           ),
         );
@@ -363,12 +474,5 @@ class _MyGroupsScreenState extends State<MyGroupsScreen> {
       default:
         return Icons.groups_outlined;
     }
-  }
-
-  String _formatOrgType(String orgType) {
-    return orgType.replaceAll('_', ' ').toLowerCase().split(' ').map((word) {
-      if (word.isEmpty) return '';
-      return word[0].toUpperCase() + word.substring(1);
-    }).join(' ');
   }
 }

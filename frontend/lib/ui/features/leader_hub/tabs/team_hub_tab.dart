@@ -31,64 +31,78 @@ class TeamHubTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeSosCount = viewModel.teamSosAlerts.length;
+    final isLive = viewModel.activeToday > 0;
 
     return ListView(
-      padding: AppSpacing.edgeInsetsScreen,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       children: [
-        // Squad Readiness & Muster Summary
-        ShadCard(
-          title: viewModel.groupName,
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.liveIndicatorBg,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.sensors, size: 12, color: AppColors.success),
-                const SizedBox(width: 4),
-                Text(
-                  '${viewModel.activeToday} Live',
-                  style: AppTypography.captionXs.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
+        // 1. Hero Team Banner (Matching Participant Style)
+        _buildHeroTeamBanner(context, isLive),
+
+        const SizedBox(height: AppSpacing.md),
+
+        // 2. Readiness & Muster Status Strip
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+          decoration: BoxDecoration(
+            color: isLive ? AppColors.liveIndicatorBg : AppColors.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
+            border: Border.all(
+              color: isLive ? AppColors.successBorder : AppColors.hairline,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                'Meeting Point: ${viewModel.musterPoint}',
-                style: AppTypography.bodySm,
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isLive ? AppColors.success : AppColors.mute,
+                  shape: BoxShape.circle,
+                ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  _buildMiniStat('Members', '${viewModel.totalEnrolled}'),
-                  const SizedBox(width: AppSpacing.sm),
-                  _buildMiniStat('Checked-In', '${viewModel.checkedInCount} (${viewModel.checkinPercent.toStringAsFixed(0)}%)'),
-                  const SizedBox(width: AppSpacing.sm),
-                  _buildMiniStat('Finished', '${viewModel.completedCount}'),
-                ],
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  '${viewModel.activeToday} Live • ${viewModel.checkedInCount}/${viewModel.totalEnrolled} Checked-In (${viewModel.checkinPercent.toStringAsFixed(0)}%)',
+                  style: AppTypography.captionXs.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isLive ? AppColors.liveIndicatorText : AppColors.ink,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Icon(
+                isLive ? Icons.sensors : Icons.schedule,
+                color: isLive ? AppColors.success : AppColors.mute,
+                size: 16,
               ),
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
-        // Priority SOS Triage Queue
+        // 3. Priority SOS Triage Card
         ShadCard(
-          title: 'Team Emergency & Help Alerts',
-          trailing: Text(
-            activeSosCount > 0 ? '$activeSosCount Active' : '0 Active',
-            style: AppTypography.captionXs.copyWith(
-              color: activeSosCount > 0 ? AppColors.sale : AppColors.success,
-              fontWeight: FontWeight.w700,
+          title: 'Safety & SOS Alerts',
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: activeSosCount > 0 ? AppColors.errorBg : AppColors.successBg,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(
+                color: activeSosCount > 0 ? AppColors.errorBorder : AppColors.successBorder,
+              ),
+            ),
+            child: Text(
+              activeSosCount > 0 ? '$activeSosCount ACTIVE' : '0 ACTIVE',
+              style: AppTypography.captionXs.copyWith(
+                color: activeSosCount > 0 ? AppColors.sale : AppColors.success,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           child: Column(
@@ -96,6 +110,7 @@ class TeamHubTab extends StatelessWidget {
             children: [
               if (viewModel.teamSosAlerts.isEmpty)
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(AppSpacing.md),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -103,12 +118,23 @@ class TeamHubTab extends StatelessWidget {
                     borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
                     border: Border.all(color: AppColors.hairlineSoft),
                   ),
-                  child: Text(
-                    '✓ All team riders safe. No active emergency pings.',
-                    style: AppTypography.bodySm.copyWith(
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle_outline, color: AppColors.success, size: 16),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'All contingent members reporting safe.',
+                          style: AppTypography.bodySm.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                        ),
+                      ),
+                    ],
                   ),
                 )
               else
@@ -137,11 +163,6 @@ class TeamHubTab extends StatelessWidget {
                               Text(
                                 '${sos.senderName ?? "Team Member"}\n$phone',
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Connecting to mobile cellular dialer with highest priority.',
-                                style: AppTypography.caption,
                               ),
                             ],
                           ),
@@ -208,108 +229,172 @@ class TeamHubTab extends StatelessWidget {
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
-        // Live Squad GPS Telemetry Map HUD
+        // 4. Quick Operations & Contingent Actions
         ShadCard(
-          title: 'Live Team GPS Tracking',
+          title: 'Squad Operations',
+          child: Row(
+            children: [
+              Expanded(
+                child: ShadButton(
+                  text: 'Add Member',
+                  icon: Icons.person_add_outlined,
+                  size: ShadButtonSize.sm,
+                  variant: ShadButtonVariant.outline,
+                  onPressed: () {
+                    DirectAddMemberModal.show(
+                      context,
+                      onAdd: (name, phone) async {
+                        final ok = await viewModel.directAddMember(
+                          domainId: domainId,
+                          groupId: groupId,
+                          leaderUserId: leaderUserId,
+                          memberPhone: phone,
+                          memberName: name,
+                        );
+                        if (context.mounted && ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Added $name to team attendance.'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: ShadButton(
+                  text: 'Send Notice',
+                  icon: Icons.campaign_outlined,
+                  size: ShadButtonSize.sm,
+                  variant: ShadButtonVariant.primary,
+                  onPressed: () {
+                    PublishBroadcastModal.show(
+                      context,
+                      isSuperAdmin: false,
+                      onPublish: (text, _) async {
+                        final ok = await viewModel.sendTeamBroadcast(
+                          domainId: domainId,
+                          leaderUserId: leaderUserId,
+                          groupId: groupId,
+                          messageText: text,
+                        );
+                        if (context.mounted && ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Team notice dispatched.'),
+                              backgroundColor: AppColors.ink,
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: AppSpacing.md),
+
+        // 5. Live Squad GPS Telemetry Map HUD
+        ShadCard(
+          title: 'Live Contingent Radar',
           trailing: Text(
-            '${viewModel.teamLocations.length} Online',
+            '${viewModel.teamLocations.length} Active',
             style: AppTypography.captionXs.copyWith(color: AppColors.mute),
           ),
           child: DensityClusterMapView(
             title: '${viewModel.groupName} Live Map',
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
 
-        // Quick Actions
-        Row(
-          children: [
-            Expanded(
-              child: ShadButton(
-                text: 'Add Rider to Team',
-                icon: Icons.person_add,
-                variant: ShadButtonVariant.primary,
-                onPressed: () {
-                  DirectAddMemberModal.show(
-                    context,
-                    onAdd: (name, phone) async {
-                      final ok = await viewModel.directAddMember(
-                        domainId: domainId,
-                        groupId: groupId,
-                        leaderUserId: leaderUserId,
-                        memberPhone: phone,
-                        memberName: name,
-                      );
-                      if (context.mounted && ok) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Added $name to team attendance.'),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
-                      }
-                    },
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: ShadButton(
-                text: 'Send Team Notice',
-                icon: Icons.campaign,
-                variant: ShadButtonVariant.secondary,
-                onPressed: () {
-                  PublishBroadcastModal.show(
-                    context,
-                    isSuperAdmin: false,
-                    onPublish: (text, _) async {
-                      final ok = await viewModel.sendTeamBroadcast(
-                        domainId: domainId,
-                        leaderUserId: leaderUserId,
-                        groupId: groupId,
-                        messageText: text,
-                      );
-                      if (context.mounted && ok) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Team notice dispatched.'),
-                            backgroundColor: AppColors.ink,
-                          ),
-                        );
-                      }
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 80),
+        const SizedBox(height: 88),
       ],
     );
   }
 
-  Widget _buildMiniStat(String label, String value) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.canvas,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.hairlineSoft),
+  Widget _buildHeroTeamBanner(BuildContext context, bool isLive) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: AppTypography.captionXs),
-            const SizedBox(height: 2),
-            Text(value, style: AppTypography.bodyStrong),
-          ],
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Background subtle shield icon
+          Positioned(
+            right: -8,
+            bottom: -8,
+            child: Icon(
+              Icons.shield_outlined,
+              size: 80,
+              color: Colors.white.withOpacity(0.08),
+            ),
+          ),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                viewModel.groupName,
+                style: AppTypography.headingLg.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Muster: ${viewModel.musterPoint} • ${viewModel.totalEnrolled} Members',
+                style: AppTypography.caption.copyWith(
+                  color: Colors.white.withOpacity(0.8),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ElevatedButton.icon(
+                onPressed: onNavigateToRoster,
+                icon: const Icon(Icons.how_to_reg, size: 15, color: Color(0xFF0F172A)),
+                label: Text(
+                  'Manage Roster (${viewModel.checkedInCount}/${viewModel.totalEnrolled})',
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12.5,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF0F172A),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

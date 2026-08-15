@@ -50,7 +50,7 @@ class SosTriageCard extends StatelessWidget {
                     const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
-                        '🚨 $typeName DISTRESS',
+                        '$typeName DISTRESS',
                         style: AppTypography.headingMd.copyWith(color: AppColors.sale),
                         overflow: TextOverflow.ellipsis,
                       ),

@@ -551,10 +551,10 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
                 ),
                 child: Row(
                   children: [
-                    _buildLightingButton('🌅', MapLightingMode.dawn),
-                    _buildLightingButton('☀️', MapLightingMode.day),
-                    _buildLightingButton('🌇', MapLightingMode.dusk),
-                    _buildLightingButton('🌙', MapLightingMode.night),
+                    _buildLightingButton(Icons.wb_twilight, MapLightingMode.dawn, 'Dawn'),
+                    _buildLightingButton(Icons.wb_sunny_outlined, MapLightingMode.day, 'Day'),
+                    _buildLightingButton(Icons.wb_cloudy_outlined, MapLightingMode.dusk, 'Dusk'),
+                    _buildLightingButton(Icons.nightlight_round, MapLightingMode.night, 'Night'),
                   ],
                 ),
               ),
@@ -642,17 +642,24 @@ class _DensityClusterMapViewState extends State<DensityClusterMapView>
     );
   }
 
-  Widget _buildLightingButton(String emoji, MapLightingMode mode) {
+  Widget _buildLightingButton(IconData icon, MapLightingMode mode, String label) {
     final isSelected = _lightingMode == mode;
-    return GestureDetector(
-      onTap: () => setState(() => _lightingMode = mode),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.softCloud : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
+    return Tooltip(
+      message: label,
+      child: GestureDetector(
+        onTap: () => setState(() => _lightingMode = mode),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.ink : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Icon(
+            icon,
+            size: 13,
+            color: isSelected ? AppColors.onPrimary : AppColors.mute,
+          ),
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 12)),
       ),
     );
   }
@@ -877,7 +884,7 @@ class _MapboxVector3DPainter extends CustomPainter {
       // Label with Dark Card Backdrop
       final tp = TextPainter(
         text: TextSpan(
-          text: isStart ? '🚩 START' : isEnd ? '🏁 FINISH' : '📍 ${wp.name.split('(').first.trim()}',
+          text: isStart ? 'START' : isEnd ? 'FINISH' : wp.name.split('(').first.trim(),
           style: TextStyle(
             color: color,
             fontSize: 9.5,
@@ -935,7 +942,7 @@ class _MapboxVector3DPainter extends CustomPainter {
       // Rider Callout Banner
       final tp = TextPainter(
         text: TextSpan(
-          text: isLeader ? '👑 ${rider.userName ?? "Rajesh (Leader)"}' : '🚴 ${rider.userName ?? "Rider"}',
+          text: isLeader ? '${rider.userName ?? "Rajesh"} (LEADER)' : (rider.userName ?? "Rider"),
           style: TextStyle(
             color: color,
             fontSize: 9.0,

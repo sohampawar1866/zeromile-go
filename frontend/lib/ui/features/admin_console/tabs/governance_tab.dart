@@ -24,36 +24,61 @@ class GovernanceTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeQueueCount = viewModel.escalatedSosQueue.length;
+
     return ListView(
-      padding: AppSpacing.edgeInsetsScreen,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       children: [
-        // Escalated & Direct SOS Queue
+        // 1. Escalated & Direct SOS Queue
         ShadCard(
-          title: 'Escalated Response Queue',
-          trailing: Text(
-            '${viewModel.escalatedSosQueue.length} Active',
-            style: AppTypography.captionXs.copyWith(color: AppColors.sale, fontWeight: FontWeight.bold),
+          title: 'Escalated SOS Queue',
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: activeQueueCount > 0 ? AppColors.errorBg : AppColors.successBg,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(
+                color: activeQueueCount > 0 ? AppColors.errorBorder : AppColors.successBorder,
+              ),
+            ),
+            child: Text(
+              activeQueueCount > 0 ? '$activeQueueCount ACTIVE' : '0 ACTIVE',
+              style: AppTypography.captionXs.copyWith(
+                color: activeQueueCount > 0 ? AppColors.sale : AppColors.success,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'High-priority incidents forwarded by Group Leaders or submitted by General riders:',
-                style: AppTypography.bodySm,
-              ),
-              const SizedBox(height: AppSpacing.md),
               if (viewModel.escalatedSosQueue.isEmpty)
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(AppSpacing.md),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.softCloud,
+                    color: AppColors.canvas,
                     borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-                    border: Border.all(color: AppColors.hairline),
+                    border: Border.all(color: AppColors.hairlineSoft),
                   ),
-                  child: Text(
-                    '✓ No active emergency incidents in queue.',
-                    style: AppTypography.bodySm.copyWith(color: AppColors.success, fontWeight: FontWeight.w700),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle_outline, color: AppColors.success, size: 16),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'No escalated emergency incidents in queue.',
+                          style: AppTypography.bodySm.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                        ),
+                      ),
+                    ],
                   ),
                 )
               else
@@ -68,7 +93,7 @@ class GovernanceTab extends StatelessWidget {
                     if (context.mounted && ok) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Ambulance dispatched & incident resolved.'),
+                          content: Text('Incident resolved & ambulances notified.'),
                           backgroundColor: AppColors.success,
                         ),
                       );
@@ -78,124 +103,138 @@ class GovernanceTab extends StatelessWidget {
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
-        // Broadcast Trigger Button
-        ShadButton(
-          text: 'Publish Domain Broadcast Alert',
-          icon: Icons.campaign_outlined,
-          isFullWidth: true,
-          variant: ShadButtonVariant.destructive,
-          onPressed: () {
-            PublishBroadcastModal.show(
-              context,
-              isSuperAdmin: true,
-              onPublish: (text, _) async {
-                final ok = await viewModel.sendDomainBroadcast(
-                  domainId: domainId,
-                  adminUserId: adminUserId,
-                  messageText: text,
-                );
-                if (context.mounted && ok) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Domain-wide alert dispatched to all subscribers.'),
-                      backgroundColor: AppColors.sale,
-                    ),
-                  );
-                }
-              },
-            );
-          },
-        ),
-        const SizedBox(height: AppSpacing.md),
-
-        // Pending Group Creation Applications
+        // 2. City Broadcast & Alert Actions
         ShadCard(
-          title: 'New Group Requests (${viewModel.pendingRequests.length})',
+          title: 'Event Operations & Safety Alert',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Broadcast critical instructions to all registered riders and contingent leaders simultaneously:',
+                style: AppTypography.bodySm,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ShadButton(
+                text: 'Publish Citywide Broadcast',
+                icon: Icons.campaign_outlined,
+                isFullWidth: true,
+                variant: ShadButtonVariant.destructive,
+                onPressed: () {
+                  PublishBroadcastModal.show(
+                    context,
+                    isSuperAdmin: true,
+                    onPublish: (text, _) async {
+                      final ok = await viewModel.sendDomainBroadcast(
+                        domainId: domainId,
+                        adminUserId: adminUserId,
+                        messageText: text,
+                      );
+                      if (context.mounted && ok) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Domain broadcast published.'),
+                            backgroundColor: AppColors.ink,
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: AppSpacing.md),
+
+        // 3. Pending Contingent Approvals
+        ShadCard(
+          title: 'Squad & Club Approvals',
+          trailing: Text(
+            '${viewModel.pendingRequests.length} Pending',
+            style: AppTypography.captionXs.copyWith(color: AppColors.mute),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (viewModel.pendingRequests.isEmpty)
-                const Text('No pending group requests to review.', style: AppTypography.caption)
-              else
-                ...viewModel.pendingRequests.map((req) => Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  padding: AppSpacing.edgeInsetsCard,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.softCloud,
+                    color: AppColors.canvas,
                     borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-                    border: Border.all(color: AppColors.hairline),
+                    border: Border.all(color: AppColors.hairlineSoft),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(req.orgName, style: AppTypography.headingMd),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        'Category: ${req.orgType} • Expected: ${req.expectedCount} Riders • Meeting Point: ${req.musterPoint}',
-                        style: AppTypography.caption,
-                      ),
+                  child: const Text(
+                    'No pending contingent approval requests.',
+                    style: AppTypography.caption,
+                  ),
+                )
+              else
+                ...viewModel.pendingRequests.map((req) {
+                  final groupName = req.orgName;
+                  final requestId = req.id;
+                  final orgType = req.orgType;
 
-                      if (req.leaderNotes != null && req.leaderNotes!.isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.xs),
-                        Text('Remarks: ${req.leaderNotes}', style: AppTypography.bodySm.copyWith(color: AppColors.warningAccent)),
-                      ],
-                      const SizedBox(height: AppSpacing.md),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ShadButton(
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.canvas,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(color: AppColors.hairlineSoft),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(groupName, style: AppTypography.bodyStrong),
+                              const SizedBox(height: 2),
+                              Text('Type: $orgType', style: AppTypography.caption),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            ShadButton(
                               text: 'Approve',
-                              icon: Icons.check,
                               size: ShadButtonSize.sm,
                               variant: ShadButtonVariant.primary,
                               onPressed: () async {
                                 final ok = await viewModel.reviewGroupProposal(
-                                  requestId: req.id,
+                                  requestId: requestId,
                                   reviewerUserId: adminUserId,
                                   approve: true,
                                 );
                                 if (context.mounted && ok) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Approved! Sub-group created & applicant elevated to Leader.'),
+                                    SnackBar(
+                                      content: Text('Approved $groupName contingent.'),
                                       backgroundColor: AppColors.success,
                                     ),
                                   );
                                 }
                               },
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: ShadButton(
-                              text: 'Reject',
-                              icon: Icons.close,
-                              size: ShadButtonSize.sm,
-                              variant: ShadButtonVariant.outline,
-                              onPressed: () async {
-                                final ok = await viewModel.reviewGroupProposal(
-                                  requestId: req.id,
-                                  reviewerUserId: adminUserId,
-                                  approve: false,
-                                );
-                                if (context.mounted && ok) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Proposal rejected.')),
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                )),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }),
             ],
           ),
         ),
+
+        const SizedBox(height: 88),
       ],
     );
   }

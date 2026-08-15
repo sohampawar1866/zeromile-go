@@ -7,20 +7,19 @@ import '../../../../config/app_typography.dart';
 import '../../../../models/event_domain.dart';
 import '../../../../models/route_checkpoint.dart';
 import '../../../../services/mapbox_service.dart';
-import '../../../core/widgets/density_cluster_map_view.dart';
-
 import '../../../core/components/shad_button.dart';
 import '../../../core/components/shad_card.dart';
+import '../../../core/widgets/density_cluster_map_view.dart';
 
 class MapboxRouteStudioCard extends StatefulWidget {
   final EventDomain? activeDomain;
   final List<RouteCheckpoint> existingCheckpoints;
-  final void Function(List<MapPoint> waypoints, double distanceKm)? onRouteSaved;
+  final Function(List<MapPoint> waypoints, double distanceKm)? onRouteSaved;
 
   const MapboxRouteStudioCard({
     super.key,
-    required this.activeDomain,
-    required this.existingCheckpoints,
+    this.activeDomain,
+    this.existingCheckpoints = const [],
     this.onRouteSaved,
   });
 
@@ -30,19 +29,20 @@ class MapboxRouteStudioCard extends StatefulWidget {
 
 class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
   List<MapPoint> _currentWaypoints = [];
-  double _calculatedDistanceKm = 0.0;
+  double _calculatedDistanceKm = 10.4;
 
   @override
   void initState() {
     super.initState();
-    _currentWaypoints = widget.existingCheckpoints
-        .map((cp) => MapPoint(
-              latitude: cp.latitude,
-              longitude: cp.longitude,
-              name: cp.name,
-              tag: cp.checkpointType.name.toUpperCase(),
-            ))
-        .toList();
+    if (widget.existingCheckpoints.isNotEmpty) {
+      _currentWaypoints = widget.existingCheckpoints
+          .map((c) => MapPoint(
+                latitude: c.latitude,
+                longitude: c.longitude,
+                name: c.name,
+              ))
+          .toList();
+    }
   }
 
   void _deleteWaypoint(int index) {
@@ -63,7 +63,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '💾 Draft Route saved with ${_currentWaypoints.length} waypoints (${_calculatedDistanceKm.toStringAsFixed(1)} km).',
+          'Draft Route saved with ${_currentWaypoints.length} waypoints (${_calculatedDistanceKm.toStringAsFixed(1)} km).',
         ),
         backgroundColor: AppColors.ink,
       ),
@@ -85,7 +85,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '🔒 Official Mapbox 3D Route Published (${_calculatedDistanceKm.toStringAsFixed(1)} km)! Broadcasted to all group leaders.',
+          'Official Mapbox 3D Route Published (${_calculatedDistanceKm.toStringAsFixed(1)} km)! Broadcasted to all group leaders.',
         ),
         backgroundColor: AppColors.success,
       ),
@@ -110,7 +110,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
         // Route Distance Metric Card (Theme Clean Light Style)
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           decoration: BoxDecoration(
             color: AppColors.softCloud,
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -121,17 +121,17 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
               Text(
                 '${_calculatedDistanceKm.toStringAsFixed(1)} km',
                 style: const TextStyle(
-                  fontSize: 32,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
                   color: AppColors.ink,
                   letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               const Text(
                 'TOTAL OFFICIAL ROUTE DISTANCE',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 9.5,
                   color: AppColors.mute,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
@@ -144,14 +144,14 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
 
         // Multi-Rider 3D Live Simulation Panel
         ShadCard(
-          title: '🚴 Multi-Rider 3D Live GPS Tracking',
+          title: 'Multi-Rider 3D Live GPS Tracking',
           description: 'Simulates 4 team riders moving live through Mapbox 3D Nagpur buildings.',
           child: Column(
             children: [
-              _buildRiderTelemetryRow('👑 Rajesh Sharma (Leader)', '${(_calculatedDistanceKm * 0.85).toStringAsFixed(1)} km', AppColors.ink),
-              _buildRiderTelemetryRow('🚴 Aniket Deshmukh', '${(_calculatedDistanceKm * 0.72).toStringAsFixed(1)} km', AppColors.accentTeal),
-              _buildRiderTelemetryRow('🚴 Priya Verma', '${(_calculatedDistanceKm * 0.60).toStringAsFixed(1)} km', AppColors.success),
-              _buildRiderTelemetryRow('🚴 Saurabh Joshi', '${(_calculatedDistanceKm * 0.45).toStringAsFixed(1)} km', AppColors.info),
+              _buildRiderTelemetryRow('Rajesh Sharma', '${(_calculatedDistanceKm * 0.85).toStringAsFixed(1)} km', AppColors.ink, isLeader: true),
+              _buildRiderTelemetryRow('Aniket Deshmukh', '${(_calculatedDistanceKm * 0.72).toStringAsFixed(1)} km', AppColors.accentTeal),
+              _buildRiderTelemetryRow('Priya Verma', '${(_calculatedDistanceKm * 0.60).toStringAsFixed(1)} km', AppColors.success),
+              _buildRiderTelemetryRow('Saurabh Joshi', '${(_calculatedDistanceKm * 0.45).toStringAsFixed(1)} km', AppColors.info),
             ],
           ),
         ),
@@ -162,7 +162,8 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
           children: [
             Expanded(
               child: ShadButton(
-                text: '💾 Save Draft',
+                text: 'Save Draft',
+                icon: Icons.save_outlined,
                 variant: ShadButtonVariant.secondary,
                 onPressed: _saveDraft,
               ),
@@ -170,7 +171,8 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: ShadButton(
-                text: '🔒 Lock & Publish',
+                text: 'Lock & Publish',
+                icon: Icons.lock_outline,
                 variant: ShadButtonVariant.primary,
                 onPressed: _publishRoute,
               ),
@@ -181,7 +183,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
 
         // Active Checkpoints & Landmarks List
         ShadCard(
-          title: '🏁 Official Checkpoints & Milestones',
+          title: 'Official Checkpoints & Milestones',
           trailing: Text('${_currentWaypoints.length} Points', style: AppTypography.caption),
           child: Column(
             children: [
@@ -196,7 +198,7 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppColors.canvas,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -252,10 +254,10 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
     );
   }
 
-  Widget _buildRiderTelemetryRow(String name, String distance, Color color) {
+  Widget _buildRiderTelemetryRow(String name, String distance, Color color, {bool isLeader = false}) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.canvas,
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -264,23 +266,49 @@ class _MapboxRouteStudioCardState extends State<MapboxRouteStudioCard> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                name,
-                style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    name,
+                    style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                if (isLeader) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: AppColors.ink,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: const Text(
+                      'LEADER',
+                      style: TextStyle(
+                        color: AppColors.onPrimary,
+                        fontSize: 7.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             distance,
             style: AppTypography.bodySm.copyWith(

@@ -148,7 +148,7 @@ void main() {
         ),
       );
 
-      expect(find.text('🚨 MEDICAL DISTRESS'), findsOneWidget);
+      expect(find.text('MEDICAL DISTRESS'), findsOneWidget);
       expect(find.text('Rahul Deshmukh (+91 98220 99999)'), findsOneWidget);
       expect(find.text('Resolve Locally'), findsOneWidget);
 
@@ -197,7 +197,7 @@ void main() {
       expect(find.text('Heading to Water Point 1'), findsOneWidget);
       expect(find.text('8:15 AM'), findsOneWidget);
       expect(find.text('Zero Mile'), findsOneWidget);
-      expect(find.text('Water Point 1'), findsNWidgets(2)); // Title & milestone node
+      expect(find.text('Water Point 1'), findsOneWidget);
     });
   });
 }

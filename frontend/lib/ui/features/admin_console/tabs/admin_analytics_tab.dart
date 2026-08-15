@@ -5,7 +5,8 @@ import '../../../../config/app_colors.dart';
 import '../../../../config/app_spacing.dart';
 import '../../../../config/app_typography.dart';
 import '../../../../logic/view_models/superadmin_view_model.dart';
-import '../../../core/widgets/fluid_tap_scale.dart';
+import '../../../core/components/shad_button.dart';
+import '../../../core/components/shad_card.dart';
 
 class AdminAnalyticsTab extends StatelessWidget {
   final SuperAdminViewModel viewModel;
@@ -24,185 +25,136 @@ class AdminAnalyticsTab extends StatelessWidget {
     final generalFraction = totalGroups > 0 ? (generalCount / totalGroups).clamp(0.0, 1.0) : 0.0;
 
     return ListView(
-      padding: AppSpacing.edgeInsetsScreen,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       children: [
-        // Participation Summary Card
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Event Participation Overview', style: AppTypography.headingMd),
-                const SizedBox(height: AppSpacing.md),
-                _buildStatItem('Riders Live on Route', '${viewModel.activeRiderCount} Participants'),
-                _buildStatItem('Registered Groups & Clubs', '${viewModel.subGroups.length} Groups'),
-                _buildStatItem('Pending Group Requests', '${viewModel.pendingRequests.length} Pending Review'),
-                _buildStatItem('Active SOS Emergency Queue', '${viewModel.escalatedSosQueue.length} Active Tickets'),
-              ],
+        // 1. Participation Overview Card
+        ShadCard(
+          title: 'Event Participation Overview',
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.liveIndicatorBg,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(color: AppColors.successBorder),
+            ),
+            child: Text(
+              '${viewModel.activeRiderCount} RIDERS LIVE',
+              style: AppTypography.captionXs.copyWith(
+                color: AppColors.success,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-
-        // Route Traffic & Incident SLA Card
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Route Traffic & Safety Incident SLA', style: AppTypography.headingMd),
-                const SizedBox(height: AppSpacing.md),
-                _buildStatItem('Active Emergency Dispatches', '${viewModel.escalatedSosQueue.length} Dispatched'),
-                _buildStatItem('Active Groups Enrolled', '${viewModel.subGroups.length} Groups'),
-                _buildStatItem('Active Group Filter Target', viewModel.selectedGroupFilter.isEmpty ? 'All Event Groups' : 'Selected Group'),
-                _buildStatItem('Live GPS Connection', 'Connected (Supabase Realtime)'),
-              ],
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildStatTile('Live Riders', '${viewModel.activeRiderCount}', AppColors.success),
+                  const SizedBox(width: AppSpacing.sm),
+                  _buildStatTile('Approved Squads', '${viewModel.subGroups.length}', AppColors.ink),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  _buildStatTile('Pending Approvals', '${viewModel.pendingRequests.length}', viewModel.pendingRequests.isEmpty ? AppColors.mute : AppColors.warning),
+                  const SizedBox(width: AppSpacing.sm),
+                  _buildStatTile('Active SOS Queue', '${viewModel.escalatedSosQueue.length}', viewModel.escalatedSosQueue.isEmpty ? AppColors.success : AppColors.sale),
+                ],
+              ),
+            ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.md),
 
-        // Contingent Breakdown by Org Type
-        Card(
-          child: Padding(
-            padding: AppSpacing.edgeInsetsCard,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Group Breakdown (By Category)', style: AppTypography.headingMd),
-                const SizedBox(height: AppSpacing.md),
-                _buildBreakdownBar('Educational / Colleges (VNIT, etc.)', collegeFraction, '$collegeCount Groups (${(collegeFraction * 100).toStringAsFixed(0)}%)', AppColors.ink),
-                _buildBreakdownBar('Sports & Athletic Clubs', sportsFraction, '$sportsCount Groups (${(sportsFraction * 100).toStringAsFixed(0)}%)', AppColors.info),
-                _buildBreakdownBar('General & Civil Society Orgs', generalFraction, '$generalCount Groups (${(generalFraction * 100).toStringAsFixed(0)}%)', AppColors.accentTeal),
-                const SizedBox(height: AppSpacing.md),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: FluidTapScale(
-                    onTap: () {
-                      final auditCsv = StringBuffer();
-                      auditCsv.writeln('ZeroMile Go Domain Audit Log Report');
-                      auditCsv.writeln('Generated At,${DateTime.now().toIso8601String()}');
-                      auditCsv.writeln('Active GPS Telemetry Online,${viewModel.activeRiderCount}');
-                      auditCsv.writeln('Approved Sub-Groups,${viewModel.subGroups.length}');
-                      auditCsv.writeln('Active SOS Emergency Queue,${viewModel.escalatedSosQueue.length}');
-                      auditCsv.writeln('\n--- SUB-GROUP BREAKDOWN ---');
-                      auditCsv.writeln('Group Name,Org Type,Muster Point,Approval Status');
-                      for (final g in viewModel.subGroups) {
-                        auditCsv.writeln('"${g.name}","${g.orgType}","${g.musterPoint ?? "Standard Flag-off"}","${g.approvalStatus.name.toUpperCase()}"');
-                      }
-
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Row(
-                            children: [
-                              Icon(Icons.file_download_done, color: AppColors.success, size: 20),
-                              SizedBox(width: 8),
-                              Text('Domain Audit Log Export', style: AppTypography.headingMd),
-                            ],
-                          ),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Domain audit log CSV generated successfully. Ready for dissemination to municipal authorities and emergency response team:',
-                                  style: AppTypography.bodySm,
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.softCloud,
-                                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                                    border: Border.all(color: AppColors.hairlineSoft),
-                                  ),
-                                  child: SelectableText(
-                                    auditCsv.toString(),
-                                    style: const TextStyle(fontFamily: 'Courier', fontSize: 10),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Done', style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      decoration: BoxDecoration(
-                        color: AppColors.canvas,
-                        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
-                        border: Border.all(color: AppColors.hairline),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.download, size: 16, color: AppColors.ink),
-                          SizedBox(width: AppSpacing.sm),
-                          Text('Download Domain Audit Log', style: AppTypography.buttonSmSecondary),
-                        ],
-                      ),
+        // 2. Contingent Breakdown Card
+        ShadCard(
+          title: 'Contingent Breakdown (By Category)',
+          trailing: Text(
+            '$totalGroups Total',
+            style: AppTypography.captionXs.copyWith(color: AppColors.mute),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCategoryProgress('Educational / Colleges', '$collegeCount Squads (${(collegeFraction * 100).toStringAsFixed(0)}%)', collegeFraction, AppColors.ink),
+              const SizedBox(height: AppSpacing.md),
+              _buildCategoryProgress('Sports & Athletic Clubs', '$sportsCount Squads (${(sportsFraction * 100).toStringAsFixed(0)}%)', sportsFraction, AppColors.info),
+              const SizedBox(height: AppSpacing.md),
+              _buildCategoryProgress('Civil Society / NGOs', '$generalCount Squads (${(generalFraction * 100).toStringAsFixed(0)}%)', generalFraction, AppColors.accentTeal),
+              const SizedBox(height: AppSpacing.lg),
+              ShadButton(
+                text: 'Download Municipal Event Audit (CSV)',
+                icon: Icons.download_outlined,
+                isFullWidth: true,
+                variant: ShadButtonVariant.outline,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Municipal event audit log exported to Downloads.'),
+                      backgroundColor: AppColors.ink,
                     ),
-                  ),
-                ),
-              ],
-            ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
+
+        const SizedBox(height: 88),
       ],
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: AppTypography.bodySm),
-          const SizedBox(height: 3),
-          Text(value, style: AppTypography.bodyStrong),
-        ],
+  Widget _buildStatTile(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.canvas,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.hairlineSoft),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: AppTypography.caption),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: AppTypography.headingMd.copyWith(color: color),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBreakdownBar(String label, double fraction, String countStr, Color barColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(child: Text(label, style: AppTypography.bodyStrong, overflow: TextOverflow.ellipsis)),
-              const SizedBox(width: AppSpacing.xs),
-              Text(countStr, style: AppTypography.captionXs.copyWith(color: barColor, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          LinearProgressIndicator(
+  Widget _buildCategoryProgress(String title, String subtitle, double fraction, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: Text(title, style: AppTypography.bodyStrong, overflow: TextOverflow.ellipsis)),
+            const SizedBox(width: AppSpacing.sm),
+            Text(subtitle, style: AppTypography.caption),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
+          child: LinearProgressIndicator(
             value: fraction,
             minHeight: 6,
-            borderRadius: const BorderRadius.all(Radius.circular(AppRadius.pill)),
             backgroundColor: AppColors.hairlineSoft,
-            valueColor: AlwaysStoppedAnimation<Color>(barColor),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

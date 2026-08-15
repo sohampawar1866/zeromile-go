@@ -11,7 +11,6 @@ import '../../../logic/view_models/groups_view_model.dart';
 import '../../../logic/view_models/leader_hub_view_model.dart';
 import '../../../logic/view_models/superadmin_view_model.dart';
 import '../../../logic/view_models/dev_panel_view_model.dart';
-import '../../core/dialogs/switch_domain_modal.dart';
 import '../home/participant_home_screen.dart';
 import '../home/participant_live_map_screen.dart';
 import '../groups/my_groups_screen.dart';
